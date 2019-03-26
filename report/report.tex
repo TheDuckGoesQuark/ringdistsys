@@ -91,7 +91,11 @@ To demonstrate an understanding of leader election and mutual exclusion in distr
 
 \section{Initial Set-up}
 
+Java 8 was chosen for this project due to it's friendly socket API, and Maven \cite{maven} was used as a build tool.
 
+\subsection{Configuration}
+
+Since each node would be running on an isolated machine, the planned testing environment would involve using \emph{ssh} to start the node on each machine. Providing configuration as command line arguments was considered simpler than other methods, and was implemented using the Apache Commons CLI library \cite{apachecli}.
 
 \section{Leader/Coordinator Election}
 

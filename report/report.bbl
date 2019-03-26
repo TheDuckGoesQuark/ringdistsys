@@ -1,3 +1,13 @@
-\begin{thebibliography}{}
+\begin{thebibliography}{1}
+
+\bibitem{maven}
+Apache.
+\newblock Apache maven project.
+\newblock \url{https://maven.apache.org/}.
+
+\bibitem{apachecli}
+Apache Commons.
+\newblock Apache commons cli.
+\newblock \url{https://commons.apache.org/proper/commons-cli/}.
 
 \end{thebibliography}

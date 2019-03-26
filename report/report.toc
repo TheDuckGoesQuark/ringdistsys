@@ -1,5 +1,6 @@
 \babel@toc {english}{}
 \contentsline {section}{\numberline {1}Goal}{1}
 \contentsline {section}{\numberline {2}Initial Set-up}{1}
+\contentsline {subsection}{\numberline {2.1}Configuration}{1}
 \contentsline {section}{\numberline {3}Leader/Coordinator Election}{1}
 \contentsline {section}{\numberline {4}Receive/Send Posts}{1}
