@@ -79,23 +79,23 @@
 
 \end{titlepage}
 
+\section*{Goal}
+
+To demonstrate an understanding of leader election and mutual exclusion in distributed systems by developing a ring-based distributed social media application.
+
 \tableofcontents
 \newpage
 
 \pagenumbering{arabic}
 \setcounter{page}{1} 
 
-\section{Goal}
-
-To demonstrate an understanding of leader election and mutual exclusion in distributed systems by developing a ring-based distributed social media application.
-
 \section{Initial Set-up}
 
-Java 8 was chosen for this project due to it's friendly socket API, and Maven \cite{maven} was used as a build tool. JUnit4 was used for the test suite.
+Java 8 was chosen for this project due to it's friendly socket API, and Maven \cite{maven} was used as the build tool. TDD was implemented, with JUnit4 as the the test suite framework.
 
 \subsection{Configuration}
 
-Since each node would be running on an isolated machine, the planned testing environment would involve using \emph{ssh} to start the node on each machine. Providing configuration as command line arguments was considered simpler than other methods, and was implemented using the Apache Commons CLI library \cite{apachecli}. 
+Since each node would be running on an isolated machine, the planned testing environment would involve using \emph{ssh} to start the nodes remotely. Providing the configuration as command line arguments was considered simpler than other methods, and was implemented using the Apache Commons CLI library \cite{apachecli}.
 
 \section{Leader/Coordinator Election}
 
