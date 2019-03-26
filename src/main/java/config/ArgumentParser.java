@@ -48,19 +48,12 @@ public class ArgumentParser {
 
         CommandLineParser parser = new DefaultParser();
 
-        boolean help = false;
         InetAddress inputHost = null;
         int inputPort = 0;
         int inputId = 0;
 
         try {
-            CommandLine cmd;
-
-            cmd = parser.parse(options, args);
-
-            if (cmd.hasOption(HELP)) {
-                printHelpAndDie(options);
-            }
+            CommandLine cmd = parser.parse(options, args);
 
             inputHost = InetAddress.getByName(cmd.getOptionValue(HOST));
             inputPort = ((Number) cmd.getParsedOptionValue(PORT)).intValue();
