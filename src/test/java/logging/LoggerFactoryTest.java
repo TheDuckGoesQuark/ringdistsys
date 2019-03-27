@@ -13,4 +13,10 @@ public class LoggerFactoryTest {
         Logger logger = LoggerFactory.buildLogger(1);
         assertNotNull(logger);
     }
+
+    @Test
+    public void useLogger() {
+        Logger logger = LoggerFactory.buildLogger(1);
+        logger.info("hello world");
+    }
 }
