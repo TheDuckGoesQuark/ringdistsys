@@ -15,8 +15,9 @@ public class UDPSocket {
 
     /**
      * Send a message to the given destination
+     *
      * @param message message to send
-     * @param dest destination to send message
+     * @param dest    destination to send message
      * @throws IOException if unable to convert message to bytes, or socket exception occurs
      */
     public void sendMessage(Message message, SocketAddress dest) throws IOException {
@@ -30,6 +31,7 @@ public class UDPSocket {
 
     /**
      * Poll until message is received
+     *
      * @return message received from this socket
      */
     public Message receiveMessage() throws IOException {
@@ -46,5 +48,9 @@ public class UDPSocket {
      */
     public void close() {
         datagramSocket.close();
+    }
+
+    public boolean isClosed() {
+        return datagramSocket.isClosed();
     }
 }
