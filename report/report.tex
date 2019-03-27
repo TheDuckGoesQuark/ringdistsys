@@ -27,6 +27,8 @@
 \usepackage[explicit]{titlesec}
 \usepackage[hyphens,spaces,obeyspaces]{url}
 \usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
 \usepackage{grffile}
 
 \begin{document}
@@ -93,9 +95,45 @@ To demonstrate an understanding of leader election and mutual exclusion in distr
 
 Java 8 was chosen for this project due to it's friendly socket API, and Maven \cite{maven} was used as the build tool. TDD was implemented with JUnit4 as the the test suite framework.
 
+The project was started with the intention of implementing the bully algorithm, as it provided fault tolerance with low overhead. 
+
 \subsection{Configuration}
 
 Since each node would be running on an isolated machine, the planned testing environment would involve using \emph{ssh} to start the nodes remotely. Providing the configuration as command line arguments was considered simpler than other methods, and was implemented using the Apache Commons CLI library \cite{apachecli}.
+
+\subsection{Communication}
+TCP was used for communication \textbf{around} the ring for the following reasons:
+\begin{enumerate}
+    \item Reliable communication.
+    \item Keepalive functionality allows effective failure detection.
+    \item Connection is reused frequently between predecessors and successors, justifying handshake overhead.
+\end{enumerate}
+
+UDP was used for communication \textbf{across} the ring for the following reasons:
+\begin{enumerate}
+    \item Reliable communication.
+    \item Keepalive functionality allows effective failure detection.
+    \item Connection is reused frequently between predecessors and successors, justifying handshake overhead.
+\end{enumerate}
+
+
+\begin{figure}[!h]
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=.6\linewidth]{images/tcp}
+  \caption{TCP Around Ring}
+  \label{fig:sub1}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=.6\linewidth]{images/udp}
+  \caption{UDP Across Ring}
+  \label{fig:sub2}
+\end{subfigure}
+\caption{The different types of communication used}
+\label{fig:test}
+\end{figure}
 
 \section{Leader/Coordinator Election}
 
