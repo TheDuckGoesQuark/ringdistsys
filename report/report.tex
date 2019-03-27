@@ -101,21 +101,22 @@ The project was started with the intention of implementing the bully algorithm, 
 
 Since each node would be running on an isolated machine, the planned testing environment would involve using \emph{ssh} to start the nodes remotely. Providing the configuration as command line arguments was considered simpler than other methods, and was implemented using the Apache Commons CLI library \cite{apachecli}.
 
-\subsection{Communication}
-TCP was used for communication \textbf{around} the ring for the following reasons:
+\subsection{Communication Protocols}
+
+Due to different patterns of communication during recovery and regular message passing phases both TCP and UDP were used for this project, as shown in Figure \ref{fig:pattern}.
+
+\linebreak
+\noindent TCP was used for communication \textbf{around} the ring:
 \begin{enumerate}
-    \item Reliable communication.
-    \item Keepalive functionality allows effective failure detection.
+    \item Reliable communication avoids token being lost.
+    \item Keepalive functionality provides effective failure detection.
     \item Connection is reused frequently between predecessors and successors, justifying handshake overhead.
 \end{enumerate}
 
-UDP was used for communication \textbf{across} the ring for the following reasons:
+\noindent UDP was used for communication \textbf{across} the ring: 
 \begin{enumerate}
-    \item Reliable communication.
-    \item Keepalive functionality allows effective failure detection.
-    \item Connection is reused frequently between predecessors and successors, justifying handshake overhead.
+    \item Low communication overhead allows for messages to be sent to multiple nodes quickly, improving recovery time from node failure.
 \end{enumerate}
-
 
 \begin{figure}[!h]
 \centering
@@ -123,16 +124,16 @@ UDP was used for communication \textbf{across} the ring for the following reason
   \centering
   \includegraphics[width=.6\linewidth]{images/tcp}
   \caption{TCP Around Ring}
-  \label{fig:sub1}
+  \label{fig:tcp}
 \end{subfigure}%
 \begin{subfigure}{.5\textwidth}
   \centering
   \includegraphics[width=.6\linewidth]{images/udp}
   \caption{UDP Across Ring}
-  \label{fig:sub2}
+  \label{fig:udp}
 \end{subfigure}
 \caption{The different types of communication used}
-\label{fig:test}
+\label{fig:pattern}
 \end{figure}
 
 \section{Leader/Coordinator Election}

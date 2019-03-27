@@ -1,3 +1,6 @@
+package logging;
+
+import logging.LoggerFactory;
 import org.junit.Test;
 
 import java.util.logging.Logger;

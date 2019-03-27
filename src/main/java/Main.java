@@ -1,5 +1,6 @@
 import config.ArgumentParser;
 import config.Configuration;
+import node.Node;
 
 public class Main {
 
