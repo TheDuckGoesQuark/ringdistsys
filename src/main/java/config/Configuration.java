@@ -1,49 +1,40 @@
 package config;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 public class Configuration {
 
     /**
-     * The host address of this node
+     * The socket address used by this node for communication
      */
-    private InetAddress hostAddress;
-    /**
-     * The port number used by sockets for this node
-     */
-    private int portNumber;
+    private final InetSocketAddress address;
+
     /**
      * The ID of this node, unique to the system
      */
-    private int nodeId;
+    private final int nodeId;
 
     public Configuration(InetAddress hostAddress, int portNumber, int nodeId) {
-        this.hostAddress = hostAddress;
-        this.portNumber = portNumber;
+        this.address = new InetSocketAddress(hostAddress, portNumber);
         this.nodeId = nodeId;
     }
 
-    public InetAddress getHostAddress() {
-        return hostAddress;
-    }
-
-    public void setHostAddress(InetAddress hostAddress) {
-        this.hostAddress = hostAddress;
-    }
-
-    public int getPortNumber() {
-        return portNumber;
-    }
-
-    public void setPortNumber(int portNumber) {
-        this.portNumber = portNumber;
+    public InetSocketAddress getAddress() {
+        return address;
     }
 
     public int getNodeId() {
         return nodeId;
     }
 
-    public void setNodeId(int nodeId) {
-        this.nodeId = nodeId;
+    @Override
+    public String toString() {
+        return "Address: '" +
+                address.toString() +
+                "' | " +
+                "Node ID: '" +
+                nodeId +
+                "'";
     }
 }

@@ -35,8 +35,8 @@ public class ArgumentParserTest {
     public void parseArgsWhenAllFlagsHaveValue() {
         String[] args = {"-a", "127.0.0.0", "-p", "8080", "-i", "6"};
         Configuration config = ArgumentParser.parseArgs(args);
-        assertEquals("Address is equals", "127.0.0.0", config.getHostAddress().getHostAddress());
-        assertEquals("Port number is correct", 8080, config.getPortNumber());
+        assertEquals("Address is equals", "127.0.0.0", config.getAddress().getAddress().getHostAddress());
+        assertEquals("Port number is correct", 8080, config.getAddress().getPort());
         assertEquals("Id is correct", 6, config.getNodeId());
     }
 
