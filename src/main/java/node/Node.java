@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import static config.NodeListFileParser.parseNodeFile;
 
 public class Node {
 
@@ -70,6 +69,10 @@ public class Node {
             this.initializeCoordinatorThread();
         }
 
-        // TODO node stuff.
+        // TODO await successor address from coordinator
+        // TODO connect to successor
+
+        // TODO on loss of connection to successor:
+            // TODO if successor ID = Coordinator ID: Begin reelection.
     }
 }

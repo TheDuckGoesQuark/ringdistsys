@@ -22,6 +22,10 @@ public class Coordinator implements Runnable {
         this.nodes = nodes;
     }
 
+    public boolean isRunning() {
+        return running;
+    }
+
     public void start() {
         logger.info("Starting " + THREAD_NAME);
         if (thread == null) {
@@ -39,7 +43,11 @@ public class Coordinator implements Runnable {
 
         running = true;
         while(running) {
-            // TODO
+            // TODO check ring members are up
+            // TODO inform ring members of their successor
+            // TODO await nodes sending notification that their successor has failed
+            // TODO when node successor dies, send new successor to that node
+            running = false;
         }
     }
 
