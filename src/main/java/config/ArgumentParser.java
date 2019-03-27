@@ -11,14 +11,10 @@ public class ArgumentParser {
     private static final String HOST = "host";
     private static final String PORT = "port";
     private static final String ID = "id";
-    private static final String HELP = "help";
+    private static final String LIST_FILE = "list";
 
     private static Options buildOptions() {
         Options options = new Options();
-
-        Option help = new Option("h", HELP, false, "show usage");
-        help.setRequired(false);
-        options.addOption(help);
 
         Option host = new Option("a", HOST, true, "host address");
         host.setRequired(true);
@@ -33,6 +29,10 @@ public class ArgumentParser {
         nodeId.setRequired(true);
         nodeId.setType(Number.class);
         options.addOption(nodeId);
+
+        Option list = new Option("f", LIST_FILE, true, "path to file containing list of nodes (resource P)");
+        list.setRequired(true);
+        options.addOption(list);
 
         return options;
     }
@@ -51,6 +51,7 @@ public class ArgumentParser {
         InetAddress inputHost = null;
         int inputPort = 0;
         int inputId = 0;
+        String listFile = null;
 
         try {
             CommandLine cmd = parser.parse(options, args);
@@ -58,12 +59,13 @@ public class ArgumentParser {
             inputHost = InetAddress.getByName(cmd.getOptionValue(HOST));
             inputPort = ((Number) cmd.getParsedOptionValue(PORT)).intValue();
             inputId = ((Number) cmd.getParsedOptionValue(ID)).intValue();
+            listFile = cmd.getOptionValue(LIST_FILE);
 
         } catch (ParseException | UnknownHostException e) {
             System.out.println(e.getMessage());
             printHelpAndDie(options);
         }
 
-        return new Configuration(inputHost, inputPort, inputId);
+        return new Configuration(inputHost, inputPort, inputId, listFile);
     }
 }

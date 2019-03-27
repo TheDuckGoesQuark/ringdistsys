@@ -15,9 +15,15 @@ public class Configuration {
      */
     private final int nodeId;
 
-    public Configuration(InetAddress hostAddress, int portNumber, int nodeId) {
+    /**
+     * Path to file containing information about group members
+     */
+    private final String listFilePath;
+
+    public Configuration(InetAddress hostAddress, int portNumber, int nodeId, String listFilePath) {
         this.address = new InetSocketAddress(hostAddress, portNumber);
         this.nodeId = nodeId;
+        this.listFilePath = listFilePath;
     }
 
     public InetSocketAddress getAddress() {
@@ -28,6 +34,10 @@ public class Configuration {
         return nodeId;
     }
 
+    public String getListFilePath() {
+        return listFilePath;
+    }
+
     @Override
     public String toString() {
         return "Address: '" +
@@ -35,6 +45,9 @@ public class Configuration {
                 "' | " +
                 "Node ID: '" +
                 nodeId +
+                "' | " +
+                "List File Path: '" +
+                listFilePath +
                 "'";
     }
 }
