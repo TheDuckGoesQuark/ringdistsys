@@ -1,5 +1,6 @@
 package config;
 
+import node.ElectionMethod;
 import org.apache.commons.cli.*;
 
 import java.net.InetAddress;
@@ -12,6 +13,7 @@ public class ArgumentParser {
     private static final String PORT = "port";
     private static final String ID = "id";
     private static final String LIST_FILE = "list";
+    private static final String ELECTION_METHOD = "election";
 
     private static Options buildOptions() {
         Options options = new Options();
@@ -34,6 +36,10 @@ public class ArgumentParser {
         list.setRequired(true);
         options.addOption(list);
 
+        Option elec = new Option("e", ELECTION_METHOD, true, "Election method to use (Ring/ChangRoberts/Bully)");
+        elec.setRequired(true);
+        options.addOption(elec);
+
         return options;
     }
 
@@ -52,6 +58,7 @@ public class ArgumentParser {
         int inputPort = 0;
         int inputId = 0;
         String listFile = null;
+        ElectionMethod electionMethod = null;
 
         try {
             CommandLine cmd = parser.parse(options, args);
@@ -60,12 +67,13 @@ public class ArgumentParser {
             inputPort = ((Number) cmd.getParsedOptionValue(PORT)).intValue();
             inputId = ((Number) cmd.getParsedOptionValue(ID)).intValue();
             listFile = cmd.getOptionValue(LIST_FILE);
+            electionMethod = ElectionMethod.valueOf(cmd.getOptionValue(ELECTION_METHOD, String.valueOf(ElectionMethod.RING_BASED)));
 
         } catch (ParseException | UnknownHostException e) {
             System.out.println(e.getMessage());
             printHelpAndDie(options);
         }
 
-        return new Configuration(inputHost, inputPort, inputId, listFile);
+        return new Configuration(inputHost, inputPort, inputId, listFile, electionMethod);
     }
 }

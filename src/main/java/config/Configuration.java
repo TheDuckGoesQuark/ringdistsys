@@ -1,5 +1,7 @@
 package config;
 
+import node.ElectionMethod;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -20,10 +22,16 @@ public class Configuration {
      */
     private final String listFilePath;
 
-    public Configuration(InetAddress hostAddress, int portNumber, int nodeId, String listFilePath) {
+    /**
+     * The election method to be used in this dist sys
+     */
+    private final ElectionMethod electionMethod;
+
+    public Configuration(InetAddress hostAddress, int portNumber, int nodeId, String listFilePath, ElectionMethod electionMethod) {
         this.address = new InetSocketAddress(hostAddress, portNumber);
         this.nodeId = nodeId;
         this.listFilePath = listFilePath;
+        this.electionMethod = electionMethod;
     }
 
     public InetSocketAddress getAddress() {
@@ -38,6 +46,10 @@ public class Configuration {
         return listFilePath;
     }
 
+    public ElectionMethod getElectionMethod() {
+        return electionMethod;
+    }
+
     @Override
     public String toString() {
         return "Address: '" +
@@ -48,6 +60,9 @@ public class Configuration {
                 "' | " +
                 "List File Path: '" +
                 listFilePath +
+                "' | " +
+                "Election Method: '" +
+                electionMethod +
                 "'";
     }
 }
