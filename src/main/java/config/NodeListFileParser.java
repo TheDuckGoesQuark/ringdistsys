@@ -1,6 +1,7 @@
 package config;
 
 import com.opencsv.CSVReader;
+import node.AddressTranslator;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -11,7 +12,7 @@ import java.util.logging.Logger;
 
 public class NodeListFileParser {
 
-    public static Map<Integer, InetSocketAddress> parseNodeFile(String listFilePath, Logger logger) throws IOException {
+    public static AddressTranslator parseNodeFile(String listFilePath, Logger logger) throws IOException {
         final Map<Integer, InetSocketAddress> nodes = new HashMap<>();
 
         try (CSVReader csvReader = new CSVReader(new FileReader(listFilePath))) {
@@ -30,7 +31,7 @@ public class NodeListFileParser {
             throw e;
         }
 
-        return nodes;
+        return new AddressTranslator(nodes);
     }
 
 }

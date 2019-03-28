@@ -2,6 +2,6 @@ package messages;
 
 public enum MessageType {
 
-    ELECTION, COORDINATOR, OK;
+    ELECTION, COORDINATOR, OK, SUCCESSOR;
 
 }

@@ -2,8 +2,6 @@ package node;
 
 import sockets.UDPSocket;
 
-import java.net.InetSocketAddress;
-import java.util.Map;
 import java.util.logging.Logger;
 
 public class Coordinator implements Runnable {
@@ -11,15 +9,15 @@ public class Coordinator implements Runnable {
     private static final String THREAD_NAME = "COORDINATOR_THREAD";
 
     private Thread thread;
-    private final Map<Integer, InetSocketAddress> nodes;
     private UDPSocket udpSocket;
     private Logger logger;
     private boolean running = false;
+    private AddressTranslator addressTranslator;
 
-    public Coordinator(UDPSocket udpSocket, Map<Integer, InetSocketAddress> nodes, Logger logger) {
+    public Coordinator(UDPSocket udpSocket, AddressTranslator addressTranslator, Logger logger) {
         this.udpSocket = udpSocket;
         this.logger = logger;
-        this.nodes = nodes;
+        this.addressTranslator = addressTranslator;
     }
 
     public boolean isRunning() {

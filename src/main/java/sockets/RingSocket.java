@@ -3,6 +3,7 @@ package sockets;
 import messages.Message;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -33,7 +34,7 @@ public class RingSocket {
         successorSocket.connect(successorAddress);
     }
 
-    public void updatePredecessor(SocketAddress predecessorAddress) throws IOException {
+    public void updatePredecessor() throws IOException {
         if (predecessorSocket != null && !predecessorSocket.isClosed()) {
             predecessorSocket.close();
         }
@@ -48,12 +49,8 @@ public class RingSocket {
         successorSocket.getOutputStream().write(message.toBytes());
     }
 
-    public Optional<Message> receiveFromPredecessor() throws IOException {
-        final byte[] receivedBytes = new byte[Message.MAX_LENGTH_BYTES];
-        int read = predecessorSocket.getInputStream().read(receivedBytes);
-
-        if (read == 0) return Optional.empty();
-        else return Optional.of(Message.fromBytes(receivedBytes));
+    public Message receiveFromPredecessor() throws IOException, ClassNotFoundException {
+        return (Message) new ObjectInputStream(predecessorSocket.getInputStream()).readObject();
     }
 }
 

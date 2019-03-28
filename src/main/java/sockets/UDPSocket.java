@@ -7,6 +7,8 @@ import java.net.*;
 
 public class UDPSocket {
 
+    private static final int BUFFER_SIZE = 1024;
+
     private DatagramSocket datagramSocket;
 
     public UDPSocket(SocketAddress socketAddress) throws SocketException {
@@ -34,9 +36,9 @@ public class UDPSocket {
      *
      * @return message received from this socket
      */
-    public Message receiveMessage() throws IOException {
+    public Message receiveMessage() throws IOException, ClassNotFoundException {
         final DatagramPacket packet =
-                new DatagramPacket(new byte[Message.MAX_LENGTH_BYTES], 0, Message.MAX_LENGTH_BYTES);
+                new DatagramPacket(new byte[BUFFER_SIZE], 0, BUFFER_SIZE);
 
         this.datagramSocket.receive(packet);
 

@@ -1,39 +1,44 @@
 package messages;
 
 import java.io.*;
-import java.nio.BufferOverflowException;
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
-public class Message {
+public class Message implements Serializable {
 
-    public static int MAX_LENGTH_BYTES = Integer.SIZE / 8;
-
-    private MessageType type;
+    private final MessageType type;
+    private final Object payload;
 
     public Message(MessageType type) {
         this.type = type;
+        this.payload = null;
+    }
+
+    public Message(MessageType type, Object payload) {
+        this.type = type;
+        this.payload = payload;
     }
 
     public MessageType getType() {
         return type;
     }
 
-    public byte[] toBytes() throws IOException {
-        return ByteBuffer.allocate(MAX_LENGTH_BYTES)
-                .putInt(type.ordinal())
-                .order(ByteOrder.BIG_ENDIAN)
-                .array();
+    public <T> T getPayload(Class<T> clazz) {
+        return (T) payload;
     }
 
-    public static Message fromBytes(final byte[] bytes) throws BufferUnderflowException, BufferOverflowException {
-        if (bytes.length > MAX_LENGTH_BYTES)
-            throw new BufferOverflowException();
+    public byte[] toBytes() throws IOException {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            final ObjectOutput out = new ObjectOutputStream(bos);
+            out.writeObject(this);
+            out.flush();
 
-        int ordinalVal = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).getInt();
-        System.out.println(ordinalVal);
-        final MessageType type = MessageType.values()[ordinalVal];
-        return new Message(type);
+            return bos.toByteArray();
+        }
+    }
+
+    public static Message fromBytes(byte[] bytes) throws IOException, ClassNotFoundException {
+        final ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+        try (ObjectInput in = new ObjectInputStream(bis)) {
+            return (Message) in.readObject();
+        }
     }
 }
