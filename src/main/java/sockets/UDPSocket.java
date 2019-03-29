@@ -5,13 +5,13 @@ import messages.Message;
 import java.io.IOException;
 import java.net.*;
 
-public class UDPSocket {
+class UDPSocket {
 
     private static final int BUFFER_SIZE = 1024;
 
     private DatagramSocket datagramSocket;
 
-    public UDPSocket(SocketAddress socketAddress) throws SocketException {
+    UDPSocket(SocketAddress socketAddress) throws SocketException {
         this.datagramSocket = new DatagramSocket(socketAddress);
     }
 
@@ -22,7 +22,7 @@ public class UDPSocket {
      * @param dest    destination to send message
      * @throws IOException if unable to convert message to bytes, or socket exception occurs
      */
-    public void sendMessage(Message message, SocketAddress dest) throws IOException {
+    void sendMessage(Message message, SocketAddress dest) throws IOException {
         final byte[] msgBytes = message.toBytes();
 
         final DatagramPacket packet =
@@ -36,7 +36,7 @@ public class UDPSocket {
      *
      * @return message received from this socket
      */
-    public Message receiveMessage(int timeoutSecs) throws IOException, ClassNotFoundException, SocketTimeoutException {
+    Message receiveMessage(int timeoutSecs) throws IOException, ClassNotFoundException, SocketTimeoutException {
         final DatagramPacket packet =
                 new DatagramPacket(new byte[BUFFER_SIZE], 0, BUFFER_SIZE);
 
@@ -49,11 +49,11 @@ public class UDPSocket {
     /**
      * Close the underlying socket
      */
-    public void close() {
+    void close() {
         datagramSocket.close();
     }
 
-    public boolean isClosed() {
+    boolean isClosed() {
         return datagramSocket.isClosed();
     }
 }

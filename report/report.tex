@@ -139,7 +139,26 @@ Due to different patterns of communication during recovery and regular message p
 
 \section{Initialization}
 
-Each node awaits 
+On initialization, each node sends out join messages to the coordinator. The joining protocol is similiar to that described in \cite{join}, and is shown in Figure \ref{fig:join}.
+
+\begin{figure}[!h]
+\centering
+  \centering
+  \includegraphics[width=.6\linewidth]{images/join}
+  \caption{Joining protocol over time, with topology shown on right.}
+\label{fig:join}
+\end{figure}
+
+\noindent When node J wants to join the ring:
+\begin{enumerate}
+    \item J sends join request to coordinator C.
+    \item C sends successor to J, telling it to connect to B.
+    \item C sends successor to A, telling it to connect to J. 
+    \item A disconnects from B, B begins listening for new predecessor.
+    \item J connects to B, A connects to J.
+\end{enumerate}
+
+Since TCP with keepalive is used around the ring, a node will notice the successor/predeccesor disconnect quickly.  
 
 \section{Leader/Coordinator Election}
 

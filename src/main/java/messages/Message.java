@@ -19,6 +19,7 @@ public class Message implements Serializable {
      * ID of node that sent message
      */
     private final int srcId;
+
     /**
      * Payload of message
      */
@@ -31,10 +32,10 @@ public class Message implements Serializable {
         this.payload = null;
     }
 
-    public Message(MessageType type, int srcId, ElectionMethod electionMethod, Object payload) {
+    public Message(MessageType type, ElectionMethod electionMethod, int srcId, Object payload) {
         this.type = type;
-        this.srcId = srcId;
         this.electionMethod = electionMethod;
+        this.srcId = srcId;
         this.payload = payload;
     }
 
@@ -50,6 +51,9 @@ public class Message implements Serializable {
         return (T) payload;
     }
 
+    public ElectionMethod getElectionMethod() {
+        return electionMethod;
+    }
 
     public byte[] toBytes() throws IOException {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {

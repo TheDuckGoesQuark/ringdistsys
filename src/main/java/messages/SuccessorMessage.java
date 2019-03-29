@@ -3,14 +3,13 @@ package messages;
 import java.net.InetSocketAddress;
 
 public class SuccessorMessage {
+    private int successorId;
 
-    private InetSocketAddress successorAddress;
-
-    public SuccessorMessage(InetSocketAddress successorAddress) {
-        this.successorAddress = successorAddress;
+    public SuccessorMessage(int successorId) {
+        this.successorId = successorId;
     }
 
-    public InetSocketAddress getSuccessorAddress() {
-        return successorAddress;
+    public int getSuccessorId() {
+        return successorId;
     }
 }

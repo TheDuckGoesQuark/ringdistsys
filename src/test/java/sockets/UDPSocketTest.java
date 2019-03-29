@@ -2,6 +2,7 @@ package sockets;
 
 import messages.Message;
 import messages.MessageType;
+import node.ElectionMethod;
 import org.junit.*;
 
 import java.io.IOException;
@@ -13,7 +14,7 @@ import static org.junit.Assert.*;
 public class UDPSocketTest {
 
     @Test
-    public void sendAndReceiveMessage() throws IOException {
+    public void sendAndReceiveMessage() throws IOException, ClassNotFoundException {
         UDPSocket srcSocket = null;
         UDPSocket destSocket = null;
 
@@ -21,10 +22,10 @@ public class UDPSocketTest {
             srcSocket = new UDPSocket(new InetSocketAddress("localhost", 8081));
             destSocket = new UDPSocket(new InetSocketAddress("localhost", 8080));
 
-            Message message = new Message(MessageType.OK);
+            Message message = new Message(MessageType.OK, ElectionMethod.RING_BASED, 1);
             srcSocket.sendMessage(message, new InetSocketAddress("localhost", 8080));
 
-            Message receivedMessage = destSocket.receiveMessage();
+            Message receivedMessage = destSocket.receiveMessage(0);
             assertEquals(message.getType(), receivedMessage.getType());
         } finally {
             if (srcSocket != null)

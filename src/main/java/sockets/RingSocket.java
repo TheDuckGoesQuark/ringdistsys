@@ -4,6 +4,7 @@ import messages.Message;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -11,8 +12,9 @@ import java.net.SocketAddress;
 
 public class RingSocket {
 
-    private Socket successorSocket = null;
+    private boolean hasToken = false;
 
+    private Socket successorSocket = null;
     private Socket predecessorSocket = null;
 
     private InetSocketAddress myAddress;
@@ -31,6 +33,7 @@ public class RingSocket {
         }
 
         successorSocket.connect(successorAddress);
+        successorSocket.setKeepAlive(true);
     }
 
     public void updatePredecessor() throws IOException {
@@ -40,12 +43,15 @@ public class RingSocket {
 
         ServerSocket serverSocket = new ServerSocket(myAddress.getPort(), 0, myAddress.getAddress());
         predecessorSocket = serverSocket.accept();
+        predecessorSocket.setKeepAlive(true);
 
         serverSocket.close();
     }
 
     public void sendToSuccessor(Message message) throws IOException {
-        successorSocket.getOutputStream().write(message.toBytes());
+        final OutputStream out = successorSocket.getOutputStream();
+        out.write(message.toBytes());
+        out.flush();
     }
 
     public Message receiveFromPredecessor() throws IOException, ClassNotFoundException {

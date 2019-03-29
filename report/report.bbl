@@ -10,4 +10,11 @@ Apache Commons.
 \newblock Apache commons cli.
 \newblock \url{https://commons.apache.org/proper/commons-cli/}.
 
+\bibitem{join}
+D.~{Lee}, A.~{Puri}, P.~{Varaiya}, R.~{Sengupta}, R.~{Attias}, and
+  S.~{Tripakis}.
+\newblock A wireless token ring protocol for ad-hoc networks.
+\newblock In {\em Proceedings, IEEE Aerospace Conference}, volume~3, pages
+  3--3, March 2002.
+
 \end{thebibliography}
