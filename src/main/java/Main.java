@@ -11,6 +11,10 @@ public class Main {
         Configuration configuration = ArgumentParser.parseArgs(args);
 
         Node node = new Node(configuration);
-        node.start();
+        try {
+            node.start();
+        } finally {
+            node.end();
+        }
     }
 }

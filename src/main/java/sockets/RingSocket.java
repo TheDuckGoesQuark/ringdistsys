@@ -9,8 +9,17 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class RingSocket {
+
+    private static final String THREAD_NAME = "RING_SOCKET";
+
+    private final BlockingQueue<Message> outboundMessages = new LinkedBlockingQueue<>();
+
+    private final int keepAliveSecs;
+    private final int tokenHoldingTimeSecs;
 
     private boolean hasToken = false;
 
@@ -19,8 +28,10 @@ public class RingSocket {
 
     private InetSocketAddress myAddress;
 
-    public RingSocket(InetSocketAddress myAddress) {
+    public RingSocket(InetSocketAddress myAddress, int keepAliveSecs, int tokenHoldingTimeSecs) {
         this.myAddress = myAddress;
+        this.keepAliveSecs = keepAliveSecs;
+        this.tokenHoldingTimeSecs = tokenHoldingTimeSecs;
     }
 
     public void updateSuccessor(SocketAddress successorAddress) throws IOException {
@@ -33,7 +44,6 @@ public class RingSocket {
         }
 
         successorSocket.connect(successorAddress);
-        successorSocket.setKeepAlive(true);
     }
 
     public void updatePredecessor() throws IOException {
@@ -43,7 +53,6 @@ public class RingSocket {
 
         ServerSocket serverSocket = new ServerSocket(myAddress.getPort(), 0, myAddress.getAddress());
         predecessorSocket = serverSocket.accept();
-        predecessorSocket.setKeepAlive(true);
 
         serverSocket.close();
     }
@@ -57,5 +66,6 @@ public class RingSocket {
     public Message receiveFromPredecessor() throws IOException, ClassNotFoundException {
         return (Message) new ObjectInputStream(predecessorSocket.getInputStream()).readObject();
     }
+
 }
 

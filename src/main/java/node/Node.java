@@ -7,6 +7,7 @@ import messages.Message;
 import messages.MessageType;
 import messages.SuccessorMessage;
 import node.coordinator.Coordinator;
+import org.omg.CORBA.TIMEOUT;
 import sockets.RingSocket;
 import sockets.Switch;
 import util.ComUtil;
@@ -22,7 +23,7 @@ import static java.lang.Thread.sleep;
 public class Node {
 
     private static final int NUM_TRIES = 3;
-    private static final int DEFAULT_JITTER = 2;
+    private static final int DEFAULT_JITTER = 3;
     private static final int COORDINATOR_ID = 6;
 
     private final Configuration config;
@@ -35,9 +36,9 @@ public class Node {
     private AddressTranslator addressTranslator;
 
     public Node(Configuration config) throws IOException {
-        this.config = config;
         this.logger = LoggerFactory.buildLogger(config.getNodeId());
         this.addressTranslator = NodeListFileParser.parseNodeFile(config.getListFilePath(), logger);
+        this.config = config;
     }
 
     private void initializeCoordinatorThread() {
@@ -48,8 +49,9 @@ public class Node {
     private void initializeCommunication() throws SocketException {
         try {
             logger.info("Initializing sockets");
-            this.ringSocket = new RingSocket(config.getAddress());
+            this.ringSocket = new RingSocket(addressTranslator.getSocketAddress(config.getNodeId()), 2, 2);
             this.messageSwitch = new Switch(config.getNodeId(), logger, addressTranslator);
+            this.messageSwitch.start();
         } catch (IOException e) {
             logger.warning("Failed to initialize sockets.");
             logger.warning(e.getMessage());
@@ -61,9 +63,10 @@ public class Node {
         logger.info("Awaiting successor from coordinator");
         do {
             final Message message = this.messageSwitch.getNodeMessage(ComUtil.timeoutJitter(DEFAULT_JITTER));
-            logger.info(String.format("Received message type %d from ", message.getSrcId()));
+            if (message == null) throw new TimeoutException();
 
             if (message.getType() == MessageType.SUCCESSOR) {
+                logger.info(String.format("Received message type %d from ", message.getSrcId()));
                 int successorId = message.getPayload(SuccessorMessage.class).getSuccessorId();
                 logger.info(String.format("Assigned %s as successor", successorId));
                 return successorId;
@@ -93,11 +96,11 @@ public class Node {
                 return awaitSuccessor();
             } catch (TimeoutException timeoutException) {
                 if (numTries == NUM_TRIES - 1) {
-                    logger.info(String.format("Failed to request successor after %d tries.", numTries));
+                    logger.warning(String.format("Failed to request successor after %d tries.", numTries + 1));
                     throw timeoutException;
                 }
             } catch (InterruptedException e) {
-                logger.info(String.format("Failed to request successor after %d tries.", numTries));
+                logger.warning(String.format("Failed to request successor after %d tries.", numTries));
                 throw e;
             }
         }
@@ -122,27 +125,54 @@ public class Node {
         // Await predecessor connection
         ringSocket.updatePredecessor();
 
-        passToken();
+        // Begin operation
+        int times = 0;
+        while (times < 10) {
+            passToken();
+            times++;
+        }
 
-        // TODO on loss of connection to successor
-
-        // TODO if successor ID = Coordinator ID: Begin reelection.
         end();
     }
 
-    public void end() {
-        this.coordinator.stop();
-        this.messageSwitch.stop();
+    private Message readToken() throws IOException {
+        try {
+            return ringSocket.receiveFromPredecessor();
+        } catch (IOException | ClassNotFoundException e) {
+            logger.warning("Disconnected from predecessor");
+            ringSocket.updatePredecessor();
+            return readToken();
+        }
     }
 
-    private void passToken() throws IOException, ClassNotFoundException, InterruptedException {
-        while (true) {
-            Message message = ringSocket.receiveFromPredecessor();
-            if (message.getType() == MessageType.TOKEN) {
-                logger.info(String.format("Received token from %d", message.getSrcId()));
-                sleep(3);
-                ringSocket.sendToSuccessor(message);
-            }
+    private void forwardToken() throws InterruptedException, TimeoutException, IOException {
+        logger.info("Forwarding token");
+        final Message message = new Message(MessageType.TOKEN, config.getElectionMethod(), config.getNodeId());
+
+        try {
+            ringSocket.sendToSuccessor(message);
+        } catch (IOException e) {
+            logger.warning("Disconnected from predecessor");
+            int succ = requestSuccessor(false);
+            ringSocket.updateSuccessor(addressTranslator.getSocketAddress(succ));
+            forwardToken();
         }
+    }
+
+
+    private void passToken() throws ClassNotFoundException, InterruptedException, IOException, TimeoutException {
+        final Message token = readToken();
+        logger.info(String.format("Received token from %d", token.getSrcId()));
+        sleep(3);
+        forwardToken();
+    }
+
+    public void end() {
+        logger.warning("Shutting down");
+        if (coordinator != null)
+            this.coordinator.stop();
+
+        if (messageSwitch != null)
+            this.messageSwitch.stop();
     }
 }

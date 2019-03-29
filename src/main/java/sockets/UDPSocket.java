@@ -11,7 +11,7 @@ class UDPSocket {
 
     private DatagramSocket datagramSocket;
 
-    UDPSocket(SocketAddress socketAddress) throws SocketException {
+    UDPSocket(InetSocketAddress socketAddress) throws SocketException {
         this.datagramSocket = new DatagramSocket(socketAddress);
     }
 
@@ -40,7 +40,6 @@ class UDPSocket {
         final DatagramPacket packet =
                 new DatagramPacket(new byte[BUFFER_SIZE], 0, BUFFER_SIZE);
 
-        this.datagramSocket.setSoTimeout(timeoutSecs);
         this.datagramSocket.receive(packet);
 
         return Message.fromBytes(packet.getData());

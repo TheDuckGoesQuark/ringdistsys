@@ -18,15 +18,6 @@ public class ArgumentParser {
     private static Options buildOptions() {
         Options options = new Options();
 
-        Option host = new Option("a", HOST, true, "host address");
-        host.setRequired(true);
-        options.addOption(host);
-
-        Option port = new Option("p", PORT, true, "port number");
-        port.setRequired(true);
-        port.setType(Number.class);
-        options.addOption(port);
-
         Option nodeId = new Option("i", ID, true, "node ID");
         nodeId.setRequired(true);
         nodeId.setType(Number.class);
@@ -54,8 +45,6 @@ public class ArgumentParser {
 
         CommandLineParser parser = new DefaultParser();
 
-        InetAddress inputHost = null;
-        int inputPort = 0;
         int inputId = 0;
         String listFile = null;
         ElectionMethod electionMethod = null;
@@ -63,17 +52,15 @@ public class ArgumentParser {
         try {
             CommandLine cmd = parser.parse(options, args);
 
-            inputHost = InetAddress.getByName(cmd.getOptionValue(HOST));
-            inputPort = ((Number) cmd.getParsedOptionValue(PORT)).intValue();
             inputId = ((Number) cmd.getParsedOptionValue(ID)).intValue();
             listFile = cmd.getOptionValue(LIST_FILE);
             electionMethod = ElectionMethod.valueOf(cmd.getOptionValue(ELECTION_METHOD, String.valueOf(ElectionMethod.RING_BASED)));
 
-        } catch (ParseException | UnknownHostException e) {
+        } catch (ParseException e) {
             System.out.println(e.getMessage());
             printHelpAndDie(options);
         }
 
-        return new Configuration(inputHost, inputPort, inputId, listFile, electionMethod);
+        return new Configuration(inputId, listFile, electionMethod);
     }
 }

@@ -5,7 +5,6 @@ import node.AddressTranslator;
 import util.StoppableThread;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
@@ -26,7 +25,6 @@ public class Switch extends StoppableThread {
     private final BlockingQueue<Message> nodeInbound = new LinkedBlockingQueue<>();
     private final BlockingQueue<Message> coordinatorInbound = new LinkedBlockingQueue<>();
 
-    private final Thread thread = new Thread();
     private final UDPSocket udpSocket;
     private final AddressTranslator addressTranslator;
 
@@ -38,15 +36,6 @@ public class Switch extends StoppableThread {
         this.udpSocket = new UDPSocket(this.addressTranslator.getSocketAddress(myId));
     }
 
-    public void start() {
-        getLogger().info("Starting " + THREAD_NAME);
-        if (!thread.isAlive()) {
-            thread.start();
-        } else {
-            getLogger().warning(THREAD_NAME + " already running!");
-        }
-    }
-
     public void stop() {
         running = false;
     }
@@ -56,7 +45,8 @@ public class Switch extends StoppableThread {
         running = true;
 
         while (running) {
-            receiveMessage().ifPresent(this::sortMessage);
+            receiveMessage()
+                    .ifPresent(this::sortMessage);
         }
 
         udpSocket.close();
@@ -66,7 +56,7 @@ public class Switch extends StoppableThread {
         udpSocket.sendMessage(message, addressTranslator.getSocketAddress(destId));
     }
 
-    public Message getNodeMessage(int timeout) throws InterruptedException, TimeoutException  {
+    public Message getNodeMessage(int timeout) throws InterruptedException {
         return nodeInbound.poll(timeout, TimeUnit.SECONDS);
     }
 
@@ -75,6 +65,7 @@ public class Switch extends StoppableThread {
     }
 
     private void sortMessage(Message message) {
+        getLogger().info("Sorting message");
         switch (message.getType()) {
             case SUCCESSOR_REQUEST:
                 coordinatorInbound.add(message);
@@ -86,6 +77,7 @@ public class Switch extends StoppableThread {
 
     private Optional<Message> receiveMessage() {
         try {
+            getLogger().info("Receiving message");
             return Optional.ofNullable(udpSocket.receiveMessage(0));
         } catch (IOException | ClassNotFoundException e) {
             getLogger().warning("Bad message received");

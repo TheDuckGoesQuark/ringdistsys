@@ -8,11 +8,6 @@ import java.net.InetSocketAddress;
 public class Configuration {
 
     /**
-     * The socket address used by this node for communication
-     */
-    private final InetSocketAddress address;
-
-    /**
      * The ID of this node, unique to the system
      */
     private final int nodeId;
@@ -27,16 +22,10 @@ public class Configuration {
      */
     private final ElectionMethod electionMethod;
 
-
-    public Configuration(InetAddress hostAddress, int portNumber, int nodeId, String listFilePath, ElectionMethod electionMethod) {
-        this.address = new InetSocketAddress(hostAddress, portNumber);
+    public Configuration(int nodeId, String listFilePath, ElectionMethod electionMethod) {
         this.nodeId = nodeId;
         this.listFilePath = listFilePath;
         this.electionMethod = electionMethod;
-    }
-
-    public InetSocketAddress getAddress() {
-        return address;
     }
 
     public int getNodeId() {
@@ -53,10 +42,7 @@ public class Configuration {
 
     @Override
     public String toString() {
-        return "Address: '" +
-                address.toString() +
-                "' | " +
-                "Node ID: '" +
+        return "Node ID: '" +
                 nodeId +
                 "' | " +
                 "List File Path: '" +
