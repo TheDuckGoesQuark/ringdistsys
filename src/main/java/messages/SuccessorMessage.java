@@ -1,8 +1,8 @@
 package messages;
 
-import java.net.InetSocketAddress;
+import java.io.Serializable;
 
-public class SuccessorMessage {
+public class SuccessorMessage implements Serializable {
     private int successorId;
 
     public SuccessorMessage(int successorId) {

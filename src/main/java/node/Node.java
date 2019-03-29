@@ -14,6 +14,9 @@ import util.ComUtil;
 
 import java.io.IOException;
 import java.net.SocketException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
@@ -46,7 +49,7 @@ public class Node {
         this.coordinator.start();
     }
 
-    private void initializeCommunication() throws SocketException {
+    private void initializeCommunication() throws IOException {
         try {
             logger.info("Initializing sockets");
             this.ringSocket = new RingSocket(addressTranslator.getSocketAddress(config.getNodeId()), 2, 2);
@@ -119,11 +122,18 @@ public class Node {
 
         final int successor = this.requestSuccessor(true);
 
+        // Await self connection in background if I'm the only member of the ring
+        if (successor == config.getNodeId()) {
+            final ExecutorService executorService = Executors.newSingleThreadExecutor();
+            executorService.submit((Callable<Void>) () -> {
+                ringSocket.updatePredecessor();
+                return null;
+            });
+        }
+
         // Connect to successor
         ringSocket.updateSuccessor(addressTranslator.getSocketAddress(successor));
 
-        // Await predecessor connection
-        ringSocket.updatePredecessor();
 
         // Begin operation
         int times = 0;

@@ -9,14 +9,14 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 
 public class RingSocket {
 
     private static final String THREAD_NAME = "RING_SOCKET";
 
     private final BlockingQueue<Message> outboundMessages = new LinkedBlockingQueue<>();
+    private final ServerSocket serverSocket;
 
     private final int keepAliveSecs;
     private final int tokenHoldingTimeSecs;
@@ -28,22 +28,19 @@ public class RingSocket {
 
     private InetSocketAddress myAddress;
 
-    public RingSocket(InetSocketAddress myAddress, int keepAliveSecs, int tokenHoldingTimeSecs) {
+    public RingSocket(InetSocketAddress myAddress, int keepAliveSecs, int tokenHoldingTimeSecs) throws IOException {
         this.myAddress = myAddress;
         this.keepAliveSecs = keepAliveSecs;
         this.tokenHoldingTimeSecs = tokenHoldingTimeSecs;
+        this.serverSocket = new ServerSocket(myAddress.getPort(), 1, myAddress.getAddress());
     }
 
     public void updateSuccessor(SocketAddress successorAddress) throws IOException {
-        if (successorSocket == null) {
-            this.successorSocket = new Socket(myAddress.getAddress(), myAddress.getPort());
-        }
-
-        if (!successorSocket.isClosed()) {
+        if (successorSocket != null && !successorSocket.isClosed()) {
             successorSocket.close();
         }
 
-        successorSocket.connect(successorAddress);
+        this.successorSocket = new Socket(myAddress.getAddress(), myAddress.getPort());
     }
 
     public void updatePredecessor() throws IOException {
@@ -51,10 +48,7 @@ public class RingSocket {
             predecessorSocket.close();
         }
 
-        ServerSocket serverSocket = new ServerSocket(myAddress.getPort(), 0, myAddress.getAddress());
         predecessorSocket = serverSocket.accept();
-
-        serverSocket.close();
     }
 
     public void sendToSuccessor(Message message) throws IOException {

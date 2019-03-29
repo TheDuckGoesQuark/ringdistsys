@@ -61,13 +61,18 @@ public class Switch extends StoppableThread {
     }
 
     public Message getCoordinatorMessage(int timeout) throws InterruptedException {
-        return coordinatorInbound.poll(timeout, TimeUnit.SECONDS);
+        if (timeout > 0) {
+            return coordinatorInbound.poll(timeout, TimeUnit.SECONDS);
+        } else {
+            return coordinatorInbound.poll();
+        }
     }
 
     private void sortMessage(Message message) {
         getLogger().info("Sorting message");
         switch (message.getType()) {
             case SUCCESSOR_REQUEST:
+            case JOIN:
                 coordinatorInbound.add(message);
                 break;
             default:
