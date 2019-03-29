@@ -2,45 +2,28 @@ package sockets;
 
 import messages.Message;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketAddress;
-import java.util.concurrent.*;
 
 public class RingSocket {
 
-    private static final String THREAD_NAME = "RING_SOCKET";
-
-    private final BlockingQueue<Message> outboundMessages = new LinkedBlockingQueue<>();
     private final ServerSocket serverSocket;
-
-    private final int keepAliveSecs;
-    private final int tokenHoldingTimeSecs;
-
-    private boolean hasToken = false;
 
     private Socket successorSocket = null;
     private Socket predecessorSocket = null;
 
-    private InetSocketAddress myAddress;
-
-    public RingSocket(InetSocketAddress myAddress, int keepAliveSecs, int tokenHoldingTimeSecs) throws IOException {
-        this.myAddress = myAddress;
-        this.keepAliveSecs = keepAliveSecs;
-        this.tokenHoldingTimeSecs = tokenHoldingTimeSecs;
+    public RingSocket(InetSocketAddress myAddress) throws IOException {
         this.serverSocket = new ServerSocket(myAddress.getPort(), 1, myAddress.getAddress());
     }
 
-    public void updateSuccessor(SocketAddress successorAddress) throws IOException {
+    public void updateSuccessor(InetSocketAddress successorAddress) throws IOException {
         if (successorSocket != null && !successorSocket.isClosed()) {
             successorSocket.close();
         }
 
-        this.successorSocket = new Socket(myAddress.getAddress(), myAddress.getPort());
+        this.successorSocket = new Socket(successorAddress.getAddress(), successorAddress.getPort());
     }
 
     public void updatePredecessor() throws IOException {
@@ -58,8 +41,15 @@ public class RingSocket {
     }
 
     public Message receiveFromPredecessor() throws IOException, ClassNotFoundException {
-        return (Message) new ObjectInputStream(predecessorSocket.getInputStream()).readObject();
+        final ObjectInputStream out = new ObjectInputStream(predecessorSocket.getInputStream());
+        return (Message) out.readObject();
     }
 
+    public void close() throws IOException {
+        if (this.successorSocket != null)
+            this.successorSocket.close();
+        if (this.predecessorSocket!= null)
+            this.successorSocket.close();
+    }
 }
 

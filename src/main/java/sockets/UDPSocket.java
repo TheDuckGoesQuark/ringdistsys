@@ -36,11 +36,12 @@ class UDPSocket {
      *
      * @return message received from this socket
      */
-    Message receiveMessage(int timeoutSecs) throws IOException, ClassNotFoundException, SocketTimeoutException {
+    Message receiveMessage(int timeoutSecs) throws IOException, ClassNotFoundException {
         final DatagramPacket packet =
                 new DatagramPacket(new byte[BUFFER_SIZE], 0, BUFFER_SIZE);
 
-        this.datagramSocket.receive(packet);
+        datagramSocket.setSoTimeout(timeoutSecs * 1000);
+        datagramSocket.receive(packet);
 
         return Message.fromBytes(packet.getData());
     }

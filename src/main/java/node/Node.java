@@ -7,13 +7,11 @@ import messages.Message;
 import messages.MessageType;
 import messages.SuccessorMessage;
 import node.coordinator.Coordinator;
-import org.omg.CORBA.TIMEOUT;
 import sockets.RingSocket;
 import sockets.Switch;
 import util.ComUtil;
 
 import java.io.IOException;
-import java.net.SocketException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -31,7 +29,9 @@ public class Node {
 
     private final Configuration config;
     private final Logger logger;
+    private boolean hasToken = true;
 
+    private ExecutorService executorService;
     private RingSocket ringSocket;
     private Switch messageSwitch;
 
@@ -42,19 +42,20 @@ public class Node {
         this.logger = LoggerFactory.buildLogger(config.getNodeId());
         this.addressTranslator = NodeListFileParser.parseNodeFile(config.getListFilePath(), logger);
         this.config = config;
+        this.executorService = Executors.newCachedThreadPool();
     }
 
     private void initializeCoordinatorThread() {
-        this.coordinator = new Coordinator(messageSwitch, logger, config.getNodeId());
-        this.coordinator.start();
+        coordinator = new Coordinator(messageSwitch, logger, config.getNodeId());
+        executorService.submit(coordinator);
     }
 
     private void initializeCommunication() throws IOException {
         try {
             logger.info("Initializing sockets");
-            this.ringSocket = new RingSocket(addressTranslator.getSocketAddress(config.getNodeId()), 2, 2);
-            this.messageSwitch = new Switch(config.getNodeId(), logger, addressTranslator);
-            this.messageSwitch.start();
+            ringSocket = new RingSocket(addressTranslator.getSocketAddress(config.getNodeId()));
+            messageSwitch = new Switch(config.getNodeId(), logger, addressTranslator);
+            executorService.submit(messageSwitch);
         } catch (IOException e) {
             logger.warning("Failed to initialize sockets.");
             logger.warning(e.getMessage());
@@ -129,6 +130,7 @@ public class Node {
                 ringSocket.updatePredecessor();
                 return null;
             });
+            executorService.shutdown();
         }
 
         // Connect to successor
@@ -171,18 +173,30 @@ public class Node {
 
 
     private void passToken() throws ClassNotFoundException, InterruptedException, IOException, TimeoutException {
-        final Message token = readToken();
-        logger.info(String.format("Received token from %d", token.getSrcId()));
-        sleep(3);
+        if (!hasToken) {
+            final Message token = readToken();
+            logger.info(String.format("Received token from %d", token.getSrcId()));
+            hasToken = true;
+        }
+        sleep(300);
         forwardToken();
+        hasToken = false;
     }
 
-    public void end() {
+    public void end() throws InterruptedException, IOException {
         logger.warning("Shutting down");
+
         if (coordinator != null)
             this.coordinator.stop();
 
         if (messageSwitch != null)
             this.messageSwitch.stop();
+
+        if (ringSocket != null)
+            this.ringSocket.close();
+
+        executorService.shutdown();
+
+        logger.warning("Finished shutting down node.");
     }
 }

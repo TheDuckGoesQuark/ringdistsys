@@ -29,7 +29,7 @@ public class Coordinator extends StoppableThread {
 
     private Optional<Message> receiveMessage() {
         try {
-            return Optional.ofNullable(messageSwitch.getCoordinatorMessage(0));
+            return Optional.ofNullable(messageSwitch.getCoordinatorMessage(3));
         } catch (InterruptedException e) {
             getLogger().warning("Error occurred: ");
             getLogger().warning(e.getMessage());
@@ -92,6 +92,8 @@ public class Coordinator extends StoppableThread {
             receiveMessage()
                     .ifPresent(this::handleMessage);
         }
+
+        getLogger().info("Coordinator thread complete");
     }
 
     public void stop() {

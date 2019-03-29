@@ -50,6 +50,8 @@ public class Switch extends StoppableThread {
         }
 
         udpSocket.close();
+
+        getLogger().info("Switch thread closed.");
     }
 
     public void sendMessage(Message message, int destId) throws IOException {
@@ -83,7 +85,7 @@ public class Switch extends StoppableThread {
     private Optional<Message> receiveMessage() {
         try {
             getLogger().info("Receiving message");
-            return Optional.ofNullable(udpSocket.receiveMessage(0));
+            return Optional.ofNullable(udpSocket.receiveMessage(3));
         } catch (IOException | ClassNotFoundException e) {
             getLogger().warning("Bad message received");
             getLogger().warning(e.getMessage());

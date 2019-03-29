@@ -25,7 +25,7 @@ public class UDPSocketTest {
             Message message = new Message(MessageType.OK, ElectionMethod.RING_BASED, 1);
             srcSocket.sendMessage(message, new InetSocketAddress("localhost", 8080));
 
-            Message receivedMessage = destSocket.receiveMessage(0);
+            Message receivedMessage = destSocket.receiveMessage(1);
             assertEquals(message.getType(), receivedMessage.getType());
         } finally {
             if (srcSocket != null)
