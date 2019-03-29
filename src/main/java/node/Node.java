@@ -112,7 +112,7 @@ public class Node {
         return 0;
     }
 
-    public void start() throws IOException, ClassNotFoundException, InterruptedException, TimeoutException {
+    public void start() throws IOException, InterruptedException, TimeoutException {
         logger.info(String.format("Initializing node with configuration: %s", config.toString()));
 
         initializeCommunication();
@@ -172,7 +172,7 @@ public class Node {
     }
 
 
-    private void passToken() throws ClassNotFoundException, InterruptedException, IOException, TimeoutException {
+    private void passToken() throws InterruptedException, IOException, TimeoutException {
         if (!hasToken) {
             final Message token = readToken();
             logger.info(String.format("Received token from %d", token.getSrcId()));
@@ -183,7 +183,7 @@ public class Node {
         hasToken = false;
     }
 
-    public void end() throws InterruptedException, IOException {
+    public void end() throws IOException {
         logger.warning("Shutting down");
 
         if (coordinator != null)
