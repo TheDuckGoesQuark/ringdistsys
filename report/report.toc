@@ -2,5 +2,6 @@
 \contentsline {section}{\numberline {1}Initial Set-up}{1}
 \contentsline {subsection}{\numberline {1.1}Configuration}{1}
 \contentsline {subsection}{\numberline {1.2}Communication Protocols}{1}
-\contentsline {section}{\numberline {2}Leader/Coordinator Election}{2}
-\contentsline {section}{\numberline {3}Receive/Send Posts}{2}
+\contentsline {section}{\numberline {2}Initialization}{2}
+\contentsline {section}{\numberline {3}Leader/Coordinator Election}{2}
+\contentsline {section}{\numberline {4}Receive/Send Posts}{2}

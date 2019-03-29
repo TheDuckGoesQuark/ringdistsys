@@ -116,6 +116,7 @@ Due to different patterns of communication during recovery and regular message p
 \noindent UDP was used for communication \textbf{across} the ring: 
 \begin{enumerate}
     \item Low communication overhead allows for messages to be sent to multiple nodes quickly, improving recovery time from node failure.
+    \item No session maintenance allows coordinator to handle more members in the ring.
 \end{enumerate}
 
 \begin{figure}[!h]
@@ -135,6 +136,10 @@ Due to different patterns of communication during recovery and regular message p
 \caption{The different types of communication used}
 \label{fig:pattern}
 \end{figure}
+
+\section{Initialization}
+
+Each node awaits 
 
 \section{Leader/Coordinator Election}
 

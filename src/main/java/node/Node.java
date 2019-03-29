@@ -12,10 +12,17 @@ import sockets.UDPSocket;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.logging.Logger;
+
+import static java.lang.Thread.sleep;
 
 
 public class Node {
+
+    private static final int NUM_TRIES = 3;
+    private static final int DEFAULT_JITTER = 2;
+    private static final int COORDINATOR_ID = 6;
 
     private final Configuration config;
     private final Logger logger;
@@ -64,38 +71,67 @@ public class Node {
         InetSocketAddress successorAddress = null;
 
         do {
-            final Message message = this.udpSocket.receiveMessage();
+            final Message message = this.udpSocket.receiveMessage(ComUtil.timeoutJitter(DEFAULT_JITTER));
+            logger.info(String.format("Received message type %d from ", message.getSrcId()));
 
-            logger.info(String.format("Received message type %s from ", message));
             if (message.getType() == MessageType.SUCCESSOR) {
                 successorAddress = message.getPayload(SuccessorMessage.class).getSuccessorAddress();
-                break;
             }
-        } while (true);
+        } while (successorAddress == null);
 
         logger.info(String.format("Assigned %s as successor", successorAddress.getAddress()));
         return successorAddress;
     }
 
-    public void start() throws IOException, ClassNotFoundException {
+    private InetSocketAddress requestSuccessor() throws IOException, ClassNotFoundException {
+        logger.info("Requesting successor from coordinator");
+
+        final Message request = new Message(MessageType.SUCCESSOR_REQUEST, config.getElectionMethod(), config.getNodeId());
+        for (int numTries = 0; numTries < NUM_TRIES; numTries++) {
+            udpSocket.sendMessage(request, addressTranslator.getSocketAddress(COORDINATOR_ID));
+
+            try {
+                return awaitSuccessor();
+            } catch (SocketTimeoutException timeoutException) {
+                if (numTries == NUM_TRIES - 1) {
+                    logger.info(String.format("Failed to request successor after %d tries.", numTries));
+                    throw timeoutException;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public void start() throws IOException, ClassNotFoundException, InterruptedException {
         logger.info(String.format("Initializing node with configuration: %s", config.toString()));
 
         initializeAddressTranslator();
         initializeSockets();
 
-        if (config.getNodeId() == 6) {
+        if (config.getNodeId() == COORDINATOR_ID) {
             this.initializeCoordinatorThread();
         }
 
-        final InetSocketAddress succesorAddress = this.awaitSuccessor();
+        final InetSocketAddress successor = this.requestSuccessor();
 
-        ringSocket.updateSuccessor(succesorAddress);
+        ringSocket.updateSuccessor(successor);
         ringSocket.updatePredecessor();
 
-        // TODO await successor address from coordinator
-        // TODO connect to successor
+        passToken();
 
         // TODO on loss of connection to successor:
         // TODO if successor ID = Coordinator ID: Begin reelection.
+    }
+
+    private void passToken() throws IOException, ClassNotFoundException, InterruptedException {
+        while(true) {
+            Message message = ringSocket.receiveFromPredecessor();
+            if (message.getType() == MessageType.TOKEN) {
+                logger.info(String.format("Received token from %d", message.getSrcId()));
+                sleep(3);
+                ringSocket.sendToSuccessor(message);
+            }
+        }
     }
 }

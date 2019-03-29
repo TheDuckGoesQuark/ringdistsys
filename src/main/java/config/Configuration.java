@@ -27,6 +27,7 @@ public class Configuration {
      */
     private final ElectionMethod electionMethod;
 
+
     public Configuration(InetAddress hostAddress, int portNumber, int nodeId, String listFilePath, ElectionMethod electionMethod) {
         this.address = new InetSocketAddress(hostAddress, portNumber);
         this.nodeId = nodeId;
