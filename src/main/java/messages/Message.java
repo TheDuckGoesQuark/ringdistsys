@@ -71,4 +71,15 @@ public class Message implements Serializable {
             return (Message) in.readObject();
         }
     }
+
+    @Override
+    public String toString() {
+        final String payloadStr = payload == null ? "null" : payload.toString();
+        return "Message{" +
+                "type=" + type +
+                ", electionMethod=" + electionMethod +
+                ", srcId=" + srcId +
+                ", payload=" + payload +
+                '}';
+    }
 }

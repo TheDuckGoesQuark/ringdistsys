@@ -6,19 +6,23 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.logging.Logger;
 
 public class RingSocket {
 
     private final ServerSocket serverSocket;
+    private final Logger logger;
 
     private Socket successorSocket = null;
     private Socket predecessorSocket = null;
 
-    public RingSocket(InetSocketAddress myAddress) throws IOException {
+    public RingSocket(InetSocketAddress myAddress, Logger logger) throws IOException {
         this.serverSocket = new ServerSocket(myAddress.getPort(), 1, myAddress.getAddress());
+        this.logger = logger;
     }
 
     public void updateSuccessor(InetSocketAddress successorAddress) throws IOException {
+        logger.info(String.format("Updating successor to %s", successorAddress.toString()));
         if (successorSocket != null && !successorSocket.isClosed()) {
             successorSocket.close();
         }
@@ -31,7 +35,9 @@ public class RingSocket {
             predecessorSocket.close();
         }
 
+        logger.info("Waiting on predecessor connection");
         predecessorSocket = serverSocket.accept();
+        logger.info(String.format("Predecessor connected from address to %s", predecessorSocket.getInetAddress().toString()));
     }
 
     public void sendToSuccessor(Message message) throws IOException {

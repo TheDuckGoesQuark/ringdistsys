@@ -55,6 +55,7 @@ public class Switch extends StoppableThread {
     }
 
     public void sendMessage(Message message, int destId) throws IOException {
+        getLogger().info(String.format("Sending message %s to %d", message.toString(), destId));
         udpSocket.sendMessage(message, addressTranslator.getSocketAddress(destId));
     }
 
@@ -71,13 +72,16 @@ public class Switch extends StoppableThread {
     }
 
     private void sortMessage(Message message) {
+        getLogger().info(String.format("Received message %s", message.toString()));
         getLogger().info("Sorting message");
         switch (message.getType()) {
             case SUCCESSOR_REQUEST:
             case JOIN:
+                getLogger().info("Adding message to coordinator queue");
                 coordinatorInbound.add(message);
                 break;
             default:
+                getLogger().info("Adding message to node queue");
                 nodeInbound.add(message);
         }
     }
@@ -86,8 +90,11 @@ public class Switch extends StoppableThread {
         try {
             getLogger().info("Receiving message");
             return Optional.ofNullable(udpSocket.receiveMessage(3));
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             getLogger().warning("Bad message received");
+            getLogger().warning(e.getMessage());
+        } catch (IOException e) {
+            getLogger().warning("Possible error");
             getLogger().warning(e.getMessage());
         }
 

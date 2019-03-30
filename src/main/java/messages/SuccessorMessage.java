@@ -12,4 +12,11 @@ public class SuccessorMessage implements Serializable {
     public int getSuccessorId() {
         return successorId;
     }
+
+    @Override
+    public String toString() {
+        return "SuccessorMessage{" +
+                "successorId=" + successorId +
+                '}';
+    }
 }

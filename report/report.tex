@@ -101,7 +101,7 @@ The project was started with the intention of implementing the bully algorithm a
 
 Since each node would be running on an isolated machine, the planned testing environment would involve using \emph{ssh} to start the nodes remotely. Providing the configuration as command line arguments was considered simpler than other methods, and was implemented using the Apache Commons CLI library \cite{apachecli}.
 
-\subsection{Communication Protocols}
+\subsection{Sockets}
 
 Due to different patterns of communication during recovery and regular message passing phases both TCP and UDP were used for this project, as shown in Figure \ref{fig:pattern}.
 
@@ -109,7 +109,6 @@ Due to different patterns of communication during recovery and regular message p
 \noindent TCP was used for communication \textbf{around} the ring:
 \begin{enumerate}
     \item Reliable communication avoids token being lost.
-    \item Keepalive functionality provides effective failure detection.
     \item Connection is reused frequently between predecessors and successors, justifying handshake overhead.
 \end{enumerate}
 
@@ -157,8 +156,6 @@ On initialization, each node sends out join messages to the coordinator. The joi
     \item A disconnects from B, B begins listening for new predecessor.
     \item J connects to B, A connects to J.
 \end{enumerate}
-
-Since TCP with keepalive is used around the ring, a node will notice the successor/predeccesor disconnect quickly.  
 
 \section{Leader/Coordinator Election}
 

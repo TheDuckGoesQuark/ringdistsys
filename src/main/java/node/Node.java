@@ -11,6 +11,7 @@ import sockets.RingSocket;
 import sockets.Switch;
 import util.ComUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -29,7 +30,7 @@ public class Node {
 
     private final Configuration config;
     private final Logger logger;
-    private boolean hasToken = true;
+    private boolean hasToken = false;
 
     private ExecutorService executorService;
     private RingSocket ringSocket;
@@ -53,7 +54,7 @@ public class Node {
     private void initializeCommunication() throws IOException {
         try {
             logger.info("Initializing sockets");
-            ringSocket = new RingSocket(addressTranslator.getSocketAddress(config.getNodeId()));
+            ringSocket = new RingSocket(addressTranslator.getSocketAddress(config.getNodeId()), logger);
             messageSwitch = new Switch(config.getNodeId(), logger, addressTranslator);
             executorService.submit(messageSwitch);
         } catch (IOException e) {
@@ -119,32 +120,57 @@ public class Node {
 
         if (config.getNodeId() == COORDINATOR_ID) {
             this.initializeCoordinatorThread();
+            hasToken = true;
         }
 
-        final int successor = this.requestSuccessor(true);
+        updateSuccessor(this.requestSuccessor(true), true);
 
-        // Await self connection in background if I'm the only member of the ring
-        if (successor == config.getNodeId()) {
-            final ExecutorService executorService = Executors.newSingleThreadExecutor();
+        // Begin token passing
+        executorService.submit((Callable<Void>) () -> {
+            while (!killswitch())
+                passToken();
+
+            return null;
+        });
+
+        // Handle any coordination updates
+        while (!killswitch()) {
+            logger.info("Listening for coordination updates");
+            final Message message = messageSwitch.getNodeMessage(3);
+
+            if (message == null) continue;
+
+            switch (message.getType()) {
+                case SUCCESSOR:
+                    logger.info("Received new successor assignment");
+                    updateSuccessor(
+                            message.getPayload(SuccessorMessage.class).getSuccessorId(),
+                            false
+                    );
+                    break;
+            }
+        }
+
+        end();
+    }
+
+    private void updateSuccessor(int successor, boolean initial) throws IOException {
+        // Await self connection in background if I'm connecting to myself
+        if (initial || successor == config.getNodeId()) {
             executorService.submit((Callable<Void>) () -> {
                 ringSocket.updatePredecessor();
                 return null;
             });
-            executorService.shutdown();
         }
 
         // Connect to successor
         ringSocket.updateSuccessor(addressTranslator.getSocketAddress(successor));
+    }
 
-
-        // Begin operation
-        int times = 0;
-        while (times < 10) {
-            passToken();
-            times++;
-        }
-
-        end();
+    private boolean killswitch() {
+        final String killswitch = System.getProperty("user.home") + "/killswitch";
+        logger.info(String.format("Checking for %s", killswitch));
+        return new File(killswitch).exists();
     }
 
     private Message readToken() throws IOException {
@@ -153,6 +179,7 @@ public class Node {
         } catch (IOException | ClassNotFoundException e) {
             logger.warning("Disconnected from predecessor");
             ringSocket.updatePredecessor();
+            logger.info("Connected to new predecessor");
             return readToken();
         }
     }
@@ -164,13 +191,14 @@ public class Node {
         try {
             ringSocket.sendToSuccessor(message);
         } catch (IOException e) {
-            logger.warning("Disconnected from predecessor");
+            logger.warning("Disconnected from successor");
             int succ = requestSuccessor(false);
+            logger.info(String.format("Updating successor to %d", succ));
             ringSocket.updateSuccessor(addressTranslator.getSocketAddress(succ));
+            logger.info("Retrying token send");
             forwardToken();
         }
     }
-
 
     private void passToken() throws InterruptedException, IOException, TimeoutException {
         if (!hasToken) {
