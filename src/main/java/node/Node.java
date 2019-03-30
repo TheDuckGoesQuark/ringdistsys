@@ -178,6 +178,7 @@ public class Node {
             return ringSocket.receiveFromPredecessor();
         } catch (IOException | ClassNotFoundException e) {
             logger.warning("Disconnected from predecessor");
+            // TODO fix token being lost, or hanging here when predecessor = successor
             ringSocket.updatePredecessor();
             logger.info("Connected to new predecessor");
             return readToken();

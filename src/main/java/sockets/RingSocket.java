@@ -54,8 +54,12 @@ public class RingSocket {
     public void close() throws IOException {
         if (this.successorSocket != null)
             this.successorSocket.close();
+
         if (this.predecessorSocket!= null)
-            this.successorSocket.close();
+            this.predecessorSocket.close();
+
+        if (this.serverSocket != null)
+            this.serverSocket.close();
     }
 }
 
