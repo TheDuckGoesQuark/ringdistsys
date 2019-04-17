@@ -1,8 +1,7 @@
-PWD /home/jordan/Documents/Uni/4thYear/DistSys/P2/report
-INPUT /etc/texmf/web2c/texmf.cnf
-INPUT /usr/share/texmf/web2c/texmf.cnf
+PWD /cs/home/jm354/Documents/Uni/Y4/SecondSem/DistSys/ringdistsys/report
 INPUT /usr/share/texlive/texmf-dist/web2c/texmf.cnf
-INPUT /var/lib/texmf/web2c/pdftex/pdflatex.fmt
+INPUT /usr/share/texlive/texmf-dist/web2c/texmf.cnf
+INPUT /cs/home/jm354/.texlive2018/texmf-var/web2c/pdftex/pdflatex.fmt
 INPUT report.tex
 OUTPUT report.log
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/article.cls
@@ -20,14 +19,6 @@ INPUT /usr/share/texlive/texmf-dist/tex/generic/babel/babel.def
 INPUT /usr/share/texlive/texmf-dist/tex/generic/babel/txtbabel.def
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/inputenc.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/inputenc.sty
-INPUT /usr/share/texlive/texmf-dist/tex/latex/base/utf8.def
-INPUT /usr/share/texlive/texmf-dist/tex/latex/base/utf8.def
-INPUT /usr/share/texlive/texmf-dist/tex/latex/base/t1enc.dfu
-INPUT /usr/share/texlive/texmf-dist/tex/latex/base/t1enc.dfu
-INPUT /usr/share/texlive/texmf-dist/tex/latex/base/ot1enc.dfu
-INPUT /usr/share/texlive/texmf-dist/tex/latex/base/ot1enc.dfu
-INPUT /usr/share/texlive/texmf-dist/tex/latex/base/omsenc.dfu
-INPUT /usr/share/texlive/texmf-dist/tex/latex/base/omsenc.dfu
 INPUT /usr/share/texlive/texmf-dist/tex/latex/natbib/natbib.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/natbib/natbib.sty
 INPUT /usr/share/texlive/texmf-dist/tex/latex/amsmath/amsmath.sty
@@ -113,7 +104,7 @@ INPUT ./images/standrewslogo.png
 INPUT ./images/standrewslogo.png
 OUTPUT report.pdf
 INPUT ./images/standrewslogo.png
-INPUT /var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map
+INPUT /usr/share/texlive/texmf-dist/fonts/map/pdftex/updmap/pdftex.map
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmbx12.tfm
 INPUT report.toc
 INPUT report.toc
@@ -142,6 +133,9 @@ INPUT ./images/udp.png
 INPUT ./images/join.png
 INPUT ./images/join.png
 INPUT ./images/join.png
+INPUT ./images/bigflow.png
+INPUT ./images/bigflow.png
+INPUT ./images/bigflow.png
 INPUT report.bbl
 INPUT report.bbl
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmtt12.tfm

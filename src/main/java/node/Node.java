@@ -113,6 +113,12 @@ public class Node {
         return 0;
     }
 
+    /**
+     * Begins node execution
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws TimeoutException
+     */
     public void start() throws IOException, InterruptedException, TimeoutException {
         logger.info(String.format("Initializing node with configuration: %s", config.toString()));
 

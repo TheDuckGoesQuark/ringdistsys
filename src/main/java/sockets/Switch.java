@@ -94,7 +94,7 @@ public class Switch extends StoppableThread {
             getLogger().warning("Bad message received");
             getLogger().warning(e.getMessage());
         } catch (IOException e) {
-            getLogger().warning("Possible error");
+            getLogger().warning("Possible error or just timeout");
             getLogger().warning(e.getMessage());
         }
 

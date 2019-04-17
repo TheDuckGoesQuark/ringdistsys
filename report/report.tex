@@ -105,7 +105,6 @@ Since each node would be running on an isolated machine, the planned testing env
 
 Due to different patterns of communication during recovery and regular message passing phases both TCP and UDP were used for this project, as shown in Figure \ref{fig:pattern}.
 
-\linebreak
 \noindent TCP was used for communication \textbf{around} the ring:
 \begin{enumerate}
     \item Reliable communication avoids token being lost.
@@ -136,17 +135,14 @@ Due to different patterns of communication during recovery and regular message p
 \label{fig:pattern}
 \end{figure}
 
-\section{Initialization}
+\section{Ring Formation}
 
-On initialization, each node sends out join messages to the coordinator. The joining protocol is similiar to that described in \cite{join}, and is shown in Figure \ref{fig:join}.
+\subsection{Initialization}
 
-\begin{figure}[!h]
-\centering
-  \centering
-  \includegraphics[width=.6\linewidth]{images/join}
-  \caption{Joining protocol over time, with topology shown on right.}
-\label{fig:join}
-\end{figure}
+On initialization, each node sends out join messages to the coordinator. The
+joining protocol is similiar to that described in \cite{join}, and is shown in Figure \ref{fig:join}.
+Figure \ref{fig:bigjoin} shows how the state of each connection changes over the course of
+the joining procedure.
 
 \noindent When node J wants to join the ring:
 \begin{enumerate}
@@ -156,6 +152,48 @@ On initialization, each node sends out join messages to the coordinator. The joi
     \item A disconnects from B, B begins listening for new predecessor.
     \item J connects to B, A connects to J.
 \end{enumerate}
+
+\begin{figure}[!ht]
+\centering
+  \centering
+  \includegraphics[width=.6\linewidth]{images/join}
+  \caption{Joining protocol over time, with topology shown on right.}
+\label{fig:join}
+\end{figure}
+
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=\linewidth]{images/bigflow}
+  \caption{State of each connection as a new node joins the ring. The red arrow
+shows the edge that is replaced with the new node, and solid and dashed
+arrows represent ongoing and pending connections respectively. Either A or
+B can be the coordinator in this scenario.}
+\label{fig:bigjoin}
+\end{figure}
+
+In order for this process to work for a ring network with a single node,
+it required another thread to wait on the connection, and the main thread
+would then request the connection to itself. For two nodes and more the
+joining node would be able to first connect to its new successor once its
+predecessor had disconnected from its old successor as shown in figure \ref{fig:bigjoin}.
+
+The coordinator maintains a virtual representation of the network ring
+in terms of IDs, and keeps track of the last added node. When a new node
+joins, the connection occurs between itself and the last node that was added.
+A different heuristic could be used to determine whereabouts the new node
+should be inserted into the ring such as %TODO EXPLORE HEURISTICS
+
+\subsection{Recovery}
+
+Node failure is detected whenever either the predecessor or successor of the
+failing node attempts to write or read to the relevant TCP socket. The
+predecessor is likely first to discover the failure, as they read from the socket
+until the token is available. The successor will notice either when it tries to
+forward the token or when it tries to send a keepalive.
+The successor of the failing node will simply begin listening for a new
+predecessor. The predecessor of the failing node will request a new successor
+from the coordinator node. The coordinator
 
 \section{Leader/Coordinator Election}
 
