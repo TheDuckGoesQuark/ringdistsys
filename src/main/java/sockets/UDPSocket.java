@@ -1,28 +1,39 @@
 package sockets;
 
+import logging.LoggerFactory;
 import messages.Message;
+import node.AddressTranslator;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.concurrent.TimeoutException;
+import java.util.logging.Logger;
 
-class UDPSocket {
+public class UDPSocket {
 
     private static final int BUFFER_SIZE = 1024;
 
+    private final AddressTranslator addressTranslator;
+    private final Logger logger = LoggerFactory.getLogger();
+
     private DatagramSocket datagramSocket;
 
-    UDPSocket(InetSocketAddress socketAddress) throws SocketException {
-        this.datagramSocket = new DatagramSocket(socketAddress);
+    public UDPSocket(AddressTranslator addressTranslator, int myId) throws SocketException {
+        this.addressTranslator = addressTranslator;
+        this.datagramSocket = new DatagramSocket(addressTranslator.getSocketAddress(myId));
     }
 
     /**
      * Send a message to the given destination
      *
      * @param message message to send
-     * @param dest    destination to send message
+     * @param destId  destination to send message
      * @throws IOException if unable to convert message to bytes, or socket exception occurs
      */
-    void sendMessage(Message message, SocketAddress dest) throws IOException {
+    public void sendMessage(Message message, int destId) throws IOException {
+        logger.info(String.format("Sending message %s to %d", message.toString(), destId));
+        InetSocketAddress dest = addressTranslator.getSocketAddress(destId);
+
         final byte[] msgBytes = message.toBytes();
 
         final DatagramPacket packet =
@@ -36,24 +47,27 @@ class UDPSocket {
      *
      * @return message received from this socket
      */
-    Message receiveMessage(int timeoutSecs) throws IOException, ClassNotFoundException {
+    public Message receiveMessage(int timeoutSecs) {
         final DatagramPacket packet =
                 new DatagramPacket(new byte[BUFFER_SIZE], 0, BUFFER_SIZE);
 
-        datagramSocket.setSoTimeout(timeoutSecs * 1000);
-        datagramSocket.receive(packet);
-
-        return Message.fromBytes(packet.getData());
+        try {
+            datagramSocket.setSoTimeout(timeoutSecs * 1000);
+            datagramSocket.receive(packet);
+            return Message.fromBytes(packet.getData());
+        } catch (IOException | ClassNotFoundException e) {
+            return null;
+        }
     }
 
     /**
      * Close the underlying socket
      */
-    void close() {
+    public void close() {
         datagramSocket.close();
     }
 
-    boolean isClosed() {
+    public boolean isClosed() {
         return datagramSocket.isClosed();
     }
 }

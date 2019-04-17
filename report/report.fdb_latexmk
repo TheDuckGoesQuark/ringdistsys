@@ -1,12 +1,12 @@
 # Fdb version 3
-["bibtex report"] 1555526487 "report.aux" "report.bbl" "report" 1555526488
+["bibtex report"] 1555526902 "report.aux" "report.bbl" "report" 1555529890
   "/usr/share/texlive/texmf-dist/bibtex/bst/base/unsrt.bst" 1553009394 18030 1376b4b231b50c66211e47e42eda2875 ""
   "mybib.bib" 1555526314 1201 81b66571f657eedded0b635fd67e6c71 ""
-  "report.aux" 1555526488 1778 8b62876ba8f2dfad76f7e31bd838c744 "pdflatex"
+  "report.aux" 1555529889 2015 1096b080fe08618690a4b4e2694e33d7 "pdflatex"
   (generated)
   "report.blg"
   "report.bbl"
-["pdflatex"] 1555526487 "report.tex" "report.pdf" "report" 1555526488
+["pdflatex"] 1555529889 "report.tex" "report.pdf" "report" 1555529890
   "/cs/home/jm354/.texlive2018/texmf-var/web2c/pdftex/pdflatex.fmt" 1554308594 3682910 97d3137c964bcb660c39ffc53a11bf1b ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1511824771 3332 103109f5612ad95229751940c61aada0 ""
   "/usr/share/texlive/texmf-dist/fonts/map/pdftex/updmap/pdftex.map" 1530836625 2850648 765161d183c5509465c2744baf096a7a ""
@@ -78,16 +78,17 @@
   "/usr/share/texlive/texmf-dist/tex/latex/url/url.sty" 1480098842 12796 8edb7d69a20b857904dd0ea757c14ec9 ""
   "/usr/share/texlive/texmf-dist/web2c/texmf.cnf" 1553009379 33523 3a2c32bd77384f8f4508d61b4be83582 ""
   "images/bigflow.png" 1555525126 26246 926202e97e91a48555e7acc53f896d47 ""
+  "images/failure.png" 1555526654 24433 217c670a32856b00721dac509692231e ""
   "images/join.png" 1555521469 11921 06384c667670d7d60efdd067ae3787a5 ""
   "images/standrewslogo.png" 1555513888 46787 bca177cdac17a1ec69f0a6a70c78c938 ""
   "images/tcp.png" 1555513888 8481 612430959ec0e038f1bf4864baf64d03 ""
   "images/udp.png" 1555513888 7693 e8f0b198c0dc13644383ce980e86a00f ""
-  "report.aux" 1555526488 1778 8b62876ba8f2dfad76f7e31bd838c744 "pdflatex"
-  "report.bbl" 1555526487 538 f6f0843ec138b4ddbf1536e382e9fb40 "bibtex report"
-  "report.tex" 1555526483 7928 97b93751298006479df5b66280cce570 ""
-  "report.toc" 1555526488 510 8f8f85128b71f421bc34a7fe5a1387af "pdflatex"
+  "report.aux" 1555529889 2015 1096b080fe08618690a4b4e2694e33d7 "pdflatex"
+  "report.bbl" 1555526902 538 f6f0843ec138b4ddbf1536e382e9fb40 "bibtex report"
+  "report.tex" 1555529887 8602 5640abb777eb78f47fdc020dcf10a77f ""
+  "report.toc" 1555529889 523 76c7cf66382b2d67fcdd387e554025ce "pdflatex"
   (generated)
-  "report.pdf"
+  "report.toc"
   "report.log"
   "report.aux"
-  "report.toc"
+  "report.pdf"

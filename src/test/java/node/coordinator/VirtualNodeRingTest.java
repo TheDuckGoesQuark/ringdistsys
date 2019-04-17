@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class NodeRingTest {
+public class VirtualNodeRingTest {
 
     @Test
     public void containsNodeWhenPresent() {
@@ -26,7 +26,7 @@ public class NodeRingTest {
         NodeRing nodeRing = new NodeRing(1);
 
         assertTrue(nodeRing.containsNode(1));
-        Node node = nodeRing.getNode(1);
+        VirtualNode node = nodeRing.getNode(1);
 
         assertEquals(node, node.getNext());
         assertEquals(node, node.getPrev());
@@ -38,8 +38,8 @@ public class NodeRingTest {
 
         nodeRing.addNode(2);
 
-        Node first = nodeRing.getNode(1);
-        Node second = nodeRing.getNode(2);
+        VirtualNode first = nodeRing.getNode(1);
+        VirtualNode second = nodeRing.getNode(2);
 
         assertEquals(first.getNext(), second);
         assertEquals(first.getPrev(), second);
@@ -54,9 +54,9 @@ public class NodeRingTest {
         nodeRing.addNode(2);
         nodeRing.addNode(3);
 
-        Node first = nodeRing.getNode(1);
-        Node second = nodeRing.getNode(2);
-        Node third = nodeRing.getNode(3);
+        VirtualNode first = nodeRing.getNode(1);
+        VirtualNode second = nodeRing.getNode(2);
+        VirtualNode third = nodeRing.getNode(3);
 
         assertEquals(first.getNext(), second);
         assertEquals(first.getPrev(), third);
@@ -75,10 +75,10 @@ public class NodeRingTest {
         nodeRing.addNode(3);
         nodeRing.addNode(4);
 
-        Node first = nodeRing.getNode(1);
-        Node second = nodeRing.getNode(2);
-        Node third = nodeRing.getNode(3);
-        Node fourth = nodeRing.getNode(4);
+        VirtualNode first = nodeRing.getNode(1);
+        VirtualNode second = nodeRing.getNode(2);
+        VirtualNode third = nodeRing.getNode(3);
+        VirtualNode fourth = nodeRing.getNode(4);
 
         assertEquals(first.getPrev(), fourth);
         assertEquals(first.getNext(), second);
@@ -99,7 +99,7 @@ public class NodeRingTest {
         nodeRing.addNode(2);
         nodeRing.removeNode(2);
 
-        Node first = nodeRing.getNode(1);
+        VirtualNode first = nodeRing.getNode(1);
 
         assertEquals(first.getNext(), first);
         assertEquals(first.getPrev(), first) ;
@@ -111,7 +111,7 @@ public class NodeRingTest {
         nodeRing.addNode(2);
         nodeRing.removeNode(1);
 
-        Node first = nodeRing.getNode(2);
+        VirtualNode first = nodeRing.getNode(2);
 
         assertEquals(first.getNext(), first);
         assertEquals(first.getPrev(), first) ;
@@ -124,8 +124,8 @@ public class NodeRingTest {
         nodeRing.addNode(3);
         nodeRing.removeNode(3);
 
-        Node first = nodeRing.getNode(1);
-        Node second = nodeRing.getNode(2);
+        VirtualNode first = nodeRing.getNode(1);
+        VirtualNode second = nodeRing.getNode(2);
 
         assertEquals(first.getPrev(), second);
         assertEquals(first.getNext(), second);
@@ -141,8 +141,8 @@ public class NodeRingTest {
         nodeRing.addNode(3);
         nodeRing.removeNode(2);
 
-        Node first = nodeRing.getNode(1);
-        Node third = nodeRing.getNode(3);
+        VirtualNode first = nodeRing.getNode(1);
+        VirtualNode third = nodeRing.getNode(3);
 
         assertEquals(first.getPrev(), third);
         assertEquals(first.getNext(), third);

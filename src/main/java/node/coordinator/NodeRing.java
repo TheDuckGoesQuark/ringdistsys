@@ -3,18 +3,18 @@ package node.coordinator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class NodeRing {
+class NodeRing {
 
-    private final Map<Integer, Node> nodes = new LinkedHashMap<>();
-    private Node lastAdded;
+    private final Map<Integer, VirtualNode> nodes = new LinkedHashMap<>();
+    private VirtualNode lastAdded;
 
     /**
      * Initialize the node ring with a single node which is its own predecessor and successor
      *
      * @param myId id of node to add
      */
-    public NodeRing(int myId) {
-        this.lastAdded = new Node(myId);
+    NodeRing(int myId) {
+        this.lastAdded = new VirtualNode(myId);
         this.nodes.put(myId, lastAdded);
         lastAdded.setNext(lastAdded);
         lastAdded.setPrev(lastAdded);
@@ -26,7 +26,7 @@ public class NodeRing {
      * @param nodeId id of node to check for
      * @return true if in ring
      */
-    public boolean containsNode(int nodeId) {
+    boolean containsNode(int nodeId) {
         return nodes.containsKey(nodeId);
     }
 
@@ -34,10 +34,10 @@ public class NodeRing {
      * Adds the node with the given id to the ring
      *
      * @param nodeId id of node to add
-     * @return Node newly added node with predecessor and successor
+     * @return VirtualNode newly added node with predecessor and successor
      */
-    public void addNode(int nodeId) {
-        final Node node = new Node(nodeId);
+    void addNode(int nodeId) {
+        final VirtualNode node = new VirtualNode(nodeId);
         nodes.put(nodeId, node);
 
         insertIntoRing(node);
@@ -49,7 +49,7 @@ public class NodeRing {
      * @param nodeId id of node to get
      * @return the node with the given id
      */
-    public Node getNode(int nodeId) {
+    VirtualNode getNode(int nodeId) {
         return nodes.get(nodeId);
     }
 
@@ -58,7 +58,7 @@ public class NodeRing {
      *
      * @param node node to insert
      */
-    private void insertIntoRing(Node node) {
+    private void insertIntoRing(VirtualNode node) {
         node.setNext(lastAdded.getNext());
         node.setPrev(lastAdded);
 
@@ -73,11 +73,11 @@ public class NodeRing {
      *
      * @param nodeId id of node to remove
      */
-    public void removeNode(int nodeId) {
-        final Node toBeRemoved = getNode(nodeId);
+    void removeNode(int nodeId) {
+        final VirtualNode toBeRemoved = getNode(nodeId);
 
-        final Node before = toBeRemoved.getPrev();
-        final Node after = toBeRemoved.getNext();
+        final VirtualNode before = toBeRemoved.getPrev();
+        final VirtualNode after = toBeRemoved.getNext();
 
         before.setNext(after);
         after.setPrev(before);

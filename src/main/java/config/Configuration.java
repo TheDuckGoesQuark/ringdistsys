@@ -42,7 +42,7 @@ public class Configuration {
 
     @Override
     public String toString() {
-        return "Node ID: '" +
+        return "VirtualNode ID: '" +
                 nodeId +
                 "' | " +
                 "List File Path: '" +

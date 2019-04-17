@@ -1,6 +1,8 @@
 package sockets;
 
+import logging.LoggerFactory;
 import messages.Message;
+import node.AddressTranslator;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -10,24 +12,31 @@ import java.util.logging.Logger;
 
 public class RingSocket {
 
+    private final Logger logger = LoggerFactory.getLogger();
+    private final AddressTranslator addressTranslator;
     private final ServerSocket serverSocket;
-    private final Logger logger;
 
     private Socket successorSocket = null;
     private Socket predecessorSocket = null;
 
-    public RingSocket(InetSocketAddress myAddress, Logger logger) throws IOException {
+    public RingSocket(int myId, AddressTranslator addressTranslator) throws IOException {
+        final InetSocketAddress myAddress = addressTranslator.getSocketAddress(myId);
+
+        this.addressTranslator = addressTranslator;
         this.serverSocket = new ServerSocket(myAddress.getPort(), 1, myAddress.getAddress());
-        this.logger = logger;
     }
 
-    public void updateSuccessor(InetSocketAddress successorAddress) throws IOException {
+    public void updateSuccessor(int successorId) throws IOException {
+        final InetSocketAddress successorAddress = addressTranslator.getSocketAddress(successorId);
+
         logger.info(String.format("Updating successor to %s", successorAddress.toString()));
         if (successorSocket != null && !successorSocket.isClosed()) {
             successorSocket.close();
         }
 
         this.successorSocket = new Socket(successorAddress.getAddress(), successorAddress.getPort());
+        this.successorSocket.setKeepAlive(true);
+        this.successorSocket.setTcpNoDelay(true);
     }
 
     public void updatePredecessor() throws IOException {
@@ -40,26 +49,51 @@ public class RingSocket {
         logger.info(String.format("Predecessor connected from address to %s", predecessorSocket.getInetAddress().toString()));
     }
 
-    public void sendToSuccessor(Message message) throws IOException {
-        final OutputStream out = successorSocket.getOutputStream();
+    private void sendToSocket(Message message, Socket socket) throws IOException {
+        final OutputStream out = socket.getOutputStream();
         out.write(message.toBytes());
         out.flush();
     }
 
-    public Message receiveFromPredecessor() throws IOException, ClassNotFoundException {
-        final ObjectInputStream out = new ObjectInputStream(predecessorSocket.getInputStream());
+    public void sendToSuccessor(Message message) throws IOException {
+        sendToSocket(message, successorSocket);
+    }
+
+    public void sendToPredeccesor(Message message) throws IOException {
+        sendToSocket(message, predecessorSocket);
+    }
+
+    private Message readFromSocket(Socket socket) throws IOException, ClassNotFoundException {
+        final ObjectInputStream out = new ObjectInputStream(socket.getInputStream());
         return (Message) out.readObject();
+    }
+
+    public Message receiveFromSuccessor() throws IOException, ClassNotFoundException {
+        return this.readFromSocket(successorSocket);
+    }
+
+    public Message receiveFromPredecessor() throws IOException, ClassNotFoundException {
+        return this.readFromSocket(predecessorSocket);
     }
 
     public void close() throws IOException {
         if (this.successorSocket != null)
             this.successorSocket.close();
 
-        if (this.predecessorSocket!= null)
+        if (this.predecessorSocket != null)
             this.predecessorSocket.close();
 
         if (this.serverSocket != null)
             this.serverSocket.close();
+    }
+
+    /**
+     * Checks if this ring network consists of just this node
+     *
+     * @return true if the predecessor socket == successor socket
+     */
+    public boolean isClosedLoop() {
+        return predecessorSocket.getInetAddress().equals(successorSocket.getInetAddress());
     }
 }
 

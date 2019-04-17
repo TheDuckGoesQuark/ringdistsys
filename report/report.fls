@@ -136,6 +136,9 @@ INPUT ./images/join.png
 INPUT ./images/bigflow.png
 INPUT ./images/bigflow.png
 INPUT ./images/bigflow.png
+INPUT ./images/failure.png
+INPUT ./images/failure.png
+INPUT ./images/failure.png
 INPUT report.bbl
 INPUT report.bbl
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmtt12.tfm

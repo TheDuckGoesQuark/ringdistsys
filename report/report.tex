@@ -184,16 +184,26 @@ joins, the connection occurs between itself and the last node that was added.
 A different heuristic could be used to determine whereabouts the new node
 should be inserted into the ring such as %TODO EXPLORE HEURISTICS
 
-\subsection{Recovery}
+\subsection{General Node Recovery}
 
 Node failure is detected whenever either the predecessor or successor of the
 failing node attempts to write or read to the relevant TCP socket. The
 predecessor is likely first to discover the failure, as they read from the socket
 until the token is available. The successor will notice either when it tries to
 forward the token or when it tries to send a keepalive.
+
 The successor of the failing node will simply begin listening for a new
 predecessor. The predecessor of the failing node will request a new successor
-from the coordinator node. The coordinator
+from the coordinator node. The coordinator will then reply with the ID of the node after the failed node for the predeccessor to connect to, at which point normal network behaviour can resume. Figure \ref{fig:failure} shows the topology change when a node fails.
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\linewidth]{images/failure}
+	\caption{Network topology during the recovery from node B failing. Either A or C are the coordinator in this scenario.}
+	\label{fig:failure}
+\end{figure}
+
+Since TCP sockets do not provide a method for confirming that a token has been received by next node in the ring at the application level, an acknowledgement mechanism was included in token passing.
 
 \section{Leader/Coordinator Election}
 

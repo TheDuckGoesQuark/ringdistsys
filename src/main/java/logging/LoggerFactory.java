@@ -7,12 +7,15 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 public class LoggerFactory {
-    public static Logger buildLogger(int nodeId) {
+
+    private static Logger LOGGER = null;
+
+    public static void buildLogger(int nodeId) {
         Logger logger = Logger.getGlobal();
         logger.setUseParentHandlers(false);
         ConsoleHandler handler = new ConsoleHandler();
         handler.setFormatter(new SimpleFormatter() {
-            private final String format = "[%1$tF %1$tT | "+nodeId+" ] [%2$-7s] %3$s %n";
+            private final String format = "[%1$tF %1$tT | " + nodeId + " ] [%2$-7s] %3$s %n";
 
             @Override
             public synchronized String format(LogRecord lr) {
@@ -26,6 +29,11 @@ public class LoggerFactory {
 
         logger.addHandler(handler);
 
-        return logger;
+        LOGGER = logger;
     }
+
+    public static Logger getLogger() {
+        return LOGGER;
+    }
+
 }
