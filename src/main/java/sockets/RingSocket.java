@@ -46,7 +46,7 @@ public class RingSocket {
 
         logger.info("Waiting on predecessor connection");
         predecessorSocket = serverSocket.accept();
-        logger.info(String.format("Predecessor connected from address to %s", predecessorSocket.getInetAddress().toString()));
+        logger.info(String.format("Predecessor connected from address to %s", predecessorSocket.getLocalSocketAddress().toString()));
     }
 
     private void sendToSocket(Message message, Socket socket) throws IOException {
@@ -63,17 +63,23 @@ public class RingSocket {
         sendToSocket(message, predecessorSocket);
     }
 
-    private Message readFromSocket(Socket socket) throws IOException, ClassNotFoundException {
-        final ObjectInputStream out = new ObjectInputStream(socket.getInputStream());
-        return (Message) out.readObject();
+    private Message readFromSocket(Socket socket, Integer timeoutSecs) {
+        try {
+            if (timeoutSecs != null) socket.setSoTimeout(timeoutSecs * 1000);
+
+            final ObjectInputStream out = new ObjectInputStream(socket.getInputStream());
+            return (Message) out.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            return null;
+        }
     }
 
-    public Message receiveFromSuccessor() throws IOException, ClassNotFoundException {
-        return this.readFromSocket(successorSocket);
+    public Message receiveFromSuccessor(int timeoutSecs) {
+        return this.readFromSocket(successorSocket, timeoutSecs);
     }
 
-    public Message receiveFromPredecessor() throws IOException, ClassNotFoundException {
-        return this.readFromSocket(predecessorSocket);
+    public Message receiveFromPredecessor(Integer timeoutSecs) {
+        return this.readFromSocket(predecessorSocket, timeoutSecs);
     }
 
     public void close() throws IOException {
@@ -93,7 +99,7 @@ public class RingSocket {
      * @return true if the predecessor socket == successor socket
      */
     public boolean isClosedLoop() {
-        return predecessorSocket.getInetAddress().equals(successorSocket.getInetAddress());
+        return successorSocket.getLocalSocketAddress().equals(predecessorSocket.getRemoteSocketAddress());
     }
 }
 

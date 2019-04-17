@@ -83,6 +83,10 @@ public class Node {
                     logger.info("Received join request");
                     tokenRingManager.handleJoinRequest(message);
                     break;
+                case SUCCESSOR_REQUEST:
+                    logger.info("Received successor request");
+                    tokenRingManager.handleSuccessorRequest(message);
+                    break;
                 default:
                     logger.info("Received unknown message type: " + message.getType().name());
                     break;

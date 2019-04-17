@@ -49,20 +49,13 @@ class TokenRingManager {
         return coordinator != null;
     }
 
-    private Message readToken() throws IOException {
-        try {
-            return ringSocket.receiveFromPredecessor();
-        } catch (IOException | ClassNotFoundException e) {
-            logger.warning("Disconnected from predecessor");
-            ringSocket.updatePredecessor();
-            logger.info("Connected to new predecessor");
-            return readToken();
-        }
+    private Message readToken() {
+        return ringSocket.receiveFromPredecessor(null);
     }
 
-    private boolean ackIsReceived() throws IOException, ClassNotFoundException {
+    private boolean ackIsReceived() {
         logger.info("Waiting on token ACK");
-        final Message tokenAck = ringSocket.receiveFromSuccessor();
+        final Message tokenAck = ringSocket.receiveFromSuccessor(DEFAULT_JITTER);
         return tokenAck != null;
     }
 
@@ -105,6 +98,7 @@ class TokenRingManager {
 
             try {
                 updateSuccessor(awaitSuccessor(), joining);
+                // TODO main thread is actually handling this message when it comes, so this thread thinks it doesnt get a reply lmaoooo
                 successful = true;
             } catch (TimeoutException timeoutException) {
                 numTries++;
@@ -120,23 +114,26 @@ class TokenRingManager {
         logger.info("Forwarding token");
         final Message message = new Message(MessageType.TOKEN, config.getElectionMethod(), config.getNodeId());
 
-        try {
-            ringSocket.sendToSuccessor(message);
+        while (hasToken) {
+            try {
+                ringSocket.sendToSuccessor(message);
 
-            if (!ringSocket.isClosedLoop() && !ackIsReceived()) {
-                throw new IOException("No acknowledgement from successor");
+                if (!ringSocket.isClosedLoop() && !ackIsReceived()) {
+                    throw new IOException("No acknowledgement from successor");
+                } else {
+                    hasToken = false;
+                }
+
+            } catch (IOException e) {
+                logger.warning("Disconnected from successor");
+                requestSuccessor(false);
+                logger.info("Retrying token send");
             }
-        } catch (IOException | ClassNotFoundException e) {
-            logger.warning("Disconnected from successor");
-            requestSuccessor(false);
-            logger.info("Retrying token send");
-            forwardToken();
         }
-
-        hasToken = false;
     }
 
     private void sendTokenAck() throws IOException {
+        logger.info("Sending token ACK");
         final Message tokenAck = new Message(MessageType.TOKEN_ACK, config.getElectionMethod(), config.getNodeId());
         this.ringSocket.sendToPredeccesor(tokenAck);
     }
@@ -147,7 +144,18 @@ class TokenRingManager {
      * @throws IOException
      */
     void waitForToken() throws IOException {
-        final Message token = readToken();
+        Message token = null;
+
+        while (token == null) {
+            token = readToken();
+
+            if (token == null) {
+                logger.warning("Disconnected from predecessor");
+                ringSocket.updatePredecessor();
+                logger.info("Connected to new predecessor");
+            }
+        }
+
         logger.info(String.format("Received token from %d", token.getSrcId()));
         sendTokenAck();
         hasToken = true;
@@ -189,4 +197,9 @@ class TokenRingManager {
             this.ringSocket.close();
     }
 
+    public void handleSuccessorRequest(Message message) {
+        if (this.isCoordinator()) {
+            this.coordinator.handleSuccessorRequest(message);
+        }
+    }
 }
