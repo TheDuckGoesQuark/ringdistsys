@@ -131,14 +131,50 @@ public class Node {
     /**
      * Handles token passing and election messages
      */
-    private void handleRingMessages() {
+    private void handleRingMessages() throws IOException {
+        final Message message = tokenRingManager.receiveFromPredecessor();
+
+        if (message == null) {
+            tokenRingManager.updatePredecessor();
+        } else {
+            switch (message.getType()) {
+                case ELECTION:
+                    logger.info("Received election message");
+                    break;
+                case COORDINATOR:
+                    logger.info("Received coordinator message");
+                    break;
+                case TOKEN:
+                    logger.info("Received token");
+                    break;
+            }
+        }
+        // TODO
     }
 
     /**
      * Handles coordinator messages for maintaining ring
      */
     private void handleCoordinationMessages() {
+        logger.info("Waiting for coordinator message");
+        final Message message = udpSocket.receiveMessage(5);
 
+        if (message == null) {
+            logger.info("Nothing received...");
+        } else {
+            switch (message.getType()) {
+                case JOIN:
+                    logger.info("Received join request");
+                    break;
+                case SUCCESSOR_REQUEST:
+                    logger.info("Received successor request");
+                    break;
+                case SUCCESSOR:
+                    logger.info("Received successor assignment");
+                    break;
+            }
+        }
+        // TODO
     }
 
     /**

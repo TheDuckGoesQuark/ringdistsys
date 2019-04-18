@@ -43,16 +43,17 @@ public class UDPSocket {
     }
 
     /**
-     * Poll until message is received
+     * Poll until message is received unless timeout is reached
      *
      * @return message received from this socket
      */
-    public Message receiveMessage(int timeoutSecs) {
+    public Message receiveMessage(Integer timeoutSecs) {
         final DatagramPacket packet =
                 new DatagramPacket(new byte[BUFFER_SIZE], 0, BUFFER_SIZE);
 
         try {
-            datagramSocket.setSoTimeout(timeoutSecs * 1000);
+            if (timeoutSecs != null) datagramSocket.setSoTimeout(timeoutSecs * 1000);
+
             datagramSocket.receive(packet);
             return Message.fromBytes(packet.getData());
         } catch (IOException | ClassNotFoundException e) {

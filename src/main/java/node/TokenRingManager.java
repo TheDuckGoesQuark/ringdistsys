@@ -92,4 +92,21 @@ class TokenRingManager {
             this.ringSocket.close();
     }
 
+    /**
+     * Receives message from predecessor
+     *
+     * @return message received from predecessor
+     */
+    public Message receiveFromPredecessor() {
+        return ringSocket.receiveFromPredecessor(null);
+    }
+
+    /**
+     * blocks until a predecessor connects
+     *
+     * @throws IOException
+     */
+    public void updatePredecessor() throws IOException {
+        ringSocket.updatePredecessor();
+    }
 }

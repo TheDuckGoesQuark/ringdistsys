@@ -2,9 +2,9 @@ package messages;
 
 public enum MessageType {
 
-    ELECTION,
-    COORDINATOR,
-    OK, // Confi
+    ELECTION, // Election
+    COORDINATOR, // New coordinator
+    OK,
     SUCCESSOR, // Reply to a successor request containing that nodes new successor
     SUCCESSOR_REQUEST, // When a node experiences a disconnect from its successor, it can request a new one
     TOKEN, // Token message
