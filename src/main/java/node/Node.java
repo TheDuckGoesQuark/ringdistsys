@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
@@ -111,36 +112,33 @@ public class Node {
 
         joinRing();
 
-//        // Handle any coordination updates
-//        while (!killswitch()) {
-//            logger.info("Listening for coordination updates");
-//            final Message message = udpSocket.receiveMessage(3);
-//
-//            if (message == null) continue;
-//
-//            switch (message.getType()) {
-//                case SUCCESSOR:
-//                    logger.info("Received new successor assignment");
-//                    tokenRingManager.updateSuccessor(
-//                            message.getPayload(SuccessorMessage.class).getSuccessorId(),
-//                            false
-//                    );
-//                    break;
-//                case JOIN:
-//                    logger.info("Received join request");
-//                    tokenRingManager.handleJoinRequest(message);
-//                    break;
-//                case SUCCESSOR_REQUEST:
-//                    logger.info("Received successor request");
-//                    tokenRingManager.handleJoinRequest(message);
-//                    break;
-//                default:
-//                    logger.info("Received unknown message type: " + message.getType().name());
-//                    break;
-//            }
-//        }
+        // Begin election and token handler on another thread
+        executorService.submit((Callable<Void>) () -> {
+            while (!killswitch())
+                handleRingMessages();
+
+            return null;
+        });
+
+        // Handle any coordination updates
+        while (!killswitch()) {
+            handleCoordinationMessages();
+        }
 
         end();
+    }
+
+    /**
+     * Handles token passing and election messages
+     */
+    private void handleRingMessages() {
+    }
+
+    /**
+     * Handles coordinator messages for maintaining ring
+     */
+    private void handleCoordinationMessages() {
+
     }
 
     /**
@@ -173,7 +171,7 @@ public class Node {
                     }
                     break;
                 default:
-                    logger.info("Received unknown message type: " + message.getType().name());
+                    logger.info("Received irrelevant message: " + message.getType().name());
             }
         }
     }
