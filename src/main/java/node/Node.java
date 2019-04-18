@@ -56,13 +56,15 @@ public class Node {
 
         initializeCommunication();
 
-        // Begin token passing
-        executorService.submit((Callable<Void>) () -> {
-            while (!killswitch())
+        final Callable<Void> tokenPassingThread = () -> {
+            while (!killswitch()) {
                 tokenRingManager.passToken();
-
+            }
             return null;
-        });
+        };
+
+        // Begin token passing
+        executorService.submit(tokenPassingThread);
 
         // Handle any coordination updates
         while (!killswitch()) {
