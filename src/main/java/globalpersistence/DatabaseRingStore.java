@@ -18,45 +18,42 @@ public class DatabaseRingStore implements RingStore {
     private static final String PASSOWRD = "722Em!9LLknjhZ";
 
     private static final String NODE_TABLE_NAME = "nodes";
-    private static final String SUCCESSOR_TABLE_NAME = "successors";
     private static final String COORDINATOR_TABLE_NAME = "coordinators";
 
     private static final String NODE_SCHEMA =
-            "CREATE TABLE " + NODE_TABLE_NAME + "( \n" +
-                    "    nodeId INT NOT NULL,\n" +
-                    "    address VARCHAR(255) NOT NULL,\n" +
-                    "    port INT NOT NULL,\n" +
-                    "    PRIMARY KEY (nodeId)\n" +
-                    ")";
-
-    private static final String SUCCESSOR_SCHEMA =
-            "CREATE TABLE " + SUCCESSOR_TABLE_NAME + "( \n" +
-                    "    nodeId INT NOT NULL,\n" +
-                    "    successorId INT NOT NULL,\n" +
-                    "    PRIMARY KEY (nodeId),\n" +
-                    "    FOREIGN KEY (successorId) REFERENCES " + NODE_TABLE_NAME + "(nodeId)\n" +
+            "CREATE TABLE " + NODE_TABLE_NAME + " ( " +
+                    "nodeId INT NOT NULL," +
+                    "address VARCHAR(255) NOT NULL," +
+                    "port INT NOT NULL," +
+                    "successorId INT," +
+                    "PRIMARY KEY (nodeId)," +
+                    "FOREIGN KEY (successorId) REFERENCES " + NODE_TABLE_NAME + "(nodeId)" +
                     ")";
 
     private static final String COORDINATOR_SCHEMA =
-            "CREATE TABLE " + COORDINATOR_TABLE_NAME + "(\n" +
-                    "    coordinatorId INT,\n" +
-                    "    singleRowLock BOOLEAN,\n" +
-                    "    PRIMARY KEY (singleRowLock),\n" +
-                    "    FOREIGN KEY (coordinatorId) REFERENCES " + NODE_TABLE_NAME + "(nodeId)\n" +
-                    "    ON DELETE SET NULL\n" +
+            "CREATE TABLE " + COORDINATOR_TABLE_NAME + " ( " +
+                    "coordinatorId INT," +
+                    "singleRowLock BOOLEAN," +
+                    "PRIMARY KEY (singleRowLock)," +
+                    "FOREIGN KEY (coordinatorId) REFERENCES " + NODE_TABLE_NAME + "(nodeId)" +
+                    "ON DELETE SET NULL" +
                     ")";
+
+    private static final String SELECT_ALL =
+            "SELECT n.*, c.coordinatorId FROM " + NODE_TABLE_NAME + " n " +
+                    "LEFT JOIN " + COORDINATOR_TABLE_NAME + " c ON c.coordinatorId ";
 
     private static final String COUNT_NODES =
             "SELECT count(*) as nodeCount FROM " + NODE_TABLE_NAME;
 
     private static final String INSERT_NODE =
-            "INSERT INTO " + NODE_TABLE_NAME + " VALUES (?, ?, ?)";
+            "INSERT INTO " + NODE_TABLE_NAME + " VALUES (?, ?, ?, NULL)";
 
     private static final String INSERT_SUCCESSOR =
-            "INSERT INTO " + SUCCESSOR_TABLE_NAME + " VALUES (?, ?)";
+            "UPDATE " + NODE_TABLE_NAME + " SET successorId = ? where nodeId = ?";
 
     private static final String REMOVE_SUCCESSOR =
-            "DELETE FROM " + SUCCESSOR_TABLE_NAME + " WHERE nodeId = ?";
+            "UPDATE " + NODE_TABLE_NAME + " SET successorId = NULL where nodeId = ?";
 
     private static final String INSERT_COORDINATOR =
             "INSERT INTO " + COORDINATOR_TABLE_NAME + " VALUES (?, True) ON DUPLICATE KEY UPDATE coordinatorId = ?";
@@ -125,12 +122,10 @@ public class DatabaseRingStore implements RingStore {
     private void initializeSchema(Connection conn) throws SQLException {
         try (
                 final PreparedStatement nodeStatement = conn.prepareStatement(NODE_SCHEMA);
-                final PreparedStatement successorStatement = conn.prepareStatement(SUCCESSOR_SCHEMA);
                 final PreparedStatement coordinatorStatement = conn.prepareStatement(COORDINATOR_SCHEMA)
         ) {
             conn.setAutoCommit(false);
             nodeStatement.executeUpdate();
-            successorStatement.executeUpdate();
             coordinatorStatement.executeUpdate();
             conn.commit();
         }
@@ -210,12 +205,10 @@ public class DatabaseRingStore implements RingStore {
         try {
             conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
 
-            final String selectAll = "SELECT * FROM node LEFT JOIN coordinator ON coordinator.coordinatorId";
-            ps = conn.prepareStatement(selectAll);
+            ps = conn.prepareStatement(SELECT_ALL);
             rs = ps.executeQuery();
 
             while (rs.next()) {
-
                 final Optional<Integer> coordinatorId = getNullableInt("coordinatorId", rs);
                 final String address = rs.getString("address");
                 final int port = rs.getInt("port");
@@ -239,16 +232,52 @@ public class DatabaseRingStore implements RingStore {
 
     @Override
     public void updateCoordinator(int newCoordinatorId) {
+        try (
+                final Connection conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
+                final PreparedStatement ps = conn.prepareStatement(INSERT_COORDINATOR)
+        ) {
 
+            conn.setAutoCommit(true);
+            ps.setInt(1, newCoordinatorId); // Set insert
+            ps.setInt(2, newCoordinatorId); // Set on duplicate insert
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            logger.warning(e.getMessage());
+        }
     }
 
     @Override
     public void setNodeSuccessor(int nodeId, int successorId) {
+        try (
+                final Connection conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
+                final PreparedStatement ps = conn.prepareStatement(INSERT_SUCCESSOR)
+        ) {
 
+            conn.setAutoCommit(true);
+            ps.setInt(1, successorId); // set successor
+            ps.setInt(2, nodeId); // For this node
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            logger.warning(e.getMessage());
+        }
     }
 
     @Override
     public void removeNodeSuccessor(int nodeId) {
+        try (
+                final Connection conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
+                final PreparedStatement ps = conn.prepareStatement(REMOVE_SUCCESSOR)
+        ) {
+
+            conn.setAutoCommit(true);
+            ps.setInt(1, nodeId);
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            logger.warning(e.getMessage());
+        }
 
     }
 }

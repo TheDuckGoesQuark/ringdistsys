@@ -40,4 +40,15 @@ public class NodeRow {
     public boolean isCoordinator() {
         return isCoordinator;
     }
+
+    @Override
+    public String toString() {
+        return "NodeRow{" +
+                "address='" + address + '\'' +
+                ", port=" + port +
+                ", nodeId=" + nodeId +
+                ", successorId=" + successorId +
+                ", isCoordinator=" + isCoordinator +
+                '}';
+    }
 }
