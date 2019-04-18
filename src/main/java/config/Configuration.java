@@ -2,9 +2,6 @@ package config;
 
 import node.ElectionMethod;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-
 public class Configuration {
 
     /**
@@ -22,10 +19,16 @@ public class Configuration {
      */
     private final ElectionMethod electionMethod;
 
-    public Configuration(int nodeId, String listFilePath, ElectionMethod electionMethod) {
+    /**
+     * Should this node trigger a full DB refresh
+     */
+    private final boolean dropEverything;
+
+    public Configuration(int nodeId, String listFilePath, ElectionMethod electionMethod, boolean dropEverything) {
         this.nodeId = nodeId;
         this.listFilePath = listFilePath;
         this.electionMethod = electionMethod;
+        this.dropEverything = dropEverything;
     }
 
     public int getNodeId() {
@@ -40,16 +43,9 @@ public class Configuration {
         return electionMethod;
     }
 
-    @Override
-    public String toString() {
-        return "VirtualNode ID: '" +
-                nodeId +
-                "' | " +
-                "List File Path: '" +
-                listFilePath +
-                "' | " +
-                "Election Method: '" +
-                electionMethod +
-                "'";
+    public boolean shouldDropEverything() {
+        return dropEverything;
     }
+
+
 }

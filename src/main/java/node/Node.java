@@ -3,6 +3,7 @@ package node;
 import config.Configuration;
 import globalpersistence.DatabaseRingStore;
 import globalpersistence.NodeRow;
+import globalpersistence.RingStore;
 import logging.LoggerFactory;
 import messages.Message;
 import messages.MessageType;
@@ -26,7 +27,7 @@ public class Node {
     private final Logger logger = LoggerFactory.getLogger();
     private final Configuration config;
     private final ExecutorService executorService;
-    private final DatabaseRingStore databaseRingStore;
+    private final RingStore ringStore;
     private final TokenRingManager tokenRingManager;
     private final UDPSocket udpSocket;
 
@@ -36,10 +37,10 @@ public class Node {
         this.config = config;
         this.executorService = Executors.newCachedThreadPool();
 
-        this.databaseRingStore = new DatabaseRingStore(config.getListFilePath());
-        this.databaseRingStore.initialize();
+        this.ringStore = new DatabaseRingStore(config.getListFilePath(), config.shouldDropEverything());
+        this.ringStore.initialize();
 
-        final List<NodeRow> allNodes = this.databaseRingStore.getAllNodes();
+        final List<NodeRow> allNodes = this.ringStore.getAllNodes();
         final AddressTranslator addressTranslator = new AddressTranslator(allNodes);
         this.udpSocket = new UDPSocket(addressTranslator, config.getNodeId());
         this.tokenRingManager = new TokenRingManager(config, addressTranslator, executorService);
@@ -67,7 +68,8 @@ public class Node {
         } else {
             // WARN Possible race condition : make sure first node in
             // ring is started and set as coordinator before more join
-            databaseRingStore.updateCoordinator(config.getNodeId());
+            ringStore.updateCoordinator(config.getNodeId());
+            coordinatorId = config.getNodeId();
         }
     }
 
@@ -198,13 +200,13 @@ public class Node {
      */
     private void handleJoinRequest(Message request) throws IOException {
         logger.info("Handling successor request");
-        List<NodeRow> allNodes = databaseRingStore.getAllNodesWithSuccessors();
+        List<NodeRow> allNodes = ringStore.getAllNodesWithSuccessors();
 
         int requestingNodeId = request.getSrcId();
         if (allNodes.isEmpty()) {
             logger.info("Assigning node to self");
             // Assign requesting node to itself
-            databaseRingStore.setNodeSuccessor(requestingNodeId, requestingNodeId);
+            ringStore.setNodeSuccessor(requestingNodeId, requestingNodeId);
             sendSuccessorMessage(requestingNodeId, requestingNodeId);
         } else {
             logger.info("Inserting node into ring randomly");
@@ -213,7 +215,7 @@ public class Node {
             final NodeRow predecessor = allNodes.get(rand.nextInt(allNodes.size()));
             final int successor = predecessor.getSuccessorId().get();
 
-            databaseRingStore.insertIntoRing(predecessor.getNodeId(), successor, requestingNodeId);
+            ringStore.insertIntoRing(predecessor.getNodeId(), successor, requestingNodeId);
             sendSuccessorMessage(requestingNodeId, successor);
             sendSuccessorMessage(predecessor.getNodeId(), requestingNodeId);
 

@@ -39,6 +39,9 @@ public class DatabaseRingStore implements RingStore {
                     "ON DELETE SET NULL" +
                     ")";
 
+    private static final String DROP_COORDINATOR = "DROP TABLE " + COORDINATOR_TABLE_NAME;
+    private static final String DROP_NODE = "DROP TABLE " + NODE_TABLE_NAME;
+
     private static final String SELECT_ALL =
             "SELECT n.*, c.coordinatorId FROM " + NODE_TABLE_NAME + " n " +
                     "LEFT JOIN " + COORDINATOR_TABLE_NAME + " c ON c.coordinatorId ";
@@ -63,16 +66,18 @@ public class DatabaseRingStore implements RingStore {
     private static final String INSERT_COORDINATOR =
             "INSERT INTO " + COORDINATOR_TABLE_NAME + " VALUES (?, True) ON DUPLICATE KEY UPDATE coordinatorId = ?";
 
-    private Logger logger = LoggerFactory.getLogger();
-    private String nodelistpath;
+    private final Logger logger = LoggerFactory.getLogger();
+    private final String nodelistpath;
+    private final boolean doFullRestart;
 
     /**
      * Creates a database ring store instance with the path to the file it can use to initialize the database.
      *
      * @param nodelistpath path to file with node ids and socket addresses
      */
-    public DatabaseRingStore(String nodelistpath) {
+    public DatabaseRingStore(String nodelistpath, boolean doFullRestart) {
         this.nodelistpath = nodelistpath;
+        this.doFullRestart = doFullRestart;
     }
 
     /**
@@ -178,12 +183,30 @@ public class DatabaseRingStore implements RingStore {
         }
     }
 
+    /**
+     * Removes all tables from the database
+     */
+    private void dropEverything(Connection conn) throws SQLException {
+        try (
+                final PreparedStatement dropNode = conn.prepareStatement(DROP_NODE);
+                final PreparedStatement dropCoord = conn.prepareStatement(DROP_COORDINATOR)
+        ) {
+            conn.setAutoCommit(false);
+            dropCoord.executeUpdate();
+            dropNode.executeUpdate();
+            conn.commit();
+        }
+    }
+
     @Override
     public void initialize() {
         Connection conn = null;
 
         try {
             conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
+            if (doFullRestart) {
+                dropEverything(conn);
+            }
 
             if (!schemaIsInitialized(conn)) {
                 initializeSchema(conn);
@@ -198,6 +221,7 @@ public class DatabaseRingStore implements RingStore {
             closeQuietly(conn);
         }
     }
+
 
     @Override
     public List<NodeRow> getAllNodes() {

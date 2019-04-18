@@ -3,17 +3,13 @@ package config;
 import node.ElectionMethod;
 import org.apache.commons.cli.*;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
 
 public class ArgumentParser {
 
-    private static final String HOST = "host";
-    private static final String PORT = "port";
     private static final String ID = "id";
     private static final String LIST_FILE = "list";
     private static final String ELECTION_METHOD = "election";
+    private static final String DROP_EVERYTHING = "drop";
 
     private static Options buildOptions() {
         Options options = new Options();
@@ -30,6 +26,9 @@ public class ArgumentParser {
         Option elec = new Option("e", ELECTION_METHOD, true, "Election method to use (Ring/ChangRoberts/Bully)");
         elec.setRequired(true);
         options.addOption(elec);
+
+        Option drop = new Option("d", DROP_EVERYTHING, false, "Include if this node should trigger a database refresh");
+        options.addOption(drop);
 
         return options;
     }
@@ -48,6 +47,7 @@ public class ArgumentParser {
         int inputId = 0;
         String listFile = null;
         ElectionMethod electionMethod = null;
+        boolean dropEverything = false;
 
         try {
             CommandLine cmd = parser.parse(options, args);
@@ -55,12 +55,13 @@ public class ArgumentParser {
             inputId = ((Number) cmd.getParsedOptionValue(ID)).intValue();
             listFile = cmd.getOptionValue(LIST_FILE);
             electionMethod = ElectionMethod.valueOf(cmd.getOptionValue(ELECTION_METHOD, String.valueOf(ElectionMethod.RING_BASED)));
+            dropEverything = cmd.hasOption(DROP_EVERYTHING);
 
         } catch (ParseException e) {
             System.out.println(e.getMessage());
             printHelpAndDie(options);
         }
 
-        return new Configuration(inputId, listFile, electionMethod);
+        return new Configuration(inputId, listFile, electionMethod, dropEverything);
     }
 }
