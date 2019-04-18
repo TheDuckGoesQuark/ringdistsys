@@ -1,4 +1,6 @@
-package persistence;
+package globalpersistence;
+
+import java.util.Optional;
 
 /**
  * Instance of database representation of Node
@@ -31,8 +33,8 @@ public class NodeRow {
         return nodeId;
     }
 
-    public Integer getSuccessorId() {
-        return successorId;
+    public Optional<Integer> getSuccessorId() {
+        return Optional.ofNullable(successorId);
     }
 
     public boolean isCoordinator() {

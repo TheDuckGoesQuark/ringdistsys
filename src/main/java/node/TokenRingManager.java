@@ -98,7 +98,6 @@ class TokenRingManager {
 
             try {
                 updateSuccessor(awaitSuccessor(), joining);
-                // TODO main thread is actually handling this message when it comes, so this thread thinks it doesnt get a reply lmaoooo
                 successful = true;
             } catch (TimeoutException timeoutException) {
                 numTries++;

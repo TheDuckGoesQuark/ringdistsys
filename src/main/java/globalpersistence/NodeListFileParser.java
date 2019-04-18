@@ -1,8 +1,6 @@
-package config;
+package globalpersistence;
 
 import com.opencsv.CSVReader;
-import logging.LoggerFactory;
-import node.AddressTranslator;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -13,9 +11,15 @@ import java.util.logging.Logger;
 
 public class NodeListFileParser {
 
-    private final Logger logger = LoggerFactory.getLogger();
-
-    public static AddressTranslator parseNodeFile(String listFilePath, Logger logger) throws IOException {
+    /**
+     * Parses node file csv to map of node ids to their ipv4 addresses and ports
+     *
+     * @param listFilePath path of file containing node list
+     * @param logger       logger for debugging
+     * @return map of node ids to their ipv4 address and ports
+     * @throws IOException if the file cannot be found
+     */
+    public static Map<Integer, InetSocketAddress> parseNodeFile(String listFilePath, Logger logger) throws IOException {
         final Map<Integer, InetSocketAddress> nodes = new HashMap<>();
 
         try (CSVReader csvReader = new CSVReader(new FileReader(listFilePath))) {
@@ -34,7 +38,7 @@ public class NodeListFileParser {
             throw e;
         }
 
-        return new AddressTranslator(nodes);
+        return nodes;
     }
 
 }

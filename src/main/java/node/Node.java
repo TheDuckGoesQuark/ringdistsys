@@ -1,7 +1,8 @@
 package node;
 
 import config.Configuration;
-import config.NodeListFileParser;
+import globalpersistence.DatabaseRingStore;
+import globalpersistence.NodeListFileParser;
 import logging.LoggerFactory;
 import messages.Message;
 import messages.SuccessorMessage;
@@ -9,6 +10,7 @@ import sockets.UDPSocket;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -19,31 +21,22 @@ public class Node {
 
     private final Logger logger = LoggerFactory.getLogger();
     private final Configuration config;
-    private TokenRingManager tokenRingManager;
+    private final ExecutorService executorService;
 
-    private ExecutorService executorService;
-    private UDPSocket udpSocket;
-
-    private AddressTranslator addressTranslator;
+    private final TokenRingManager tokenRingManager;
+    private final UDPSocket udpSocket;
+    private final DatabaseRingStore databaseRingStore;
 
     public Node(Configuration config) throws IOException {
-        this.addressTranslator = NodeListFileParser.parseNodeFile(config.getListFilePath(), logger);
         this.config = config;
         this.executorService = Executors.newCachedThreadPool();
-    }
 
-    private void initializeCommunication() throws IOException {
-        try {
-            logger.info("Initializing sockets");
-            // Starts UDP socket
-            udpSocket = new UDPSocket(addressTranslator, config.getNodeId());
-            tokenRingManager = new TokenRingManager(config, addressTranslator, executorService, udpSocket);
-            tokenRingManager.joinRing();
-        } catch (IOException e) {
-            logger.warning("Failed to initialize sockets.");
-            logger.warning(e.getMessage());
-            throw e;
-        }
+        this.databaseRingStore = new DatabaseRingStore(config.getListFilePath());
+        this.databaseRingStore.initialize();
+
+        final AddressTranslator addressTranslator = new AddressTranslator(this.databaseRingStore.getAllNodes());
+        this.udpSocket = new UDPSocket(addressTranslator, config.getNodeId());
+        this.tokenRingManager = new TokenRingManager(config, addressTranslator, executorService, udpSocket);
     }
 
     /**
@@ -54,7 +47,7 @@ public class Node {
     public void start() throws IOException {
         logger.info(String.format("Initializing node with configuration: %s", config.toString()));
 
-        initializeCommunication();
+        tokenRingManager.joinRing();
 
         final Callable<Void> tokenPassingThread = () -> {
             while (!killswitch()) {

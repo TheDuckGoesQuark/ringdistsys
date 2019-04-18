@@ -1,5 +1,6 @@
 package sockets;
 
+import globalpersistence.NodeRow;
 import messages.Message;
 import messages.MessageType;
 import node.AddressTranslator;
@@ -8,7 +9,9 @@ import org.junit.*;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -19,10 +22,10 @@ public class UDPSocketTest {
 
     @Before
     public void initAddressTranslator() {
-        Map<Integer, InetSocketAddress> map = new HashMap<>();
-        map.put(0, new InetSocketAddress("localhost", 8080));
-        map.put(1, new InetSocketAddress("localhost", 8081));
-        addressTranslator = new AddressTranslator(map);
+        List<NodeRow> nodes = new ArrayList<>();
+        nodes.add(new NodeRow("localhost", 5001, 1, null, false));
+        nodes.add(new NodeRow("localhost", 5000, 0, null, false));
+        addressTranslator = new AddressTranslator(nodes);
     }
 
     @Test

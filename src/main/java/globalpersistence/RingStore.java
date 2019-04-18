@@ -1,11 +1,11 @@
-package persistence;
+package globalpersistence;
 
 import java.util.List;
 
 public interface RingStore {
 
     /**
-     * Initializes database with schema if not already present
+     * Initializes database by inserting local node list if its empty for some reason
      */
     void initialize();
 
@@ -40,5 +40,4 @@ public interface RingStore {
 
 
     // TODO implement with JDBC
-    // TODO replace virtual ring with this bad boy?
 }
