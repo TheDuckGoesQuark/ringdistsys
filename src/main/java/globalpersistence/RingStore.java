@@ -1,6 +1,7 @@
 package globalpersistence;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface RingStore {
 
@@ -38,6 +39,34 @@ public interface RingStore {
      */
     void removeNodeSuccessor(int nodeId);
 
+    /**
+     * Gets a list of all nodes with successors assigned (i.e. those that are part of the ring.)
+     *
+     * @return list of nodes with successors assigned
+     */
+    List<NodeRow> getAllNodesWithSuccessors();
 
-    // TODO implement with JDBC
+    /**
+     * Performs the following:
+     * Succ(newNode) = successorId
+     * Succ(predecessor) = newNode
+     * Which effectively inserts the new node into the ring.
+     *
+     * @param predecessorId node to come before the new node
+     * @param successorId   node to come after the new node
+     * @param newNodeId     node to insert
+     */
+    void insertIntoRing(int predecessorId, int successorId, int newNodeId);
+
+    /**
+     * Performs the following:
+     * Succ(predecessor) = successorId
+     * Succ(nodeToRemove) = NULL
+     * Which effectively removes the node from the ring.
+     *
+     * @param predecessorId node needing new successor
+     * @param successorId   node to be assigned as succ(predecessor)
+     * @param nodeToRemove  node to be removed from ring
+     */
+    void removeFromRing(int predecessorId, int successorId, int nodeToRemove);
 }

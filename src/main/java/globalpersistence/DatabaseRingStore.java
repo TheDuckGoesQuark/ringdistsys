@@ -43,6 +43,11 @@ public class DatabaseRingStore implements RingStore {
             "SELECT n.*, c.coordinatorId FROM " + NODE_TABLE_NAME + " n " +
                     "LEFT JOIN " + COORDINATOR_TABLE_NAME + " c ON c.coordinatorId ";
 
+    private static final String SELECT_ALL_WITH_SUCCESSOR =
+            "SELECT n.*, c.coordinatorId FROM " + NODE_TABLE_NAME + " n " +
+                    "LEFT JOIN " + COORDINATOR_TABLE_NAME + " c ON c.coordinatorId " +
+                    "WHERE n.successorId IS NOT NULL";
+
     private static final String COUNT_NODES =
             "SELECT count(*) as nodeCount FROM " + NODE_TABLE_NAME;
 
@@ -279,5 +284,87 @@ public class DatabaseRingStore implements RingStore {
             logger.warning(e.getMessage());
         }
 
+    }
+
+    @Override
+    public List<NodeRow> getAllNodesWithSuccessors() {
+        final List<NodeRow> nodeRows = new ArrayList<>();
+
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
+
+            ps = conn.prepareStatement(SELECT_ALL_WITH_SUCCESSOR);
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                final Optional<Integer> coordinatorId = getNullableInt("coordinatorId", rs);
+                final String address = rs.getString("address");
+                final int port = rs.getInt("port");
+                final int nodeId = rs.getInt("nodeId");
+                final Integer successorId = getNullableInt("successorId", rs).orElse(null);
+
+                final boolean isCoordinator = coordinatorId.isPresent() && coordinatorId.get() == nodeId;
+                nodeRows.add(new NodeRow(address, port, nodeId, successorId, isCoordinator));
+
+            }
+        } catch (SQLException e) {
+            logger.warning(e.getMessage());
+        } finally {
+            closeQuietly(conn);
+            closeQuietly(ps);
+            closeQuietly(rs);
+        }
+
+        return nodeRows;
+    }
+
+    @Override
+    public void insertIntoRing(int predecessorId, int successorId, int newNodeId) {
+        try (
+                final Connection conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
+                final PreparedStatement ps = conn.prepareStatement(INSERT_SUCCESSOR)
+        ) {
+
+            conn.setAutoCommit(false);
+            ps.setInt(1, successorId); // set successor
+            ps.setInt(2, newNodeId); // For this node
+            ps.addBatch();
+            ps.setInt(1, newNodeId); // set successor
+            ps.setInt(2, predecessorId); // For this node
+            ps.addBatch();
+
+            ps.executeUpdate();
+            conn.commit();
+
+        } catch (SQLException e) {
+            logger.warning(e.getMessage());
+        }
+
+    }
+
+    @Override
+    public void removeFromRing(int predecessorId, int successorId, int nodeToRemove) {
+        try (
+                final Connection conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
+                final PreparedStatement removeStatement = conn.prepareStatement(REMOVE_SUCCESSOR);
+                final PreparedStatement insertStatement = conn.prepareStatement(INSERT_SUCCESSOR)
+        ) {
+
+            conn.setAutoCommit(false);
+            insertStatement.setInt(1, successorId); // set successor
+            insertStatement.setInt(2, predecessorId); // For this node
+
+            removeStatement.setInt(1, nodeToRemove); // Unset successor for this node
+
+            removeStatement.executeUpdate();
+            conn.commit();
+
+        } catch (SQLException e) {
+            logger.warning(e.getMessage());
+        }
     }
 }
