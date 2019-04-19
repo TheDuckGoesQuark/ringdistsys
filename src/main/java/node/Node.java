@@ -5,6 +5,7 @@ import globalpersistence.DatabaseRingStore;
 import globalpersistence.NodeRow;
 import globalpersistence.RingStore;
 import logging.LoggerFactory;
+import messages.CoordinatorMessage;
 import messages.Message;
 import messages.MessageType;
 import messages.SuccessorMessage;
@@ -115,14 +116,20 @@ public class Node {
         // Begin election and token handler on another thread
         executorService.submit((Callable<Void>) () -> {
             while (!killswitch())
-                handleRingMessages();
+                try {
+                    handleRingMessages();
+                } catch (Exception ignored) {
+                }
 
             return null;
         });
 
         // Handle any coordination updates
         while (!killswitch()) {
-            handleCoordinationMessages();
+            try {
+                handleCoordinationMessages();
+            } catch (Exception ignored) {
+            }
         }
 
         end();
@@ -135,6 +142,7 @@ public class Node {
         final Message message = tokenRingManager.receiveFromPredecessor();
 
         if (message == null) {
+            logger.info("Lost connection to predecessor");
             tokenRingManager.updatePredecessor();
         } else {
             switch (message.getType()) {
@@ -155,7 +163,7 @@ public class Node {
     /**
      * Handles coordinator messages for maintaining ring
      */
-    private void handleCoordinationMessages() {
+    private void handleCoordinationMessages() throws IOException {
         logger.info("Waiting for coordinator message");
         final Message message = udpSocket.receiveMessage(5);
 
@@ -165,16 +173,64 @@ public class Node {
             switch (message.getType()) {
                 case JOIN:
                     logger.info("Received join request");
+                    if (isCoordinator()) {
+                        handleJoinRequest(message);
+                    }
                     break;
                 case SUCCESSOR_REQUEST:
                     logger.info("Received successor request");
+                    if (isCoordinator()) {
+                        handleSuccessorRequest(message);
+                    }
                     break;
                 case SUCCESSOR:
                     logger.info("Received successor assignment");
+                    handleSuccessorMessage(message);
                     break;
             }
         }
-        // TODO
+    }
+
+    /**
+     * Assumes requesting node's successor has failed and attempts to fix the ring.
+     *
+     * @param message message containing successor request
+     */
+    private void handleSuccessorRequest(Message message) throws IOException {
+        final int requestingNodeId = message.getSrcId();
+        final List<NodeRow> ringNodes = ringStore.getAllNodesWithSuccessors();
+
+        final Optional<NodeRow> requestingNode = ringNodes.stream()
+                .filter(nodeRow -> nodeRow.getNodeId() == requestingNodeId)
+                .findFirst();
+
+        if (!requestingNode.isPresent()) {
+            logger.warning("Node requesting successor is not part of ring?");
+            return;
+        }
+
+        // Get the id of the node that has failed
+        int lostNodeId = requestingNode.get().getSuccessorId().get();
+
+        // Get the id of the node that came after the failing node
+        int successorOfLostNodeId = ringNodes.stream()
+                .filter(nodeRow -> nodeRow.getNodeId() == lostNodeId)
+                .findFirst().get().getSuccessorId().get();
+
+        // Succ(requestingNode) == succ(lostNode)
+        ringStore.removeFromRing(requestingNodeId, successorOfLostNodeId, lostNodeId);
+
+        sendSuccessorMessage(requestingNodeId, successorOfLostNodeId);
+    }
+
+    /**
+     * Handles successor message
+     *
+     * @param message message
+     */
+    private void handleSuccessorMessage(Message message) throws IOException {
+        final SuccessorMessage successorMessage = message.getPayload(SuccessorMessage.class);
+        this.tokenRingManager.updateSuccessor(successorMessage.getSuccessorId(), false);
     }
 
     /**
@@ -197,7 +253,7 @@ public class Node {
             switch (message.getType()) {
                 case SUCCESSOR:
                     logger.info("Received new successor assignment");
-                    tokenRingManager.updateSuccessor(message.getPayload(SuccessorMessage.class).getSuccessorId());
+                    tokenRingManager.updateSuccessor(message.getPayload(SuccessorMessage.class).getSuccessorId(), true);
                     joined = true;
                     break;
                 case JOIN:

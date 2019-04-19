@@ -74,9 +74,9 @@ class TokenRingManager {
      * @param successor id of new successor
      * @throws IOException
      */
-    void updateSuccessor(int successor) throws IOException {
+    void updateSuccessor(int successor, boolean initial) throws IOException {
         // Await self connection in background if I'm connecting to myself
-        if (successor == config.getNodeId()) {
+        if (initial || successor == config.getNodeId()) {
             executorService.submit((Callable<Void>) () -> {
                 ringSocket.updatePredecessor();
                 return null;

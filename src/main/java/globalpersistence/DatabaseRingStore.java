@@ -361,7 +361,7 @@ public class DatabaseRingStore implements RingStore {
             ps.setInt(2, predecessorId); // For this node
             ps.addBatch();
 
-            ps.executeUpdate();
+            ps.executeBatch();
             conn.commit();
 
         } catch (SQLException e) {

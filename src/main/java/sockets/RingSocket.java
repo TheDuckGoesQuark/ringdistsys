@@ -46,7 +46,7 @@ public class RingSocket {
 
         logger.info("Waiting on predecessor connection");
         predecessorSocket = serverSocket.accept();
-        logger.info(String.format("Predecessor connected from address to %s", predecessorSocket.getLocalSocketAddress().toString()));
+        logger.info(String.format("Predecessor connected from address to %s", predecessorSocket.getRemoteSocketAddress().toString()));
     }
 
     private void sendToSocket(Message message, Socket socket) throws IOException {
