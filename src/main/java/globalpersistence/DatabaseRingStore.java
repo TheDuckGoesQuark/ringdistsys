@@ -384,6 +384,7 @@ public class DatabaseRingStore implements RingStore {
 
             removeStatement.setInt(1, nodeToRemove); // Unset successor for this node
 
+            insertStatement.executeUpdate();
             removeStatement.executeUpdate();
             conn.commit();
 

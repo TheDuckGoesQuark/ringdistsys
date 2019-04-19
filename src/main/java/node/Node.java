@@ -16,15 +16,16 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.logging.Logger;
 
+import static java.lang.Thread.sleep;
 import static messages.MessageType.SUCCESSOR;
 
 
 public class Node {
+
+    private static final int TOKEN_HOLD_TIME_SECS = 3;
 
     private final Logger logger = LoggerFactory.getLogger();
     private final Configuration config;
@@ -33,7 +34,13 @@ public class Node {
     private final TokenRingManager tokenRingManager;
     private final UDPSocket udpSocket;
 
+    private final BlockingQueue<Token> usableTokenQueue = new ArrayBlockingQueue<>(1);
+    private final BlockingQueue<Token> forwardableTokenQueue = new ArrayBlockingQueue<>(1);
+
+    private final Object successorConnectedNotifier = new Object();
+
     private int coordinatorId = 0;
+    private boolean lostCoordinator = false;
 
     public Node(Configuration config) throws IOException {
         this.config = config;
@@ -48,10 +55,6 @@ public class Node {
         this.tokenRingManager = new TokenRingManager(config, addressTranslator, executorService);
 
         this.initializeCoordinator(allNodes);
-    }
-
-    private boolean isCoordinator() {
-        return config.getNodeId() == coordinatorId;
     }
 
     /**
@@ -72,7 +75,12 @@ public class Node {
             // ring is started and set as coordinator before more join
             ringStore.updateCoordinator(config.getNodeId());
             coordinatorId = config.getNodeId();
+            forwardableTokenQueue.add(new Token());
         }
+    }
+
+    private boolean isCoordinator() {
+        return config.getNodeId() == coordinatorId;
     }
 
     /**
@@ -125,10 +133,24 @@ public class Node {
         });
 
         // Handle any coordination updates
+        executorService.submit((Callable<Void>) () -> {
+            while (!killswitch()) {
+                try {
+                    handleCoordinationMessages();
+                } catch (Exception ignored) {
+                }
+            }
+            return null;
+        });
+
         while (!killswitch()) {
             try {
-                handleCoordinationMessages();
-            } catch (Exception ignored) {
+                logger.info("Waiting for token...");
+                final Token token = usableTokenQueue.take();
+                logger.info("Used token :)");
+                forwardableTokenQueue.put(token);
+            } catch (InterruptedException e) {
+                break;
             }
         }
 
@@ -138,7 +160,13 @@ public class Node {
     /**
      * Handles token passing and election messages
      */
-    private void handleRingMessages() throws IOException {
+    private void handleRingMessages() throws IOException, InterruptedException {
+        if (!forwardableTokenQueue.isEmpty()) {
+            logger.info("Retrying token send");
+            forwardableTokenQueue.take();
+            forwardToken();
+        }
+
         final Message message = tokenRingManager.receiveFromPredecessor();
 
         if (message == null) {
@@ -151,12 +179,95 @@ public class Node {
                     break;
                 case COORDINATOR:
                     logger.info("Received coordinator message");
+                    handleCoordinatorMessage(message);
                     break;
                 case TOKEN:
                     logger.info("Received token");
+                    handleToken();
                     break;
             }
         }
+    }
+
+    /**
+     * Assigns the elected coordinator
+     *
+     * @param message message containing new coordinator
+     */
+    private void handleCoordinatorMessage(Message message) {
+        CoordinatorMessage coordinatorMessage = message.getPayload(CoordinatorMessage.class);
+        coordinatorId = coordinatorMessage.getCoordinatorId();
+
+        if (isCoordinator()) {
+            ringStore.updateCoordinator(coordinatorId);
+        }
+    }
+
+    /**
+     * Holds onto the token
+     */
+    private void handleToken() throws IOException, InterruptedException {
+        try {
+            tokenRingManager.sendTokenAck();
+        } catch (IOException e) {
+            logger.warning("Failed to send ack, assuming predecessor has failed");
+            tokenRingManager.updatePredecessor();
+        } finally {
+            usableTokenQueue.put(new Token());
+        }
+
+        sleep(TOKEN_HOLD_TIME_SECS * 1000);
+
+        logger.info("Waiting on main thread to finish using token");
+        forwardableTokenQueue.take();
+        forwardToken();
+    }
+
+    /**
+     * Attempts to forward token and handles successor failure if it occurs
+     *
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    private void forwardToken() throws IOException, InterruptedException {
+        logger.info("Attempting to forward token");
+        boolean successful = tokenRingManager.forwardToken();
+
+        if (!successful) {
+            logger.warning("Lost connection to successor");
+            handleLostSuccessor();
+            logger.info("Returning token to forwarding queue");
+            forwardableTokenQueue.put(new Token());
+        }
+    }
+
+    /**
+     * Handles a lost successor. If successor was the coordinator, then an election will have to take place first.
+     * Then or otherwise, a new successor will be requested
+     *
+     * @throws IOException :(
+     */
+    private void handleLostSuccessor() throws IOException, InterruptedException {
+        if (tokenRingManager.getSuccessorId() == coordinatorId) {
+            // Act as coordinator to and update self to connect to succ(lostCoordinator)
+            handleSuccessorRequest(config.getNodeId());
+            lostCoordinator = true;
+        } else {
+            // Ask coordinator for new successor
+            requestSuccessor(false);
+        }
+
+        // Wait until other thread tells us we're connected again
+        synchronized (successorConnectedNotifier) {
+            successorConnectedNotifier.wait();
+        }
+
+        if (lostCoordinator) {
+            beginElection();
+        }
+    }
+
+    private void beginElection() {
         // TODO
     }
 
@@ -180,12 +291,15 @@ public class Node {
                 case SUCCESSOR_REQUEST:
                     logger.info("Received successor request");
                     if (isCoordinator()) {
-                        handleSuccessorRequest(message);
+                        handleSuccessorRequest(message.getSrcId());
                     }
                     break;
                 case SUCCESSOR:
                     logger.info("Received successor assignment");
                     handleSuccessorMessage(message);
+                    synchronized (successorConnectedNotifier) {
+                        successorConnectedNotifier.notifyAll();
+                    }
                     break;
             }
         }
@@ -194,10 +308,9 @@ public class Node {
     /**
      * Assumes requesting node's successor has failed and attempts to fix the ring.
      *
-     * @param message message containing successor request
+     * @param requestingNodeId id of node requesting successor
      */
-    private void handleSuccessorRequest(Message message) throws IOException {
-        final int requestingNodeId = message.getSrcId();
+    private void handleSuccessorRequest(int requestingNodeId) throws IOException {
         final List<NodeRow> ringNodes = ringStore.getAllNodesWithSuccessors();
 
         final Optional<NodeRow> requestingNode = ringNodes.stream()

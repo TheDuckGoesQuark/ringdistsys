@@ -20,6 +20,8 @@ class TokenRingManager {
     private final ExecutorService executorService;
     private final RingSocket ringSocket;
 
+    private int successorId = 0;
+
     TokenRingManager(Configuration config, AddressTranslator addressTranslator, ExecutorService executorService) throws IOException {
         this.ringSocket = new RingSocket(config.getNodeId(), addressTranslator);
         this.config = config;
@@ -85,6 +87,7 @@ class TokenRingManager {
 
         // Connect to successor
         ringSocket.updateSuccessor(successor);
+        successorId = successor;
     }
 
     void cleanup() throws IOException {
@@ -108,5 +111,9 @@ class TokenRingManager {
      */
     public void updatePredecessor() throws IOException {
         ringSocket.updatePredecessor();
+    }
+
+    public int getSuccessorId() {
+        return successorId;
     }
 }

@@ -69,4 +69,5 @@ public interface RingStore {
      * @param nodeToRemove  node to be removed from ring
      */
     void removeFromRing(int predecessorId, int successorId, int nodeToRemove);
+
 }

@@ -52,7 +52,8 @@ public class UDPSocket {
                 new DatagramPacket(new byte[BUFFER_SIZE], 0, BUFFER_SIZE);
 
         try {
-            if (timeoutSecs != null) datagramSocket.setSoTimeout(timeoutSecs * 1000);
+            if (timeoutSecs != null)
+                datagramSocket.setSoTimeout(timeoutSecs * 1000);
 
             datagramSocket.receive(packet);
             return Message.fromBytes(packet.getData());

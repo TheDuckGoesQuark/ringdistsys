@@ -16,6 +16,7 @@ public class Main {
         try {
             node.start();
         } catch (Exception e) {
+            e.printStackTrace();
             node.end();
         }
     }
