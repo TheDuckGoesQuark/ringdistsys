@@ -2,6 +2,7 @@ package node.electionhandlers;
 
 import globalpersistence.VirtualNode;
 import globalpersistence.RingStore;
+import logging.LoggerFactory;
 import messages.Message;
 import messages.election.ElectionMessageHeader;
 import messages.election.bully.CoordinatorMessage;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.logging.Logger;
 
 import static java.lang.Thread.sleep;
 import static messages.MessageType.*;
@@ -22,6 +24,7 @@ public class BullyElectionHandler implements ElectionHandler {
     private static final int SECONDS_BEFORE_ASSUMING_VICTORY = 3;
     private static final int SECONDS_BEFORE_RETRYING = 3;
 
+    private final Logger logger = LoggerFactory.getLogger();
     private final RingStore ringStore;
     private final UDPSocket udpSocket;
     private final int thisNodeId;
@@ -54,6 +57,7 @@ public class BullyElectionHandler implements ElectionHandler {
 
     @Override
     public void startElection() throws IOException {
+        logger.info("Starting bully election");
         sendSelfAsCandidate();
         resetFlags();
         ongoing = true;
@@ -90,6 +94,8 @@ public class BullyElectionHandler implements ElectionHandler {
      * @throws IOException if unable to broadcast
      */
     private void assumeSelfWon() throws IOException {
+        logger.info("Electing self as coordinator");
+
         electedCoordinatorId = thisNodeId;
         ongoing = false;
 
@@ -108,9 +114,7 @@ public class BullyElectionHandler implements ElectionHandler {
         final Message message = new Message(COORDINATOR_ELECTION, thisNodeId, header);
 
         for (VirtualNode node : allNodes) {
-            if (node.getNodeId() != thisNodeId) {
-                udpSocket.sendMessage(message, node.getNodeId());
-            }
+            udpSocket.sendMessage(message, node.getNodeId());
         }
     }
 

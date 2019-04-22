@@ -345,6 +345,9 @@ public class Node {
                         successorConnectedNotifier.notifyAll();
                     }
                     break;
+                case COORDINATOR_ELECTION:
+                    handleElectionMessage(message);
+                    break;
             }
         }
     }

@@ -433,7 +433,7 @@ public class DatabaseRingStore implements RingStore {
         try {
             conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
 
-            ps = conn.prepareStatement(SELECT_ALL_WITH_SUCCESSOR);
+            ps = conn.prepareStatement(SELECT_ALL_WITH_SUCCESSOR_AND_IDS_GREATER_THAN);
             ps.setInt(1, minId);
             rs = ps.executeQuery();
 
