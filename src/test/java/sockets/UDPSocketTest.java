@@ -4,15 +4,12 @@ import globalpersistence.NodeRow;
 import messages.Message;
 import messages.MessageType;
 import node.AddressTranslator;
-import node.ElectionMethod;
+import node.electionhandlers.ElectionMethod;
 import org.junit.*;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -29,7 +26,7 @@ public class UDPSocketTest {
     }
 
     @Test
-    public void sendAndReceiveMessage() throws IOException, ClassNotFoundException {
+    public void sendAndReceiveMessage() throws IOException {
         UDPSocket srcSocket = null;
         UDPSocket destSocket = null;
 
@@ -37,7 +34,7 @@ public class UDPSocketTest {
             srcSocket = new UDPSocket(addressTranslator, 1);
             destSocket = new UDPSocket(addressTranslator, 0);
 
-            Message message = new Message(MessageType.OK, ElectionMethod.RING_BASED, 1);
+            Message message = new Message(MessageType.JOIN, 1);
             srcSocket.sendMessage(message, 0);
 
             Message receivedMessage = destSocket.receiveMessage(1);

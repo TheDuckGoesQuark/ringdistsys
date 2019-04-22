@@ -5,11 +5,13 @@ import globalpersistence.DatabaseRingStore;
 import globalpersistence.NodeRow;
 import globalpersistence.RingStore;
 import logging.LoggerFactory;
-import messages.CoordinatorMessage;
 import messages.Message;
 import messages.MessageType;
 import messages.SuccessorMessage;
+import messages.election.ElectionMessageHeader;
+import node.electionhandlers.*;
 import sockets.UDPSocket;
+import util.Token;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,16 +33,16 @@ public class Node {
     private final Configuration config;
     private final ExecutorService executorService;
     private final RingStore ringStore;
-    private final TokenRingManager tokenRingManager;
+    private final RingCommunicationHandler ringComms;
     private final UDPSocket udpSocket;
 
     private final BlockingQueue<Token> usableTokenQueue = new ArrayBlockingQueue<>(1);
     private final BlockingQueue<Token> forwardableTokenQueue = new ArrayBlockingQueue<>(1);
-
     private final Object successorConnectedNotifier = new Object();
 
     private int coordinatorId = 0;
     private boolean lostCoordinator = false;
+    private ElectionHandler currentElectionHandler;
 
     public Node(Configuration config) throws IOException {
         this.config = config;
@@ -52,7 +54,7 @@ public class Node {
         final List<NodeRow> allNodes = this.ringStore.getAllNodes();
         final AddressTranslator addressTranslator = new AddressTranslator(allNodes);
         this.udpSocket = new UDPSocket(addressTranslator, config.getNodeId());
-        this.tokenRingManager = new TokenRingManager(config, addressTranslator, executorService);
+        this.ringComms = new RingCommunicationHandler(config, addressTranslator, executorService);
 
         this.initializeCoordinator(allNodes);
     }
@@ -104,7 +106,7 @@ public class Node {
         if (udpSocket != null)
             this.udpSocket.close();
 
-        tokenRingManager.cleanup();
+        ringComms.cleanup();
 
         executorService.shutdown();
 
@@ -126,7 +128,9 @@ public class Node {
             while (!killswitch())
                 try {
                     handleRingMessages();
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    logger.warning(e.getMessage());
                 }
 
             return null;
@@ -137,7 +141,9 @@ public class Node {
             while (!killswitch()) {
                 try {
                     handleCoordinationMessages();
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    logger.warning(e.getMessage());
                 }
             }
             return null;
@@ -145,9 +151,8 @@ public class Node {
 
         while (!killswitch()) {
             try {
-                logger.info("Waiting for token...");
                 final Token token = usableTokenQueue.take();
-                logger.info("Used token :)");
+                logger.info("Holding token.");
                 forwardableTokenQueue.put(token);
             } catch (InterruptedException e) {
                 break;
@@ -167,22 +172,29 @@ public class Node {
             forwardToken();
         }
 
-        final Message message = tokenRingManager.receiveFromPredecessor();
+        final Message message = ringComms.receiveFromPredecessor();
 
         if (message == null) {
             logger.info("Lost connection to predecessor");
-            tokenRingManager.updatePredecessor();
+
+//            if (ringComms.getSuccessorId() != config.getNodeId() && ringStore.getSizeOfRing() == 2) {
+//                // COUNT == 2 occurs when:
+//                // * connected to self and new node joins,
+//                // * ring contains me and other node, and that other node has failed
+//                // In first case, we just want to listen for a new predecessor, thus we
+//                // check if we're connected to self first
+//                logger.warning("AHHAHASDASHD FUCK");
+//                handleLostSuccessor();
+//            } else {
+                ringComms.updatePredecessor();
+//            }
         } else {
+            logger.info(String.format("Receive from %d : %s", message.getSrcId(), message.toString()));
             switch (message.getType()) {
-                case ELECTION:
-                    logger.info("Received election message");
-                    break;
-                case COORDINATOR:
-                    logger.info("Received coordinator message");
-                    handleCoordinatorMessage(message);
+                case COORDINATOR_ELECTION:
+                    handleElectionMessage(message);
                     break;
                 case TOKEN:
-                    logger.info("Received token");
                     handleToken();
                     break;
             }
@@ -190,35 +202,76 @@ public class Node {
     }
 
     /**
-     * Assigns the elected coordinator
+     * Handles the election method based on the election method
      *
-     * @param message message containing new coordinator
+     * @param message message containing election message
      */
-    private void handleCoordinatorMessage(Message message) {
-        CoordinatorMessage coordinatorMessage = message.getPayload(CoordinatorMessage.class);
-        coordinatorId = coordinatorMessage.getCoordinatorId();
+    private void handleElectionMessage(Message message) throws IOException {
+        final ElectionMethod electionMethod = message.getPayload(ElectionMessageHeader.class).getElectionMethod();
 
-        if (isCoordinator()) {
-            ringStore.updateCoordinator(coordinatorId);
+        // Assign election handler if not already previously done so, or reassign to handle this new election
+        if (currentElectionHandler == null || currentElectionHandler.getMethodName() != electionMethod) {
+            assignHandlerForMethod(electionMethod);
+        }
+
+        currentElectionHandler.handleMessage(message);
+
+        // Check if an election result has been obtained from the previous message
+        if (currentElectionHandler.electionConcluded()) {
+            coordinatorId = currentElectionHandler.getResult();
+            logger.info(String.format("Election concluded, new coordinator: %d", coordinatorId));
+
+            if (isCoordinator()) {
+                ringStore.updateCoordinator(coordinatorId);
+            }
         }
     }
 
     /**
-     * Holds onto the token
+     * Assigns this nodes election handler to the handler for the given election method
+     *
+     * @param method election method to be used
+     */
+    private void assignHandlerForMethod(ElectionMethod method) {
+        switch (method) {
+            case RING_BASED:
+                currentElectionHandler = new RingBasedElectionHandler(ringComms, config.getNodeId());
+                break;
+            case CHANG_ROBERTS:
+                currentElectionHandler = new ChangeRobertsElectionHandler(ringComms, config.getNodeId());
+                break;
+            case BULLY:
+                currentElectionHandler = new BullyElectionHandler(ringComms, udpSocket, config.getNodeId());
+                break;
+            default:
+                logger.warning("Unknown election type.");
+                currentElectionHandler = null;
+        }
+    }
+
+    /**
+     * Begins the election based on the configured election method
+     */
+    private void beginElection() throws IOException {
+        assignHandlerForMethod(config.getElectionMethod());
+        currentElectionHandler.startElection();
+    }
+
+    /**
+     * Acknowledges token message, and holds onto it until the consuming thread returns it.
      */
     private void handleToken() throws IOException, InterruptedException {
         try {
-            tokenRingManager.sendTokenAck();
+            ringComms.sendTokenAck();
         } catch (IOException e) {
             logger.warning("Failed to send ack, assuming predecessor has failed");
-            tokenRingManager.updatePredecessor();
+            ringComms.updatePredecessor();
         } finally {
             usableTokenQueue.put(new Token());
         }
 
         sleep(TOKEN_HOLD_TIME_SECS * 1000);
 
-        logger.info("Waiting on main thread to finish using token");
         forwardableTokenQueue.take();
         forwardToken();
     }
@@ -230,14 +283,15 @@ public class Node {
      * @throws InterruptedException
      */
     private void forwardToken() throws IOException, InterruptedException {
-        logger.info("Attempting to forward token");
-        boolean successful = tokenRingManager.forwardToken();
+        boolean successful = ringComms.forwardToken();
 
         if (!successful) {
             logger.warning("Lost connection to successor");
             handleLostSuccessor();
             logger.info("Returning token to forwarding queue");
             forwardableTokenQueue.put(new Token());
+        } else {
+            logger.info("Token forwarded");
         }
     }
 
@@ -248,7 +302,7 @@ public class Node {
      * @throws IOException :(
      */
     private void handleLostSuccessor() throws IOException, InterruptedException {
-        if (tokenRingManager.getSuccessorId() == coordinatorId) {
+        if (ringComms.getSuccessorId() == coordinatorId) {
             // Act as coordinator to and update self to connect to succ(lostCoordinator)
             handleSuccessorRequest(config.getNodeId());
             lostCoordinator = true;
@@ -267,35 +321,26 @@ public class Node {
         }
     }
 
-    private void beginElection() {
-        // TODO
-    }
-
     /**
      * Handles coordinator messages for maintaining ring
      */
     private void handleCoordinationMessages() throws IOException {
-        logger.info("Waiting for coordinator message");
         final Message message = udpSocket.receiveMessage(5);
 
-        if (message == null) {
-            logger.info("Nothing received...");
-        } else {
+        if (message != null) {
+            logger.info(String.format("Received from %d : %s ", message.getSrcId(), message.toString()));
             switch (message.getType()) {
                 case JOIN:
-                    logger.info("Received join request");
                     if (isCoordinator()) {
                         handleJoinRequest(message);
                     }
                     break;
                 case SUCCESSOR_REQUEST:
-                    logger.info("Received successor request");
                     if (isCoordinator()) {
                         handleSuccessorRequest(message.getSrcId());
                     }
                     break;
                 case SUCCESSOR:
-                    logger.info("Received successor assignment");
                     handleSuccessorMessage(message);
                     synchronized (successorConnectedNotifier) {
                         successorConnectedNotifier.notifyAll();
@@ -343,7 +388,7 @@ public class Node {
      */
     private void handleSuccessorMessage(Message message) throws IOException {
         final SuccessorMessage successorMessage = message.getPayload(SuccessorMessage.class);
-        this.tokenRingManager.updateSuccessor(successorMessage.getSuccessorId(), false);
+        this.ringComms.updateSuccessor(successorMessage.getSuccessorId(), false);
     }
 
     /**
@@ -362,21 +407,18 @@ public class Node {
             final Message message = udpSocket.receiveMessage(3);
 
             if (message == null) continue;
+            logger.info(String.format("Received from %d : %s", message.getSrcId(), message.toString()));
 
             switch (message.getType()) {
                 case SUCCESSOR:
-                    logger.info("Received new successor assignment");
-                    tokenRingManager.updateSuccessor(message.getPayload(SuccessorMessage.class).getSuccessorId(), true);
+                    ringComms.updateSuccessor(message.getPayload(SuccessorMessage.class).getSuccessorId(), true);
                     joined = true;
                     break;
                 case JOIN:
-                    logger.info("Received successor request");
                     if (this.isCoordinator() && message.getSrcId() == config.getNodeId()) {
                         this.handleJoinRequest(message);
                     }
                     break;
-                default:
-                    logger.info("Received irrelevant message: " + message.getType().name());
             }
         }
     }
@@ -389,7 +431,7 @@ public class Node {
     private void requestSuccessor(boolean joining) throws IOException {
         logger.info("Requesting successor from coordinator " + coordinatorId);
         final MessageType messageType = joining ? MessageType.JOIN : MessageType.SUCCESSOR_REQUEST;
-        final Message request = new Message(messageType, config.getElectionMethod(), config.getNodeId());
+        final Message request = new Message(messageType, config.getNodeId());
 
         udpSocket.sendMessage(request, coordinatorId);
     }
@@ -402,7 +444,6 @@ public class Node {
      * @throws IOException something goes wrong while sending reply or connecting to DB
      */
     private void handleJoinRequest(Message request) throws IOException {
-        logger.info("Handling successor request");
         List<NodeRow> allNodes = ringStore.getAllNodesWithSuccessors();
 
         int requestingNodeId = request.getSrcId();
@@ -434,7 +475,7 @@ public class Node {
      */
     private void sendSuccessorMessage(int nodeId, int newSuccessorId) throws IOException {
         final SuccessorMessage successorMessage = new SuccessorMessage(newSuccessorId);
-        final Message reply = new Message(SUCCESSOR, config.getElectionMethod(), config.getNodeId(), successorMessage);
+        final Message reply = new Message(SUCCESSOR, config.getNodeId(), successorMessage);
         udpSocket.sendMessage(reply, nodeId);
     }
 

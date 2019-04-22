@@ -30,6 +30,8 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{grffile}
+\usepackage{listings}
+\usepackage{placeins}
 
 \begin{document}
 
@@ -93,13 +95,31 @@ To demonstrate an understanding of leader election and mutual exclusion in distr
 
 \section{Initial Set-up}
 
-Java 8 was chosen for this project due to it's friendly socket API, and Maven \cite{maven} was used as the build tool. TDD was implemented with JUnit4 as the the test suite framework.
-
-The project was started with the intention of implementing the bully algorithm as an extension, as it provided fault tolerance with low overhead, but also to provide the option to use the ring based algorithm for comparison.
+Java 8 was chosen for this project due to it's friendly socket API, and Maven \cite{maven} was used as the build tool. 
 
 \subsection{Configuration}
 
-Since each node would be running on an isolated machine, the planned testing environment would involve using \emph{ssh} to start the nodes remotely. Providing the configuration as command line arguments was considered simpler than other methods, and was implemented using the Apache Commons CLI library \cite{apachecli}.
+Since each node would be running on an isolated machine, the planned testing environment would involve using \emph{ssh} to start the nodes remotely. Providing the configuration as command line arguments was considered simpler than other methods, and was implemented using the Apache Commons CLI library \cite{apachecli}. 
+
+In order to run the program, the arguments shown in table \ref{tbl:arguments} had to be specified. The purpose of each argument is explained later.
+
+\renewcommand{\arraystretch}{1.5}
+\begin{table}[!ht]
+\begin{tabular}{l l}
+	\multicolumn{2}{}{}
+\begin{lstlisting}[breaklines=true]
+usage: java -jar <program>.jar
+\end{lstlisting} 
+\\ 
+
+ -d,--drop           &  Include if this node should trigger a database refresh. \\
+ -e,--election $\langle$arg$\rangle$ &  Election method to use. \\
+ -f,--list $\langle$arg$\rangle$     &  Path to file containing list of nodes (resource P). \\
+ -i,--id $\langle$arg$\rangle$       &  ID of this node. 
+\end{tabular}
+\caption{Arguments for running application.}
+\label{tbl:arguments}
+\end{table}
 
 \subsection{Sockets}
 
@@ -115,6 +135,7 @@ Due to different patterns of communication during recovery and regular message p
 \begin{enumerate}
     \item Low communication overhead allows for messages to be sent to multiple nodes quickly, improving recovery time from node failure.
     \item No session maintenance allows coordinator to handle more members in the ring.
+    \item Multicast communication possible which would greatly simplify broadcasting.
 \end{enumerate}
 
 \begin{figure}[!h]
@@ -144,15 +165,6 @@ joining protocol is similiar to that described in \cite{join}, and is shown in F
 Figure \ref{fig:bigjoin} shows how the state of each connection changes over the course of
 the joining procedure.
 
-\noindent When node J wants to join the ring:
-\begin{enumerate}
-    \item J sends join request to coordinator C.
-    \item C sends successor to J, telling it to connect to B.
-    \item C sends successor to A, telling it to connect to J. 
-    \item A disconnects from B, B begins listening for new predecessor.
-    \item J connects to B, A connects to J.
-\end{enumerate}
-
 \begin{figure}[!ht]
 \centering
   \centering
@@ -160,7 +172,6 @@ the joining procedure.
   \caption{Joining protocol over time, with topology shown on right.}
 \label{fig:join}
 \end{figure}
-
 
 \begin{figure}[!ht]
   \centering
@@ -171,30 +182,32 @@ arrows represent ongoing and pending connections respectively. Either A or
 B can be the coordinator in this scenario.}
 \label{fig:bigjoin}
 \end{figure}
+\FloatBarrier
+
+\noindent When node J wants to join the ring:
+\begin{enumerate}
+    \item J sends join request to coordinator C.
+    \item C sends successor to J, telling it to connect to B.
+    \item C sends successor to A, telling it to connect to J. 
+    \item A disconnects from B, B begins listening for new predecessor.
+    \item J connects to B, A connects to J.
+\end{enumerate}
 
 In order for this process to work for a ring network with a single node,
 it required another thread to wait on the connection, and the main thread
 would then request the connection to itself. For two nodes and more the
 joining node would be able to first connect to its new successor once its
-predecessor had disconnected from its old successor as shown in figure \ref{fig:bigjoin}.
-
-The coordinator maintains a virtual representation of the network ring
-in terms of IDs, and keeps track of the last added node. When a new node
-joins, the connection occurs between itself and the last node that was added.
-A different heuristic could be used to determine whereabouts the new node
-should be inserted into the ring such as %TODO EXPLORE HEURISTICS
+predecessor had disconnected from its old successor as shown in figure \ref{fig:bigjoin}. 
 
 \subsection{General Node Recovery}
 
-Node failure is detected whenever either the predecessor or successor of the
-failing node attempts to write or read to the relevant TCP socket. The
-predecessor is likely first to discover the failure, as they read from the socket
-until the token is available. The successor will notice either when it tries to
-forward the token or when it tries to send a keepalive.
+When designing a distributed system, it should be assumed that failure will occur, and so as an extension this implementation included a mechanism for recovering from failure. Node failure is detected by either:
+\begin{enumerate}
+	\item a node attempting to read the socket connected to its predecessor.
+	\item a node forwarding the token to its successor and not receiving an acknowledgement within a given timeframe.
+\end{enumerate}
 
-The successor of the failing node will simply begin listening for a new
-predecessor. The predecessor of the failing node will request a new successor
-from the coordinator node. The coordinator will then reply with the ID of the node after the failed node for the predeccessor to connect to, at which point normal network behaviour can resume. Figure \ref{fig:failure} shows the topology change when a node fails.
+When a failure is detected by the successor of a failing node, it will simply begin listening for a new predecessor. Once the predecessor of the failing node detects the loss of connection, it will request a new successor from the coordinator node. The coordinator will then reply with the ID of the node after the failed node for the original predeccessor to connect to, at which point normal network behaviour can resume. Figure \ref{fig:failure} shows the topology change when a node fails.
 
 \begin{figure}[!ht]
 	\centering
@@ -203,11 +216,11 @@ from the coordinator node. The coordinator will then reply with the ID of the no
 	\label{fig:failure}
 \end{figure}
 
-Since TCP sockets do not provide a method for confirming that a token has been received by next node in the ring at the application level, an acknowledgement mechanism was included in token passing.
+The token acknowledgement message is the only occurence of communication in the reverse direction of the ring topology. The predecessor of the failing node will hold onto the token until it is assigned a new successor, and only releases the token once it has received the acknowlegement from it. This limits the number of situtations that can result in the loss of the token. If somehow the token is acknowledged but the message does not reach the predecessor in time, it could be possible for two tokens to then be in circulation. %TODO was this addressed?
 
 \section{Leader/Coordinator Election}
 
-% LIMITATION: Cant have multiple nodes start up at the same time since node assumes itself coordinator
+% TODO LIMITATION: Cant have multiple nodes start up at the same time since node assumes itself coordinator
 
 \section{Receive/Send Posts}
 

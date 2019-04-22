@@ -1,6 +1,6 @@
 package config;
 
-import node.ElectionMethod;
+import node.electionhandlers.ElectionMethod;
 import org.apache.commons.cli.*;
 
 
@@ -19,11 +19,11 @@ public class ArgumentParser {
         nodeId.setType(Number.class);
         options.addOption(nodeId);
 
-        Option list = new Option("f", LIST_FILE, true, "path to file containing list of nodes (resource P)");
+        Option list = new Option("f", LIST_FILE, true, "Path to file containing list of nodes (resource P)");
         list.setRequired(true);
         options.addOption(list);
 
-        Option elec = new Option("e", ELECTION_METHOD, true, "Election method to use (Ring/ChangRoberts/Bully)");
+        Option elec = new Option("e", ELECTION_METHOD, true, "Election method to use (RING_BASED/CHANG_ROBERTS/BULLY)");
         elec.setRequired(true);
         options.addOption(elec);
 

@@ -11,7 +11,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
 
-class TokenRingManager {
+/**
+ * Provides an abstraction for using the ringsocket class
+ */
+public class RingCommunicationHandler {
 
     private static final int DEFAULT_JITTER = 3;
 
@@ -22,7 +25,7 @@ class TokenRingManager {
 
     private int successorId = 0;
 
-    TokenRingManager(Configuration config, AddressTranslator addressTranslator, ExecutorService executorService) throws IOException {
+    RingCommunicationHandler(Configuration config, AddressTranslator addressTranslator, ExecutorService executorService) throws IOException {
         this.ringSocket = new RingSocket(config.getNodeId(), addressTranslator);
         this.config = config;
         this.executorService = executorService;
@@ -46,7 +49,7 @@ class TokenRingManager {
      */
     public boolean forwardToken() {
         logger.info("Forwarding token");
-        final Message message = new Message(MessageType.TOKEN, config.getElectionMethod(), config.getNodeId());
+        final Message message = new Message(MessageType.TOKEN, config.getNodeId());
 
         boolean exceptionThrown = false;
         try {
@@ -65,7 +68,7 @@ class TokenRingManager {
      */
     public void sendTokenAck() throws IOException {
         logger.info("Sending token ACK");
-        final Message tokenAck = new Message(MessageType.TOKEN_ACK, config.getElectionMethod(), config.getNodeId());
+        final Message tokenAck = new Message(MessageType.TOKEN_ACK, config.getNodeId());
         this.ringSocket.sendToPredeccesor(tokenAck);
     }
 
@@ -102,6 +105,10 @@ class TokenRingManager {
      */
     public Message receiveFromPredecessor() {
         return ringSocket.receiveFromPredecessor(null);
+    }
+
+    public void sendToSuccessor(Message message) throws IOException {
+        ringSocket.sendToSuccessor(message);
     }
 
     /**

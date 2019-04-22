@@ -1,9 +1,8 @@
 package messages;
 
-import node.ElectionMethod;
+import node.electionhandlers.ElectionMethod;
 
 import java.io.*;
-import java.util.Optional;
 
 public class Message implements Serializable {
 
@@ -11,10 +10,6 @@ public class Message implements Serializable {
      * Type of message being sent
      */
     private final MessageType type;
-    /**
-     * Election method that should be used to interpret message
-     */
-    private final ElectionMethod electionMethod;
     /**
      * ID of node that sent message
      */
@@ -25,16 +20,14 @@ public class Message implements Serializable {
      */
     private final Object payload;
 
-    public Message(MessageType type, ElectionMethod electionMethod, int srcId) {
+    public Message(MessageType type, int srcId) {
         this.type = type;
-        this.electionMethod = electionMethod;
         this.srcId = srcId;
         this.payload = null;
     }
 
-    public Message(MessageType type, ElectionMethod electionMethod, int srcId, Object payload) {
+    public Message(MessageType type, int srcId, Object payload) {
         this.type = type;
-        this.electionMethod = electionMethod;
         this.srcId = srcId;
         this.payload = payload;
     }
@@ -49,10 +42,6 @@ public class Message implements Serializable {
 
     public <T> T getPayload(Class<T> clazz) {
         return (T) payload;
-    }
-
-    public ElectionMethod getElectionMethod() {
-        return electionMethod;
     }
 
     public byte[] toBytes() throws IOException {
@@ -77,7 +66,6 @@ public class Message implements Serializable {
         final String payloadStr = payload == null ? "null" : payload.toString();
         return "Message{" +
                 "type=" + type +
-                ", electionMethod=" + electionMethod +
                 ", srcId=" + srcId +
                 ", payload=" + payload +
                 '}';

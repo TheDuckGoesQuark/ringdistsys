@@ -47,6 +47,13 @@ public interface RingStore {
     List<NodeRow> getAllNodesWithSuccessors();
 
     /**
+     * Gets the number of nodes with successors (i.e. the number of nodes that are part of the ring.)
+     *
+     * @return the number of nodes in the ring
+     */
+    int getSizeOfRing();
+
+    /**
      * Performs the following:
      * Succ(newNode) = successorId
      * Succ(predecessor) = newNode

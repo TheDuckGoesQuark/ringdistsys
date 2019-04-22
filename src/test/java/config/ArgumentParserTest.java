@@ -1,6 +1,6 @@
 package config;
 
-import node.ElectionMethod;
+import node.electionhandlers.ElectionMethod;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.ExpectedSystemExit;

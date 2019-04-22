@@ -1,4 +1,4 @@
-package node;
+package util;
 
 public final class Token {
 }

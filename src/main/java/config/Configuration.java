@@ -1,6 +1,6 @@
 package config;
 
-import node.ElectionMethod;
+import node.electionhandlers.ElectionMethod;
 
 public class Configuration {
 

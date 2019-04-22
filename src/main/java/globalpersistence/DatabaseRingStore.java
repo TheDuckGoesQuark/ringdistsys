@@ -54,6 +54,10 @@ public class DatabaseRingStore implements RingStore {
     private static final String COUNT_NODES =
             "SELECT count(*) as nodeCount FROM " + NODE_TABLE_NAME;
 
+    private static final String COUNT_NODES_IN_RING =
+            "SELECT count(*) as nodeCount FROM " + NODE_TABLE_NAME + " " +
+                    "WHERE successorId IS NOT NULL";
+
     private static final String INSERT_NODE =
             "INSERT INTO " + NODE_TABLE_NAME + " VALUES (?, ?, ?, NULL)";
 
@@ -216,6 +220,7 @@ public class DatabaseRingStore implements RingStore {
                 insertNodesFromFile(conn);
             }
         } catch (SQLException | IOException e) {
+            e.printStackTrace();
             logger.warning(e.getMessage());
         } finally {
             closeQuietly(conn);
@@ -249,6 +254,7 @@ public class DatabaseRingStore implements RingStore {
 
             }
         } catch (SQLException e) {
+            e.printStackTrace();
             logger.warning(e.getMessage());
         } finally {
             closeQuietly(conn);
@@ -272,6 +278,7 @@ public class DatabaseRingStore implements RingStore {
             ps.executeUpdate();
 
         } catch (SQLException e) {
+            e.printStackTrace();
             logger.warning(e.getMessage());
         }
     }
@@ -344,6 +351,23 @@ public class DatabaseRingStore implements RingStore {
         }
 
         return nodeRows;
+    }
+
+    @Override
+    public int getSizeOfRing() {
+        int count = 0;
+        try (
+                final Connection conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
+                final PreparedStatement nodeExistQuery = conn.prepareStatement(COUNT_NODES_IN_RING);
+                final ResultSet rs = nodeExistQuery.executeQuery()
+        ) {
+            rs.next();
+            count = rs.getInt("nodeCount");
+        } catch (SQLException e) {
+            logger.warning(e.getMessage());
+        }
+
+        return count;
     }
 
     @Override
