@@ -79,6 +79,12 @@ public class RingBasedElectionHandler implements ElectionHandler {
         }
     }
 
+    /**
+     * Forwards election message
+     *
+     * @param header election message
+     * @throws IOException
+     */
     private void forwardElectionMessage(ElectionMessageHeader header) throws IOException {
         final Message message = new Message(COORDINATOR_ELECTION, thisNodeId, header);
         ringCommunicationHandler.sendToSuccessor(message);
