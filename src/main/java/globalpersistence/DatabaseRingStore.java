@@ -51,6 +51,11 @@ public class DatabaseRingStore implements RingStore {
                     "LEFT JOIN " + COORDINATOR_TABLE_NAME + " c ON c.coordinatorId " +
                     "WHERE n.successorId IS NOT NULL";
 
+    private static final String SELECT_ALL_WITH_SUCCESSOR_AND_IDS_GREATER_THAN =
+            "SELECT n.*, c.coordinatorId FROM " + NODE_TABLE_NAME + " n " +
+                    "LEFT JOIN " + COORDINATOR_TABLE_NAME + " c ON c.coordinatorId " +
+                    "WHERE n.successorId IS NOT NULL AND n.nodeId > ?";
+
     private static final String COUNT_NODES =
             "SELECT count(*) as nodeCount FROM " + NODE_TABLE_NAME;
 
@@ -229,8 +234,8 @@ public class DatabaseRingStore implements RingStore {
 
 
     @Override
-    public List<NodeRow> getAllNodes() {
-        final List<NodeRow> nodeRows = new ArrayList<>();
+    public List<VirtualNode> getAllNodes() {
+        final List<VirtualNode> virtualNodes = new ArrayList<>();
 
         Connection conn = null;
         PreparedStatement ps = null;
@@ -250,7 +255,7 @@ public class DatabaseRingStore implements RingStore {
                 final Integer successorId = getNullableInt("successorId", rs).orElse(null);
 
                 final boolean isCoordinator = coordinatorId.isPresent() && coordinatorId.get() == nodeId;
-                nodeRows.add(new NodeRow(address, port, nodeId, successorId, isCoordinator));
+                virtualNodes.add(new VirtualNode(address, port, nodeId, successorId, isCoordinator));
 
             }
         } catch (SQLException e) {
@@ -262,7 +267,7 @@ public class DatabaseRingStore implements RingStore {
             closeQuietly(rs);
         }
 
-        return nodeRows;
+        return virtualNodes;
     }
 
     @Override
@@ -318,8 +323,8 @@ public class DatabaseRingStore implements RingStore {
     }
 
     @Override
-    public List<NodeRow> getAllNodesWithSuccessors() {
-        final List<NodeRow> nodeRows = new ArrayList<>();
+    public List<VirtualNode> getAllNodesWithSuccessors() {
+        final List<VirtualNode> virtualNodes = new ArrayList<>();
 
         Connection conn = null;
         PreparedStatement ps = null;
@@ -339,7 +344,7 @@ public class DatabaseRingStore implements RingStore {
                 final Integer successorId = getNullableInt("successorId", rs).orElse(null);
 
                 final boolean isCoordinator = coordinatorId.isPresent() && coordinatorId.get() == nodeId;
-                nodeRows.add(new NodeRow(address, port, nodeId, successorId, isCoordinator));
+                virtualNodes.add(new VirtualNode(address, port, nodeId, successorId, isCoordinator));
 
             }
         } catch (SQLException e) {
@@ -350,7 +355,7 @@ public class DatabaseRingStore implements RingStore {
             closeQuietly(rs);
         }
 
-        return nodeRows;
+        return virtualNodes;
     }
 
     @Override
@@ -415,5 +420,41 @@ public class DatabaseRingStore implements RingStore {
         } catch (SQLException e) {
             logger.warning(e.getMessage());
         }
+    }
+
+    @Override
+    public List<VirtualNode> getAllNodesInRingWithIdGreaterThan(int minId) {
+        final List<VirtualNode> virtualNodes = new ArrayList<>();
+
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
+
+            ps = conn.prepareStatement(SELECT_ALL_WITH_SUCCESSOR);
+            ps.setInt(1, minId);
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                final Optional<Integer> coordinatorId = getNullableInt("coordinatorId", rs);
+                final String address = rs.getString("address");
+                final int port = rs.getInt("port");
+                final int nodeId = rs.getInt("nodeId");
+                final Integer successorId = getNullableInt("successorId", rs).orElse(null);
+
+                final boolean isCoordinator = coordinatorId.isPresent() && coordinatorId.get() == nodeId;
+                virtualNodes.add(new VirtualNode(address, port, nodeId, successorId, isCoordinator));
+            }
+        } catch (SQLException e) {
+            logger.warning(e.getMessage());
+        } finally {
+            closeQuietly(conn);
+            closeQuietly(ps);
+            closeQuietly(rs);
+        }
+
+        return virtualNodes;
     }
 }

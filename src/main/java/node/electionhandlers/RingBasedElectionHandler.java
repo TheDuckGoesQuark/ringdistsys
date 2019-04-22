@@ -42,7 +42,6 @@ public class RingBasedElectionHandler implements ElectionHandler {
         final ElectionMessageHeader electionMessageHeader = new ElectionMessageHeader(RING_BASED, ELECTION, electionMessage);
         final Message message = new Message(COORDINATOR_ELECTION, thisNodeId, electionMessageHeader);
         ringCommunicationHandler.sendToSuccessor(message);
-        logger.info(String.format("Sent to successor %s", electionMessage.toString()));
         ongoing = true;
     }
 

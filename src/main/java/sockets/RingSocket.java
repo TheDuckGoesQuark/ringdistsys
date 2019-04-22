@@ -99,7 +99,8 @@ public class RingSocket {
      * @return true if the predecessor socket == successor socket
      */
     public boolean isClosedLoop() {
-        return successorSocket.getLocalSocketAddress().equals(predecessorSocket.getRemoteSocketAddress());
+        if (predecessorSocket == null || successorSocket == null) return false;
+        else return successorSocket.getLocalSocketAddress().equals(predecessorSocket.getRemoteSocketAddress());
     }
 }
 

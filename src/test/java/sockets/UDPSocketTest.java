@@ -1,10 +1,9 @@
 package sockets;
 
-import globalpersistence.NodeRow;
+import globalpersistence.VirtualNode;
 import messages.Message;
 import messages.MessageType;
 import node.AddressTranslator;
-import node.electionhandlers.ElectionMethod;
 import org.junit.*;
 
 import java.io.IOException;
@@ -19,9 +18,9 @@ public class UDPSocketTest {
 
     @Before
     public void initAddressTranslator() {
-        List<NodeRow> nodes = new ArrayList<>();
-        nodes.add(new NodeRow("localhost", 5001, 1, null, false));
-        nodes.add(new NodeRow("localhost", 5000, 0, null, false));
+        List<VirtualNode> nodes = new ArrayList<>();
+        nodes.add(new VirtualNode("localhost", 5001, 1, null, false));
+        nodes.add(new VirtualNode("localhost", 5000, 0, null, false));
         addressTranslator = new AddressTranslator(nodes);
     }
 

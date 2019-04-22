@@ -2,7 +2,7 @@ package node;
 
 import config.Configuration;
 import globalpersistence.DatabaseRingStore;
-import globalpersistence.NodeRow;
+import globalpersistence.VirtualNode;
 import globalpersistence.RingStore;
 import logging.LoggerFactory;
 import messages.Message;
@@ -51,7 +51,7 @@ public class Node {
         this.ringStore = new DatabaseRingStore(config.getListFilePath(), config.shouldDropEverything());
         this.ringStore.initialize();
 
-        final List<NodeRow> allNodes = this.ringStore.getAllNodes();
+        final List<VirtualNode> allNodes = this.ringStore.getAllNodes();
         final AddressTranslator addressTranslator = new AddressTranslator(allNodes);
         this.udpSocket = new UDPSocket(addressTranslator, config.getNodeId());
         this.ringComms = new RingCommunicationHandler(config.getNodeId(), addressTranslator, executorService);
@@ -65,14 +65,16 @@ public class Node {
      *
      * @param allNodes list of nodes in database
      */
-    private void initializeCoordinator(List<NodeRow> allNodes) {
-        final Optional<NodeRow> optCoordinator = allNodes.stream()
-                .filter(NodeRow::isCoordinator)
+    private void initializeCoordinator(List<VirtualNode> allNodes) {
+        final Optional<VirtualNode> optCoordinator = allNodes.stream()
+                .filter(VirtualNode::isCoordinator)
                 .findFirst();
 
         if (optCoordinator.isPresent()) {
             coordinatorId = optCoordinator.get().getNodeId();
-        } else {
+        }
+
+        if (!optCoordinator.isPresent() || coordinatorId == config.getNodeId()) {
             // WARN Possible race condition : make sure first node in
             // ring is started and set as coordinator before more join
             ringStore.updateCoordinator(config.getNodeId());
@@ -181,15 +183,13 @@ public class Node {
                 // COUNT == 2 occurs when:
                 // * connected to self and new node joins,
                 // * ring contains me and other node, and that other node has failed
-                // In first case, we just want to listen for a new predecessor, thus we
-                // check if we're connected to self first
-                logger.warning("AHHAHASDASHD FUCK");
+                // In first case, we just want to listen for a new predecessor,
+                // in the second we need to trigger self connection
                 handleLostSuccessor();
             } else {
                 ringComms.updatePredecessor();
             }
         } else {
-            logger.info(String.format("Receive from %d : %s", message.getSrcId(), message.toString()));
             switch (message.getType()) {
                 case COORDINATOR_ELECTION:
                     handleElectionMessage(message);
@@ -241,7 +241,7 @@ public class Node {
                 currentElectionHandler = new ChangeRobertsElectionHandler(ringComms, config.getNodeId());
                 break;
             case BULLY:
-                currentElectionHandler = new BullyElectionHandler(ringComms, udpSocket, config.getNodeId());
+                currentElectionHandler = new BullyElectionHandler(udpSocket, config.getNodeId(), executorService, ringStore);
                 break;
             default:
                 logger.warning("Unknown election type.");
@@ -328,7 +328,6 @@ public class Node {
         final Message message = udpSocket.receiveMessage(5);
 
         if (message != null) {
-            logger.info(String.format("Received from %d : %s ", message.getSrcId(), message.toString()));
             switch (message.getType()) {
                 case JOIN:
                     if (isCoordinator()) {
@@ -356,9 +355,9 @@ public class Node {
      * @param requestingNodeId id of node requesting successor
      */
     private void handleSuccessorRequest(int requestingNodeId) throws IOException {
-        final List<NodeRow> ringNodes = ringStore.getAllNodesWithSuccessors();
+        final List<VirtualNode> ringNodes = ringStore.getAllNodesWithSuccessors();
 
-        final Optional<NodeRow> requestingNode = ringNodes.stream()
+        final Optional<VirtualNode> requestingNode = ringNodes.stream()
                 .filter(nodeRow -> nodeRow.getNodeId() == requestingNodeId)
                 .findFirst();
 
@@ -444,7 +443,7 @@ public class Node {
      * @throws IOException something goes wrong while sending reply or connecting to DB
      */
     private void handleJoinRequest(Message request) throws IOException {
-        List<NodeRow> allNodes = ringStore.getAllNodesWithSuccessors();
+        List<VirtualNode> allNodes = ringStore.getAllNodesWithSuccessors();
 
         int requestingNodeId = request.getSrcId();
         if (allNodes.isEmpty()) {
@@ -456,7 +455,7 @@ public class Node {
             logger.info("Inserting node into ring randomly");
             // Assign succ(new node) to random node
             final Random rand = new Random();
-            final NodeRow predecessor = allNodes.get(rand.nextInt(allNodes.size()));
+            final VirtualNode predecessor = allNodes.get(rand.nextInt(allNodes.size()));
             final int successor = predecessor.getSuccessorId().get();
 
             ringStore.insertIntoRing(predecessor.getNodeId(), successor, requestingNodeId);

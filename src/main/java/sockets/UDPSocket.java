@@ -31,7 +31,7 @@ public class UDPSocket {
      * @throws IOException if unable to convert message to bytes, or socket exception occurs
      */
     public void sendMessage(Message message, int destId) throws IOException {
-        logger.info(String.format("Sending message %s to %d", message.toString(), destId));
+        logger.info(String.format("Sending message to %d : %s", destId, message.toString()));
         InetSocketAddress dest = addressTranslator.getSocketAddress(destId);
 
         final byte[] msgBytes = message.toBytes();
@@ -56,7 +56,9 @@ public class UDPSocket {
                 datagramSocket.setSoTimeout(timeoutSecs * 1000);
 
             datagramSocket.receive(packet);
-            return Message.fromBytes(packet.getData());
+            final Message message = Message.fromBytes(packet.getData());
+            logger.info(String.format("Received message: %s", message.toString()));
+            return message;
         } catch (IOException | ClassNotFoundException e) {
             return null;
         }

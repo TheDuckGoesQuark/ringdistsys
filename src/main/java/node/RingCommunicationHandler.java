@@ -109,7 +109,9 @@ public class RingCommunicationHandler {
      * @return message received from predecessor
      */
     Message receiveFromPredecessor() {
-        return ringSocket.receiveFromPredecessor(null);
+        final Message message = ringSocket.receiveFromPredecessor(null);
+        logger.info(String.format("Received from predecessor %s", message != null ? message.toString() : null));
+        return message;
     }
 
     /**
@@ -119,6 +121,7 @@ public class RingCommunicationHandler {
      * @throws IOException
      */
     public void sendToSuccessor(Message message) throws IOException {
+        logger.info(String.format("Sending to %d : %s", successorId, message.toString()));
         ringSocket.sendToSuccessor(message);
     }
 

@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 import static messages.MessageType.COORDINATOR_ELECTION;
 import static messages.election.ElectionMessageType.COORDINATOR;
 import static messages.election.ElectionMessageType.ELECTION;
-import static node.electionhandlers.ElectionMethod.RING_BASED;
+import static node.electionhandlers.ElectionMethod.CHANG_ROBERTS;
 
 public class ChangeRobertsElectionHandler implements ElectionHandler {
 
@@ -31,17 +31,16 @@ public class ChangeRobertsElectionHandler implements ElectionHandler {
 
     @Override
     public ElectionMethod getMethodName() {
-        return ElectionMethod.CHANG_ROBERTS;
+        return CHANG_ROBERTS;
     }
 
     @Override
     public void startElection() throws IOException {
         logger.info("Starting chang roberts election.");
         final ElectionMessage electionMessage = new ElectionMessage(thisNodeId);
-        final ElectionMessageHeader electionMessageHeader = new ElectionMessageHeader(ElectionMethod.CHANG_ROBERTS, ELECTION, electionMessage);
+        final ElectionMessageHeader electionMessageHeader = new ElectionMessageHeader(CHANG_ROBERTS, ELECTION, electionMessage);
         final Message message = new Message(COORDINATOR_ELECTION, thisNodeId, electionMessageHeader);
         ringCommunicationHandler.sendToSuccessor(message);
-        logger.info(String.format("Sent to successor %s", electionMessage.toString()));
         participant = true;
     }
 
@@ -79,7 +78,7 @@ public class ChangeRobertsElectionHandler implements ElectionHandler {
      * @throws IOException if something goes wrong while trying to send
      */
     private void forwardCoordinatorMessage(CoordinatorMessage coordinatorMessage) throws IOException {
-        final ElectionMessageHeader header = new ElectionMessageHeader(RING_BASED, COORDINATOR, coordinatorMessage);
+        final ElectionMessageHeader header = new ElectionMessageHeader(CHANG_ROBERTS, COORDINATOR, coordinatorMessage);
         final Message message = new Message(COORDINATOR_ELECTION, thisNodeId, header);
         ringCommunicationHandler.sendToSuccessor(message);
     }
@@ -90,22 +89,27 @@ public class ChangeRobertsElectionHandler implements ElectionHandler {
         int currentCandidate = electionMessage.getCurrentCandidate();
 
         if (currentCandidate == thisNodeId) {
-            // Message has returned to be and can be concluded
+            // Message has returned to me and can be concluded
             concludeElection(currentCandidate);
-        } else {
-            if (!participant) {
-                if (currentCandidate < thisNodeId) {
-                    // Set self as better candidate if not already participating
-                    electionMessage.setCurrentCandidate(thisNodeId);
-                }
-
-                forwardElectionMessage(header);
-                participant = true;
+        } else if (currentCandidate > thisNodeId) {
+            // Always forward when candidate has greater ID
+            forwardElectionMessage(header);
+            participant = true;
+        } else if (!participant) {
+            // Otherwise only forward if not already participating
+            if (currentCandidate < thisNodeId) {
+                // Set self as better candidate
+                electionMessage.setCurrentCandidate(thisNodeId);
             }
+
+            forwardElectionMessage(header);
+            participant = true;
         }
     }
 
     private void concludeElection(int currentCandidate) throws IOException {
+        logger.info(String.format("Election concluded: %d", currentCandidate));
+
         electedCoordinator = currentCandidate;
         participant = false;
 

@@ -1,7 +1,6 @@
 package globalpersistence;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface RingStore {
 
@@ -15,7 +14,7 @@ public interface RingStore {
      *
      * @return list of all nodes
      */
-    List<NodeRow> getAllNodes();
+    List<VirtualNode> getAllNodes();
 
     /**
      * Assigns a new coordinator
@@ -44,7 +43,7 @@ public interface RingStore {
      *
      * @return list of nodes with successors assigned
      */
-    List<NodeRow> getAllNodesWithSuccessors();
+    List<VirtualNode> getAllNodesWithSuccessors();
 
     /**
      * Gets the number of nodes with successors (i.e. the number of nodes that are part of the ring.)
@@ -77,4 +76,12 @@ public interface RingStore {
      */
     void removeFromRing(int predecessorId, int successorId, int nodeToRemove);
 
+    /**
+     * Gets a list of all the nodes with successors assigned (i.e. those that are part of the ring)
+     * who have IDs greater than the given value
+     *
+     * @param minId the minimum ID to include
+     * @return list of all nodes with greater IDs in the ring
+     */
+    List<VirtualNode> getAllNodesInRingWithIdGreaterThan(int minId);
 }

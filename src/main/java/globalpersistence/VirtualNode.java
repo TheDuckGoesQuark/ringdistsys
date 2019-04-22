@@ -5,7 +5,7 @@ import java.util.Optional;
 /**
  * Instance of database representation of Node
  */
-public class NodeRow {
+public class VirtualNode {
 
     private String address;
     private int port;
@@ -13,7 +13,7 @@ public class NodeRow {
     private Integer successorId;
     private boolean isCoordinator;
 
-    public NodeRow(String address, int port, int nodeId, Integer successorId, boolean isCoordinator) {
+    public VirtualNode(String address, int port, int nodeId, Integer successorId, boolean isCoordinator) {
         this.address = address;
         this.port = port;
         this.nodeId = nodeId;
@@ -43,7 +43,7 @@ public class NodeRow {
 
     @Override
     public String toString() {
-        return "NodeRow{" +
+        return "VirtualNode{" +
                 "address='" + address + '\'' +
                 ", port=" + port +
                 ", nodeId=" + nodeId +
