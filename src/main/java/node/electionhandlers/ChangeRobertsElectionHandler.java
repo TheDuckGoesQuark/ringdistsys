@@ -93,13 +93,15 @@ public class ChangeRobertsElectionHandler implements ElectionHandler {
             // Message has returned to be and can be concluded
             concludeElection(currentCandidate);
         } else {
-            if (currentCandidate < thisNodeId && !participant) {
-                // Set self as better candidate if not already participating
-                electionMessage.setCurrentCandidate(thisNodeId);
+            if (!participant) {
+                if (currentCandidate < thisNodeId) {
+                    // Set self as better candidate if not already participating
+                    electionMessage.setCurrentCandidate(thisNodeId);
+                }
+
                 forwardElectionMessage(header);
                 participant = true;
-            }  // else: Already a participant, do nothing.
-
+            }
         }
     }
 
