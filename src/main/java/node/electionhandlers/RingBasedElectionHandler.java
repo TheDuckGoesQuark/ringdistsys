@@ -126,6 +126,7 @@ public class RingBasedElectionHandler implements ElectionHandler {
         // Forward message if not already aware of the new coordinator
         boolean toBeForwarded = electedCoordinator != coordinatorMessage.getCoordinatorId();
         electedCoordinator = coordinatorMessage.getCoordinatorId();
+        ongoing = false;
 
         if (toBeForwarded) {
             forwardCoordinatorMessage(coordinatorMessage);

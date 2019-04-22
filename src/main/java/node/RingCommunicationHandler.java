@@ -19,16 +19,17 @@ public class RingCommunicationHandler {
     private static final int DEFAULT_JITTER = 3;
 
     private final Logger logger = LoggerFactory.getLogger();
-    private final Configuration config;
     private final ExecutorService executorService;
     private final RingSocket ringSocket;
+    private final int thisNodeId;
 
     private int successorId = 0;
+    private boolean disconnectedFromSelf;
 
-    RingCommunicationHandler(Configuration config, AddressTranslator addressTranslator, ExecutorService executorService) throws IOException {
-        this.ringSocket = new RingSocket(config.getNodeId(), addressTranslator);
-        this.config = config;
+    RingCommunicationHandler(int thisNodeId, AddressTranslator addressTranslator, ExecutorService executorService) throws IOException {
+        this.ringSocket = new RingSocket(thisNodeId, addressTranslator);
         this.executorService = executorService;
+        this.thisNodeId = thisNodeId;
     }
 
     /**
@@ -49,7 +50,7 @@ public class RingCommunicationHandler {
      */
     public boolean forwardToken() {
         logger.info("Forwarding token");
-        final Message message = new Message(MessageType.TOKEN, config.getNodeId());
+        final Message message = new Message(MessageType.TOKEN, thisNodeId);
 
         boolean exceptionThrown = false;
         try {
@@ -68,7 +69,7 @@ public class RingCommunicationHandler {
      */
     public void sendTokenAck() throws IOException {
         logger.info("Sending token ACK");
-        final Message tokenAck = new Message(MessageType.TOKEN_ACK, config.getNodeId());
+        final Message tokenAck = new Message(MessageType.TOKEN_ACK, thisNodeId);
         this.ringSocket.sendToPredeccesor(tokenAck);
     }
 
@@ -81,11 +82,15 @@ public class RingCommunicationHandler {
      */
     void updateSuccessor(int successor, boolean initial) throws IOException {
         // Await self connection in background if I'm connecting to myself
-        if (initial || successor == config.getNodeId()) {
+        if (initial || successor == thisNodeId) {
             executorService.submit((Callable<Void>) () -> {
                 ringSocket.updatePredecessor();
                 return null;
             });
+        } else {
+            // Boolean flag to inform thread listening for messages from self that it just disconnected due to
+            // forming a link with a new node, and not because any failure has occurred
+            disconnectedFromSelf = successorId == thisNodeId;
         }
 
         // Connect to successor
@@ -103,10 +108,16 @@ public class RingCommunicationHandler {
      *
      * @return message received from predecessor
      */
-    public Message receiveFromPredecessor() {
+    Message receiveFromPredecessor() {
         return ringSocket.receiveFromPredecessor(null);
     }
 
+    /**
+     * Sends a message to the successor of this node
+     *
+     * @param message the message to be sent
+     * @throws IOException
+     */
     public void sendToSuccessor(Message message) throws IOException {
         ringSocket.sendToSuccessor(message);
     }
@@ -116,11 +127,23 @@ public class RingCommunicationHandler {
      *
      * @throws IOException
      */
-    public void updatePredecessor() throws IOException {
+    void updatePredecessor() throws IOException {
         ringSocket.updatePredecessor();
     }
 
-    public int getSuccessorId() {
+    /**
+     * Returns the ID of the successor of this node
+     *
+     * @return the id of this nodes successor
+     */
+    int getSuccessorId() {
         return successorId;
+    }
+
+    /**
+     * @return true if this node disconnected from itself in order to form the latest connection
+     */
+    public boolean justDisconnectedFromSelf() {
+        return disconnectedFromSelf;
     }
 }

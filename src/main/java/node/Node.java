@@ -54,7 +54,7 @@ public class Node {
         final List<NodeRow> allNodes = this.ringStore.getAllNodes();
         final AddressTranslator addressTranslator = new AddressTranslator(allNodes);
         this.udpSocket = new UDPSocket(addressTranslator, config.getNodeId());
-        this.ringComms = new RingCommunicationHandler(config, addressTranslator, executorService);
+        this.ringComms = new RingCommunicationHandler(config.getNodeId(), addressTranslator, executorService);
 
         this.initializeCoordinator(allNodes);
     }
@@ -177,17 +177,17 @@ public class Node {
         if (message == null) {
             logger.info("Lost connection to predecessor");
 
-//            if (ringComms.getSuccessorId() != config.getNodeId() && ringStore.getSizeOfRing() == 2) {
-//                // COUNT == 2 occurs when:
-//                // * connected to self and new node joins,
-//                // * ring contains me and other node, and that other node has failed
-//                // In first case, we just want to listen for a new predecessor, thus we
-//                // check if we're connected to self first
-//                logger.warning("AHHAHASDASHD FUCK");
-//                handleLostSuccessor();
-//            } else {
+            if (!ringComms.justDisconnectedFromSelf() && ringStore.getSizeOfRing() == 2) {
+                // COUNT == 2 occurs when:
+                // * connected to self and new node joins,
+                // * ring contains me and other node, and that other node has failed
+                // In first case, we just want to listen for a new predecessor, thus we
+                // check if we're connected to self first
+                logger.warning("AHHAHASDASHD FUCK");
+                handleLostSuccessor();
+            } else {
                 ringComms.updatePredecessor();
-//            }
+            }
         } else {
             logger.info(String.format("Receive from %d : %s", message.getSrcId(), message.toString()));
             switch (message.getType()) {
