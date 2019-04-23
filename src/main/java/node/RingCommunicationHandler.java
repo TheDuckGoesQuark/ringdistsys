@@ -1,10 +1,9 @@
 package node;
 
-import config.Configuration;
 import logging.LoggerFactory;
 import messages.Message;
 import messages.MessageType;
-import sockets.RingSocket;
+import node.sockets.RingSocket;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;

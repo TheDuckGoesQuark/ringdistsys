@@ -4,12 +4,18 @@
 \contentsline {subsection}{\numberline {2.1}Messages}{1}
 \contentsline {subsection}{\numberline {2.2}Transport Protocol}{2}
 \contentsline {subsection}{\numberline {2.3}Initialization and Joining}{3}
-\contentsline {subsection}{\numberline {2.4}Topology Recovery and Maintenance}{4}
-\contentsline {subsection}{\numberline {2.5}Topology Persistence}{6}
-\contentsline {section}{\numberline {3}Leader/Coordinator Election}{8}
-\contentsline {subsection}{\numberline {3.1}Election API}{8}
-\contentsline {subsection}{\numberline {3.2}Triggering Elections}{9}
-\contentsline {subsection}{\numberline {3.3}Ring-Based}{9}
-\contentsline {subsection}{\numberline {3.4}Chang Roberts}{9}
-\contentsline {subsection}{\numberline {3.5}Bully}{10}
-\contentsline {section}{\numberline {4}Receive/Send Posts}{10}
+\contentsline {subsection}{\numberline {2.4}Topology Recovery and Maintenance}{5}
+\contentsline {subsection}{\numberline {2.5}Topology Persistence}{7}
+\contentsline {section}{\numberline {3}Leader/Coordinator Election}{10}
+\contentsline {subsection}{\numberline {3.1}Election API}{10}
+\contentsline {subsection}{\numberline {3.2}Triggering Elections}{11}
+\contentsline {subsection}{\numberline {3.3}Ring-Based}{11}
+\contentsline {subsection}{\numberline {3.4}Chang Roberts}{11}
+\contentsline {subsection}{\numberline {3.5}Bully}{12}
+\contentsline {section}{\numberline {4}Receive/Send Posts}{13}
+\contentsline {subsection}{\numberline {4.1}Mutual Exclusion}{13}
+\contentsline {subsection}{\numberline {4.2}Web Server}{14}
+\contentsline {section}{\numberline {5}Testing}{15}
+\contentsline {section}{\numberline {6}Evaluation}{15}
+\contentsline {section}{\numberline {7}Summary}{15}
+\contentsline {section}{\numberline {8}How to Run}{15}

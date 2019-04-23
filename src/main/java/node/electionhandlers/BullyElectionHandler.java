@@ -1,12 +1,12 @@
 package node.electionhandlers;
 
-import globalpersistence.VirtualNode;
-import globalpersistence.RingStore;
+import node.ringstore.VirtualNode;
+import node.ringstore.RingStore;
 import logging.LoggerFactory;
 import messages.Message;
 import messages.election.ElectionMessageHeader;
 import messages.election.bully.CoordinatorMessage;
-import sockets.UDPSocket;
+import node.sockets.UDPSocket;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,7 +22,7 @@ import static node.electionhandlers.ElectionMethod.*;
 public class BullyElectionHandler implements ElectionHandler {
 
     private static final int SECONDS_BEFORE_ASSUMING_VICTORY = 3;
-    private static final int SECONDS_BEFORE_RETRYING = 3;
+    private static final int SECONDS_BEFORE_RETRYING = 5;
 
     private final Logger logger = LoggerFactory.getLogger();
     private final RingStore ringStore;
@@ -142,13 +142,13 @@ public class BullyElectionHandler implements ElectionHandler {
 
     /**
      * If my ID is greater than the ID of the node requesting the election, then reply with an OK and start my own election
-     * with higher IDs nodes.
+     * with higher IDs nodes. Do nothing if already part of an election
      *
      * @param message
      * @throws IOException
      */
     private void handleElectionMessage(Message message) throws IOException {
-        if (message.getSrcId() < thisNodeId) {
+        if (message.getSrcId() < thisNodeId && !ongoing) {
             sendOk(message.getSrcId());
             startElection();
         }

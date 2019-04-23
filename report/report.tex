@@ -237,6 +237,29 @@ would then request the connection to itself. For two nodes and more the
 joining node would be able to first connect to its new successor once its
 predecessor had disconnected from its old successor as shown in figure \ref{fig:bigjoin}. 
 
+Figure \ref{fig:succreq} shows the logs from node 2 as it joins the ring, and figure \ref{fig:succreqcoord} shows the logs from the coordinator as it handles the request. Figure \ref{fig:singlenodejoin} shows the logs from node 6 when it initializes the ring network by connecting to itself.
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\linewidth]{images/succreq}
+	\caption{Logs from node 2 when joining the ring with coordinator ID 8.}
+	\label{fig:succreq}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\linewidth]{images/succreqcoord}
+	\caption{Logs from coordinator node 8 when node 2 wishes to join.}
+	\label{fig:succreqcoord}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\linewidth]{images/singlenodejoin}
+	\caption{Logs from node 6 when it initializes the ring network and connects to itself.}
+	\label{fig:singlenodejoin}
+\end{figure}
+
 \subsection{Topology Recovery and Maintenance}
 
 When designing a distributed system, it should be assumed that failure will occur, and so as an extension this implementation included a mechanism for recovering from failure. Node failure is detected by either:
@@ -245,7 +268,7 @@ When designing a distributed system, it should be assumed that failure will occu
 	\item a node forwarding the token to its successor and not receiving an acknowledgement within a given timeframe.
 \end{enumerate}
 
-When a failure is detected by the successor of a failing node, it will simply begin listening for a new predecessor. Once the predecessor of the failing node detects the loss of connection, it will request a new successor from the coordinator node. The coordinator will then reply with the ID of the node after the failed node for the original predeccessor to connect to, at which point normal network behaviour can resume. Figure \ref{fig:failure} shows the topology change when a node fails.
+When a failure is detected by the successor of a failing node, it will simply begin listening for a new predecessor. Once the predecessor of the failing node detects the loss of connection, it will request a new successor from the coordinator node. The coordinator will then reply with the ID of the node after the failed node for the original predeccessor to connect to, at which point normal network behaviour can resume. Figure \ref{fig:failure} shows the topology change when a node fails. Since the failure is detected by the ring handling thread, and the new successor message arrives on the UDPSocket handling thread, the ring handling thread simply blocks until notified by the UDPSocket thread that a new successor has now been connected to. 
 
 \begin{figure}[!ht]
 	\centering
@@ -254,7 +277,14 @@ When a failure is detected by the successor of a failing node, it will simply be
 	\label{fig:failure}
 \end{figure}
 
-The token acknowledgement message is the only occurence of communication in the reverse direction of the ring topology. The predecessor of the failing node will hold onto the token until it is assigned a new successor, and only releases the token once it has received the acknowlegement from it. This limits the number of situtations that can result in the loss of the token. If somehow the token is acknowledged but the acknowledgement message does not reach the predecessor in time, it could be possible for two tokens to then be in circulation. 
+The token acknowledgement message is the only occurence of communication in the reverse direction of the ring topology. The predecessor of the failing node will hold onto the token until it is assigned a new successor, and only releases the token once it has received the acknowlegement from it. This limits the number of situtations that can result in the loss of the token. If somehow the token is acknowledged but the acknowledgement message does not reach the predecessor in time, it could be possible for two tokens to then be in circulation. Figure \ref{fig:recovery} shows logs from a node that has experienced successor failure. 
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\linewidth]{images/recovery}
+	\caption{Logs from node 6 when it's successor fails to acknowledge it's sent token.}
+	\label{fig:recovery}
+\end{figure}
 
 During testing, an edge case was realised with this recovery mechanism. If the disconnect is discovered when reading from the predecessor socket, there is a case where just waiting for a new predecessor does not work. Figure \ref{fig:hard} shows two scenarios where the disconnect is realised while reading from the predecessor socket. 
 
@@ -293,6 +323,45 @@ In order to ensure that only one coordinator existed at any time, the coordinato
 \end{enumerate}
 
 Whilst another row could be added with the value FALSE for \emph{singleRowLock}, permissions would be configured such that only the hosts and a system administrator would be able to perform updates so it could be assumed that as long as the application code always used TRUE for inserts, only one row would ever exist. 
+
+\begin{figure}[!h]
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=0.95\linewidth]{images/fullring}
+  \caption{Node database table.}
+  \label{fig:nodetable}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=0.95\linewidth]{images/coord}
+  \caption{Coordinator database table.}
+  \label{fig:coordtable}
+\end{subfigure}
+\caption{The state of the database after nodes join in the order 6, 5, 8, 3, 4, 7, 1, 2.}
+\label{fig:dbstate}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=0.95\linewidth]{images/afterfailnodes}
+  \caption{Node database table.}
+  \label{fig:nodetableafterfail}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=0.95\linewidth]{images/afterfailcoord}
+  \caption{Coordinator database table.}
+  \label{fig:coordtableafterfail}
+\end{subfigure}
+\caption{The state of the database after recovering from node 8 failing.}
+\label{fig:dbstateafterfail}
+\end{figure}
+
+Figure \ref{fig:dbstate} shows the state of the database after 8 nodes join in a random order. Figure \ref{fig:dbstateafterfail} shows the state of the database after node 8 fails and a new coordinator is elected.
+
 
 \section{Leader/Coordinator Election}
 
@@ -333,17 +402,80 @@ The ring based algorithm was the simplest to implement and test. The node starti
 
 This node then chose the new coordinator from the list of candidates based on which had the highest ID, and forwarded the result to its successors as a COORDINATOR message. The result would be forwarded by each node until it reached a node that was already aware of the new coordinator.
 
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\linewidth]{images/ringelec}
+	\caption{Logs from node 2 after detecting coordinator failure. Note how token passing resumes as soon as a new successor is found despite the loss of the coordinator in order to make node failure transparent.}
+	\label{fig:ringbased}
+\end{figure}
+
 \subsection{Chang Roberts}
 
 The Chang Roberts algorithm reused most of the components from the ring-based algorithm, other than the forwarding logic for ELECTION messages. 
 
 If the ELECTION message contained the receiving nodes ID, then it would conclude the election and forward the COORDINATOR message as in the ring-based algorithm. However, in order to avoid redundant forwarding of election messages if two elections are started at the same time, ELECTION messages would only be forwarded if the receiving node was a better candidate (i.e. had a greater ID), or if it had not already participated by forwarding a message previously.
 
+Figure \ref{fig:chang} shows logs from a new node that has joined the ring and triggered an election. Initially the election message is sent, and later it returns with the same ID and so node 8 elects itself. It then forwards the coordinator message until it arrives back to itself at which point it is dropped.
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\linewidth]{images/chang}
+	\caption{Logs from node 8 when it joins the ring and notices its ID is greater than the current coordinator.}
+	\label{fig:chang}
+\end{figure}
+
 \subsection{Bully}
 
-The bully algorithm 
+The bully algorithm was the most difficult to implement due to its dependence on timing. An election would be started by a node by sending an ELECTION message to all nodes with IDs greater than it's own. It would then create a thread which would sleep for a preset time before assuming it is to be the coordinator. If one of the other nodes that received the ELECTION message replied with an OK message, the sleeping thread would simply terminate after the preset time had expired. Another thread would be spawned to again sleep for a duration of time after receiving the OK message. If no coordinator message was received before this second duration elapsed, then the node would restart the election.
+
+Each node that received an ELECTION message would reply with an OK message if it had not already started an election, and then carry out the same procedure as the first node had to trigger the election. Eventually the node with the highest ID would not have any other nodes to send ELECTION messages to, and so it would consider itself the coordinator and inform all the other nodes in the ring using the COORDINATOR message.
+
+Figure \ref{fig:bully} shows how effective the bully algorithm is at dealing with failure and demonstrates a node being bullied into letting another node be coordinator. The order of events in the logs shown are:
+
+\begin{enumerate}
+	\item Node 6 receives election message from node 4.
+	\item 6 replies with OK message, and begins its own election by sending an election message to node 7.
+	\item 6 also receives election message from node 5, but ignores it since it is already carrying out an election.
+	\item Timeout occurs without 7 sending OK message, 6 tries to elect self as coordinator and sends coordinator message to all other nodes.
+	\item Node 7 has in the meantime elected itself as coordinator, and 'bullies' node 6 into letting it be coordinator.
+\end{enumerate}
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\linewidth]{images/bully}
+	\caption{Logs from node 6 during an election where coordinator 8 has failed, and 7 should be the next coordinator.}
+	\label{fig:bully}
+\end{figure}
 
 \section{Receive/Send Posts}
+
+\subsection{Mutual Exclusion}
+
+At any one time, only one server/node should be able to read or write from the message queue. In order to provide this mutual exclusion, the token-ring method was used. A token is created by the first node in the ring when initializing the network, and is forwarded around the ring after a) the node holding the token carries out a operation on the resource or b) a timeout expires. 
+
+Since only one node can have the token at any one time, mutual exclusion is ensured. No starvation can occur since the token will always eventually return to each node in the ring. The downsides of the token-ring algorithm is that the wait time between each operation grows linearly with the size of the ring. It also requires some sort of recovery mechanism if the node holding the token fails.
+
+In order to ensure that the token is at least delivered successfully, the token acknowledgement message described earlier for detecting lost nodes was utilised. The following steps are taken between waiting on a token and forwarding it:
+
+\begin{enumerate}
+	\item Ring message handling thread polls predecessor socket for token.
+	\item Client handling thread polls the single element \emph{usableTokenQueue} waiting for the token to become available.
+	\item When the token arrives, the ring message thread replies with an ACK, and puts the token in the \emph{usableTokenQueue} for the client to consume. It then begins polling the single element \emph{forwardableTokenQueue} where the client will return the token.
+	\item The client dequeues the token from the \emph{usableTokenQueue} and uses it to serve it's clients then returns it to ring thread via the \emph{forwardableTokenQueue}.
+	\item Ring thread then removes the token from the \emph{forwardableTokenQueue} and forwards it onto it's successor.
+\end{enumerate}
+
+\subsection{Web Server}
+
+In order for clients to make and receive posts, a simple web server was configured. Until this point all tests could be run locally (i.e. using localhost as the host address.), by using a different port for each node. In order to isolate the ring topology from clients, a different socket was to be used for the web server, and it made sense for the web server to exist on the same port for each host. 
+
+\section{Testing}
+
+\section{Evaluation}
+
+\section{Summary}
+
+\section{How to Run}
 
 \bibliographystyle{unsrt}
 \bibliography{mybib}

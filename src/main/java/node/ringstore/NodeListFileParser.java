@@ -1,4 +1,4 @@
-package globalpersistence;
+package node.ringstore;
 
 import com.opencsv.CSVReader;
 

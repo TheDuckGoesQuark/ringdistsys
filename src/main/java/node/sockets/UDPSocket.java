@@ -1,4 +1,4 @@
-package sockets;
+package node.sockets;
 
 import logging.LoggerFactory;
 import messages.Message;
@@ -6,7 +6,6 @@ import node.AddressTranslator;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
 public class UDPSocket {

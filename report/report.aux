@@ -30,26 +30,58 @@
 \newlabel{fig:join}{{4}{3}}
 \@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces State of each connection as a new node joins the ring. The red arrow shows the edge that is replaced with the new node, and solid and dashed arrows represent ongoing and pending connections respectively. Either A or B can be the coordinator in this scenario.\relax }}{4}}
 \newlabel{fig:bigjoin}{{5}{4}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Topology Recovery and Maintenance}{4}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Network topology during the recovery from node B failing. Either A or C are the coordinator in this scenario.\relax }}{5}}
-\newlabel{fig:failure}{{6}{5}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Two predecessor disconnect scenarios that are identical to the thread polling the predecessor socket.\relax }}{6}}
-\newlabel{fig:hard}{{7}{6}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Topology Persistence}{6}}
-\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces ER diagram of the database schema for persisting the network topology.\relax }}{7}}
-\newlabel{fig:er}{{8}{7}}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Leader/Coordinator Election}{8}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Election API}{8}}
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Methods of the election handler interface.\relax }}{9}}
-\newlabel{tbl:elecapi}{{3}{9}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Triggering Elections}{9}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Ring-Based}{9}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Chang Roberts}{9}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Logs from node 2 when joining the ring with coordinator ID 8.\relax }}{4}}
+\newlabel{fig:succreq}{{6}{4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Logs from coordinator node 8 when node 2 wishes to join.\relax }}{5}}
+\newlabel{fig:succreqcoord}{{7}{5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Logs from node 6 when it initializes the ring network and connects to itself.\relax }}{5}}
+\newlabel{fig:singlenodejoin}{{8}{5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Topology Recovery and Maintenance}{5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces Network topology during the recovery from node B failing. Either A or C are the coordinator in this scenario.\relax }}{6}}
+\newlabel{fig:failure}{{9}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Logs from node 6 when it's successor fails to acknowledge it's sent token.\relax }}{6}}
+\newlabel{fig:recovery}{{10}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Two predecessor disconnect scenarios that are identical to the thread polling the predecessor socket.\relax }}{7}}
+\newlabel{fig:hard}{{11}{7}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Topology Persistence}{7}}
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces ER diagram of the database schema for persisting the network topology.\relax }}{8}}
+\newlabel{fig:er}{{12}{8}}
+\newlabel{fig:nodetable}{{13a}{9}}
+\newlabel{sub@fig:nodetable}{{a}{9}}
+\newlabel{fig:coordtable}{{13b}{9}}
+\newlabel{sub@fig:coordtable}{{b}{9}}
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces The state of the database after nodes join in the order 6, 5, 8, 3, 4, 7, 1, 2.\relax }}{9}}
+\newlabel{fig:dbstate}{{13}{9}}
+\newlabel{fig:nodetableafterfail}{{14a}{9}}
+\newlabel{sub@fig:nodetableafterfail}{{a}{9}}
+\newlabel{fig:coordtableafterfail}{{14b}{9}}
+\newlabel{sub@fig:coordtableafterfail}{{b}{9}}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces The state of the database after recovering from node 8 failing.\relax }}{9}}
+\newlabel{fig:dbstateafterfail}{{14}{9}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Leader/Coordinator Election}{10}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Election API}{10}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Methods of the election handler interface.\relax }}{10}}
+\newlabel{tbl:elecapi}{{3}{10}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Triggering Elections}{11}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Ring-Based}{11}}
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Logs from node 2 after detecting coordinator failure. Note how token passing resumes as soon as a new successor is found despite the loss of the coordinator in order to make node failure transparent.\relax }}{11}}
+\newlabel{fig:ringbased}{{15}{11}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Chang Roberts}{11}}
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Logs from node 8 when it joins the ring and notices its ID is greater than the current coordinator.\relax }}{12}}
+\newlabel{fig:chang}{{16}{12}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Bully}{12}}
+\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Logs from node 6 during an election where coordinator 8 has failed, and 7 should be the next coordinator.\relax }}{13}}
+\newlabel{fig:bully}{{17}{13}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Receive/Send Posts}{13}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Mutual Exclusion}{13}}
 \bibstyle{unsrt}
 \bibdata{mybib}
 \bibcite{maven}{{1}{}{{}}{{}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Web Server}{14}}
 \bibcite{apachecli}{{2}{}{{}}{{}}}
 \bibcite{join}{{3}{}{{}}{{}}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Bully}{10}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Receive/Send Posts}{10}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Testing}{15}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Evaluation}{15}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Summary}{15}}
+\@writefile{toc}{\contentsline {section}{\numberline {8}How to Run}{15}}

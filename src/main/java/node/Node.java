@@ -1,16 +1,18 @@
 package node;
 
 import config.Configuration;
-import globalpersistence.DatabaseRingStore;
-import globalpersistence.VirtualNode;
-import globalpersistence.RingStore;
+import node.ringstore.DatabaseRingStore;
+import node.ringstore.VirtualNode;
+import node.ringstore.RingStore;
 import logging.LoggerFactory;
 import messages.Message;
 import messages.MessageType;
 import messages.SuccessorMessage;
 import messages.election.ElectionMessageHeader;
+import node.clienthandler.ClientHandler;
+import node.clienthandler.HttpClientHandler;
 import node.electionhandlers.*;
-import sockets.UDPSocket;
+import node.sockets.UDPSocket;
 import util.Token;
 
 import java.io.File;
@@ -34,6 +36,7 @@ public class Node {
     private final ExecutorService executorService;
     private final RingStore ringStore;
     private final RingCommunicationHandler ringComms;
+    private final ClientHandler clientHandler = new HttpClientHandler();
     private final UDPSocket udpSocket;
 
     private final BlockingQueue<Token> usableTokenQueue = new ArrayBlockingQueue<>(1);
@@ -98,7 +101,7 @@ public class Node {
     }
 
     /**
-     * Terminates and cleans up any resources used and created by the node, such as sockets and threads.
+     * Terminates and cleans up any resources used and created by the node, such as node.sockets and threads.
      *
      * @throws IOException if something goes wrong during termination.
      */
@@ -109,6 +112,7 @@ public class Node {
             this.udpSocket.close();
 
         ringComms.cleanup();
+        clientHandler.cleanup();
 
         executorService.shutdown();
 

@@ -33,7 +33,8 @@ public class LoggerFactory {
     }
 
     public static Logger getLogger() {
-        return LOGGER;
+        if (LOGGER == null) return Logger.getGlobal();
+        else return LOGGER;
     }
 
 }

@@ -1,6 +1,6 @@
-package sockets;
+package node.sockets;
 
-import globalpersistence.VirtualNode;
+import node.ringstore.VirtualNode;
 import messages.Message;
 import messages.MessageType;
 import node.AddressTranslator;

@@ -1,4 +1,4 @@
-package sockets;
+package node.sockets;
 
 import logging.LoggerFactory;
 import messages.Message;
