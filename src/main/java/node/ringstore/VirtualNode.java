@@ -7,15 +7,17 @@ import java.util.Optional;
  */
 public class VirtualNode {
 
-    private String address;
-    private int port;
-    private int nodeId;
-    private Integer successorId;
-    private boolean isCoordinator;
+    private final String address;
+    private final int coordinatorPort;
+    private final int clientPort;
+    private final int nodeId;
+    private final Integer successorId;
+    private final boolean isCoordinator;
 
-    public VirtualNode(String address, int port, int nodeId, Integer successorId, boolean isCoordinator) {
+    public VirtualNode(String address, int coordinatorPort, int clientPort, int nodeId, Integer successorId, boolean isCoordinator) {
         this.address = address;
-        this.port = port;
+        this.coordinatorPort = coordinatorPort;
+        this.clientPort = clientPort;
         this.nodeId = nodeId;
         this.successorId = successorId;
         this.isCoordinator = isCoordinator;
@@ -25,8 +27,12 @@ public class VirtualNode {
         return address;
     }
 
-    public int getPort() {
-        return port;
+    public int getCoordinatorPort() {
+        return coordinatorPort;
+    }
+
+    public int getClientPort() {
+        return clientPort;
     }
 
     public int getNodeId() {
@@ -45,7 +51,8 @@ public class VirtualNode {
     public String toString() {
         return "VirtualNode{" +
                 "address='" + address + '\'' +
-                ", port=" + port +
+                ", coordinatorPort=" + coordinatorPort +
+                ", clientPort=" + clientPort +
                 ", nodeId=" + nodeId +
                 ", successorId=" + successorId +
                 ", isCoordinator=" + isCoordinator +

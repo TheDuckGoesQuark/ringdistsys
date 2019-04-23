@@ -235,7 +235,7 @@ Knowing this meant that it could be assumed if there were only two nodes in the 
 
 Initially, the coordinator node was always the node with the ID 6. This node would maintain an in-memory virtual representation of the network topology using a cyclic linked list of node IDs. This obviously would be useless if the coordinator was to change, and so it was clearly necessary to persist the network topology somehow. 
 
-This was achieved by adding a database which would behave like resource P in the practical specification (the list of nodes). Only the coordinator would be able to write and update the database, and all other nodes would read from it. The database allowed operations to be carried out as transactions, meaning that node failure during an update could be rolled back. The database is initialized using a csv file containing the ID, address, and port of each node that \emph{may} join the network at some point. Figure \ref{fig:er} shows an ER diagram of the database schema.
+This was achieved by adding a database which would behave like resource P in the practical specification (the list of nodes). Only the coordinator would be able to write and update the database, and all other nodes would read from it. The database allowed operations to be carried out as transactions, meaning that node failure during an update could be rolled back. The database is initialized using a csv file containing the ID, address, and coordinatorPort of each node that \emph{may} join the network at some point. Figure \ref{fig:er} shows an ER diagram of the database schema.
 
 \begin{figure}[!ht]
 	\centering

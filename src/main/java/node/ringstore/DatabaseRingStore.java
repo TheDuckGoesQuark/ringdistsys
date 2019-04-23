@@ -24,7 +24,8 @@ public class DatabaseRingStore implements RingStore {
             "CREATE TABLE " + NODE_TABLE_NAME + " ( " +
                     "nodeId INT NOT NULL," +
                     "address VARCHAR(255) NOT NULL," +
-                    "port INT NOT NULL," +
+                    "coordinationPort INT NOT NULL," +
+                    "clientPort INT NOT NULL," +
                     "successorId INT," +
                     "PRIMARY KEY (nodeId)," +
                     "FOREIGN KEY (successorId) REFERENCES " + NODE_TABLE_NAME + "(nodeId)" +
@@ -64,7 +65,7 @@ public class DatabaseRingStore implements RingStore {
                     "WHERE successorId IS NOT NULL";
 
     private static final String INSERT_NODE =
-            "INSERT INTO " + NODE_TABLE_NAME + " VALUES (?, ?, ?, NULL)";
+            "INSERT INTO " + NODE_TABLE_NAME + " VALUES (?, ?, ?, ?, NULL)";
 
     private static final String INSERT_SUCCESSOR =
             "UPDATE " + NODE_TABLE_NAME + " SET successorId = ? where nodeId = ?";
@@ -175,16 +176,17 @@ public class DatabaseRingStore implements RingStore {
      * @throws SQLException if something goes wrong while inserting into the DB
      */
     private void insertNodesFromFile(Connection conn) throws IOException, SQLException {
-        final Map<Integer, InetSocketAddress> idToAddress = NodeListFileParser.parseNodeFile(nodelistpath, logger);
+        final List<VirtualNode> virtualNodes = NodeListFileParser.parseNodeFile(nodelistpath, logger);
 
         try (
                 final PreparedStatement insertNodeQuery = conn.prepareStatement(INSERT_NODE);
         ) {
             conn.setAutoCommit(false);
-            for (Map.Entry<Integer, InetSocketAddress> node : idToAddress.entrySet()) {
-                insertNodeQuery.setInt(1, node.getKey());
-                insertNodeQuery.setString(2, node.getValue().getHostName());
-                insertNodeQuery.setInt(3, node.getValue().getPort());
+            for (VirtualNode node : virtualNodes) {
+                insertNodeQuery.setInt(1, node.getNodeId());
+                insertNodeQuery.setString(2, node.getAddress());
+                insertNodeQuery.setInt(3, node.getCoordinatorPort());
+                insertNodeQuery.setInt(4, node.getClientPort());
                 insertNodeQuery.addBatch();
             }
             insertNodeQuery.executeBatch();
@@ -232,6 +234,24 @@ public class DatabaseRingStore implements RingStore {
         }
     }
 
+    /**
+     * Parses a virtual node from the row of a result set
+     *
+     * @param rs the result set to parse the virtual node from
+     * @return virtual node using values from the current row in the result set
+     * @throws SQLException
+     */
+    private static VirtualNode nodeFromRow(ResultSet rs) throws SQLException {
+        final Optional<Integer> coordinatorId = getNullableInt("coordinatorId", rs);
+        final String address = rs.getString("address");
+        final int coordinationPort = rs.getInt("coordinationPort");
+        final int clientPort = rs.getInt("clientPort");
+        final int nodeId = rs.getInt("nodeId");
+        final Integer successorId = getNullableInt("successorId", rs).orElse(null);
+
+        final boolean isCoordinator = coordinatorId.isPresent() && coordinatorId.get() == nodeId;
+        return new VirtualNode(address, coordinationPort, clientPort, nodeId, successorId, isCoordinator);
+    }
 
     @Override
     public List<VirtualNode> getAllNodes() {
@@ -248,15 +268,7 @@ public class DatabaseRingStore implements RingStore {
             rs = ps.executeQuery();
 
             while (rs.next()) {
-                final Optional<Integer> coordinatorId = getNullableInt("coordinatorId", rs);
-                final String address = rs.getString("address");
-                final int port = rs.getInt("port");
-                final int nodeId = rs.getInt("nodeId");
-                final Integer successorId = getNullableInt("successorId", rs).orElse(null);
-
-                final boolean isCoordinator = coordinatorId.isPresent() && coordinatorId.get() == nodeId;
-                virtualNodes.add(new VirtualNode(address, port, nodeId, successorId, isCoordinator));
-
+                virtualNodes.add(nodeFromRow(rs));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -337,15 +349,7 @@ public class DatabaseRingStore implements RingStore {
             rs = ps.executeQuery();
 
             while (rs.next()) {
-                final Optional<Integer> coordinatorId = getNullableInt("coordinatorId", rs);
-                final String address = rs.getString("address");
-                final int port = rs.getInt("port");
-                final int nodeId = rs.getInt("nodeId");
-                final Integer successorId = getNullableInt("successorId", rs).orElse(null);
-
-                final boolean isCoordinator = coordinatorId.isPresent() && coordinatorId.get() == nodeId;
-                virtualNodes.add(new VirtualNode(address, port, nodeId, successorId, isCoordinator));
-
+                virtualNodes.add(nodeFromRow(rs));
             }
         } catch (SQLException e) {
             logger.warning(e.getMessage());
@@ -438,14 +442,7 @@ public class DatabaseRingStore implements RingStore {
             rs = ps.executeQuery();
 
             while (rs.next()) {
-                final Optional<Integer> coordinatorId = getNullableInt("coordinatorId", rs);
-                final String address = rs.getString("address");
-                final int port = rs.getInt("port");
-                final int nodeId = rs.getInt("nodeId");
-                final Integer successorId = getNullableInt("successorId", rs).orElse(null);
-
-                final boolean isCoordinator = coordinatorId.isPresent() && coordinatorId.get() == nodeId;
-                virtualNodes.add(new VirtualNode(address, port, nodeId, successorId, isCoordinator));
+                virtualNodes.add(nodeFromRow(rs));
             }
         } catch (SQLException e) {
             logger.warning(e.getMessage());

@@ -15,7 +15,7 @@ public class AddressTranslator {
     public AddressTranslator(List<VirtualNode> nodes) {
         this.idMap = new HashMap<>();
         for (VirtualNode node : nodes) {
-            idMap.put(node.getNodeId(), new InetSocketAddress(node.getAddress(), node.getPort()));
+            idMap.put(node.getNodeId(), new InetSocketAddress(node.getAddress(), node.getCoordinatorPort()));
         }
     }
 

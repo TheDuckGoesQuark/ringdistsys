@@ -303,7 +303,7 @@ Knowing this meant that it could be assumed if there were only two nodes in the 
 
 Initially, the coordinator node was always the node with the ID 6. This node would maintain an in-memory virtual representation of the network topology using a cyclic linked list of node IDs. This obviously would be useless if the coordinator was to change, and so it was necessary to persist the network topology somehow. 
 
-This was achieved by adding a database which would behave like resource P in the practical specification (the list of nodes). Only the coordinator would be able to write and update the database, and all other nodes would read from it. The database allowed operations to be carried out as transactions, meaning that node failure during an update could be rolled back. The database is initialized using a csv file containing the ID, address, and port of each node that \emph{may} join the network at some point. Figure \ref{fig:er} shows an ER diagram of the database schema. The successorId is nullable and refers to another row in the node table. If a value is present in that column then the node ID on that row would be assumed to be part of the ring.
+This was achieved by adding a database which would behave like resource P in the practical specification (the list of nodes). Only the coordinator would be able to write and update the database, and all other nodes would read from it. The database allowed operations to be carried out as transactions, meaning that node failure during an update could be rolled back. The database is initialized using a csv file containing the ID, address, and coordinatorPort of each node that \emph{may} join the network at some point. Figure \ref{fig:er} shows an ER diagram of the database schema. The successorId is nullable and refers to another row in the node table. If a value is present in that column then the node ID on that row would be assumed to be part of the ring.
 
 \begin{figure}[!ht]
 	\centering
@@ -467,7 +467,7 @@ In order to ensure that the token is at least delivered successfully, the token 
 
 \subsection{Web Server}
 
-In order for clients to make and receive posts, a simple web server was configured. Until this point all tests could be run locally (i.e. using localhost as the host address.), by using a different port for each node. In order to isolate the ring topology from clients, a different socket was to be used for the web server, and it made sense for the web server to exist on the same port for each host. 
+In order for clients to make and receive posts, a simple web server was configured. 
 
 \section{Testing}
 

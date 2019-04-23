@@ -19,8 +19,8 @@ public class UDPSocketTest {
     @Before
     public void initAddressTranslator() {
         List<VirtualNode> nodes = new ArrayList<>();
-        nodes.add(new VirtualNode("localhost", 5001, 1, null, false));
-        nodes.add(new VirtualNode("localhost", 5000, 0, null, false));
+        nodes.add(new VirtualNode("localhost", 5001, 8001, 1, null, false));
+        nodes.add(new VirtualNode("localhost", 5000, 8002, 0, null, false));
         addressTranslator = new AddressTranslator(nodes);
     }
 
