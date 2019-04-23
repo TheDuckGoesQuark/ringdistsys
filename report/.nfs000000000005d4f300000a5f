@@ -33,9 +33,6 @@
 \usepackage{listings}
 \usepackage{placeins}
 
-\usepackage{booktabs}
-\usepackage{tabularx}
-
 \begin{document}
 
 \begin{titlepage}
@@ -109,7 +106,7 @@ In order to run the program, the arguments shown in table \ref{tbl:arguments} ha
 \renewcommand{\arraystretch}{1.5}
 \begin{table}[!ht]
 \begin{tabular}{l l}
-	\multicolumn{2}{l}{}
+	\multicolumn{2}{}{}
 \begin{lstlisting}[breaklines=true]
 usage: java -jar <program>.jar
 \end{lstlisting} 
@@ -141,48 +138,25 @@ Due to different patterns of communication during recovery and regular message p
     \item Multicast communication possible which would greatly simplify broadcasting.
 \end{enumerate}
 
-\section{Ring Formation}
-
-\subsection{Message Structure}
-
-In order for nodes to understand and parse the messages that were sent between them, a message protocol was designed. Figure \ref{fig:mainmsg} shows the header that would be part of every message sent. The possible types of messages are summarised in table \ref{tbl:messagetypes}.
-
-\begin{table}[!h]
-\centering
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}lll@{}}
-\toprule
-Message Type                               & Usage                                                                                                                        & Payload                  \\ \midrule
-\multicolumn{1}{l|}{JOIN}                  & \multicolumn{1}{l|}{Sent by new node to coordinator when wanting to join ring.}                                              & None                     \\
-\multicolumn{1}{l|}{SUCCESSOR}             & \multicolumn{1}{l|}{Sent by coordinator to inform a node to connect to a new successor.}                                     & New Successor ID\\
-\multicolumn{1}{l|}{SUCCESSOR\_REQUEST}    & \multicolumn{1}{l|}{Sent by a node to the coordinator after its successor has failed in order to be reassigned a successor.} & None                     \\
-\multicolumn{1}{l|}{TOKEN}                 & \multicolumn{1}{l|}{Sent by a node to its successor.}                                                                        & None                     \\
-\multicolumn{1}{l|}{TOKEN\_ACK}            & \multicolumn{1}{l|}{Sent by a node to its predecessor after receiving the token to confirm its reception.}                   & None                     \\
-\multicolumn{1}{l|}{COORDINATOR\_ELECTION} & \multicolumn{1}{l|}{Message payload contains an election message.}                                                           & Election Message         \\ \bottomrule
-\end{tabular}%
-}
-\caption{Possible values for the type field in the message header, with their usage and payload.}
-\label{tbl:messagetypes}
-\end{table}
-
-The messages consist of serialized Java objects, which requires that they all implement the \emph{Serializable} interface. Figure \ref{fig:mainmsg} 
-
 \begin{figure}[!h]
 \centering
-\begin{minipage}{.5\textwidth}
+\begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[width=.8\linewidth]{images/mainmsg}
-  \captionof{figure}{Main message header.}
-  \label{fig:mainmsg}
-\end{minipage}%
-\begin{minipage}{.5\textwidth}
+  \includegraphics[width=.6\linewidth]{images/tcp}
+  \caption{TCP Around Ring}
+  \label{fig:tcp}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
   \centering
-  \includegraphics[width=.8\linewidth]{images/elecmsg}
-  \captionof{figure}{Election message header.}
-  \label{fig:elecmsg}
-\end{minipage}
+  \includegraphics[width=.6\linewidth]{images/udp}
+  \caption{UDP Across Ring}
+  \label{fig:udp}
+\end{subfigure}
+\caption{The different types of communication used}
+\label{fig:pattern}
 \end{figure}
 
+\section{Ring Formation}
 
 \subsection{Initialization}
 
@@ -259,9 +233,9 @@ Knowing this meant that it could be assumed if there were only two nodes in the 
 
 \subsection{Ring Topology Persistence}
 
-Initially, the coordinator node was always the node with the ID 6. This node would maintain an in-memory virtual representation of the network topology using a cyclic linked list of node IDs. This obviously would be useless if the coordinator was to change, and so it was necessary to persist the network topology somehow. 
+Initially, the coordinator node was always the node with the ID 6. This node would maintain an in-memory virtual representation of the network topology using a cyclic linked list of node IDs. This obviously would be useless if the coordinator was to change, and so it was clearly necessary to persist the network topology somehow. 
 
-This was achieved by adding a database which would behave like resource P in the practical specification (the list of nodes). Only the coordinator would be able to write and update the database, and all other nodes would read from it. The database allowed operations to be carried out as transactions, meaning that node failure during an update could be rolled back. The database is initialized using a csv file containing the ID, address, and port of each node that \emph{may} join the network at some point. Figure \ref{fig:er} shows an ER diagram of the database schema. The successorId is nullable and refers to another row in the node table. If a value is present in that column then the node ID on that row would be assumed to be part of the ring.
+This was achieved by adding a database which would behave like resource P in the practical specification (the list of nodes). Only the coordinator would be able to write and update the database, and all other nodes would read from it. The database allowed operations to be carried out as transactions, meaning that node failure during an update could be rolled back. The database is initialized using a csv file containing the ID, address, and port of each node that \emph{may} join the network at some point. Figure \ref{fig:er} shows an ER diagram of the database schema.
 
 \begin{figure}[!ht]
 	\centering
@@ -282,10 +256,18 @@ In order to ensure that only one coordinator existed at any time, the coordinato
 
 Whilst another row could be added with the value FALSE for \emph{singleRowLock}, permissions would be configured such that only the hosts and a system administrator would be able to perform updates so it could be assumed that as long as the application code always used TRUE for inserts, only one row would ever exist. 
 
-
 \section{Leader/Coordinator Election}
 
-Firstly the ring-based election algorithm was implemented, as required for the basic specification. An interface was used for providing a generic 'election algorithm' API, allowing different algorithms to be switched out easily. Any messages that arrived from either the UDP socket or the ring sockets that were related 
+Firstly the ring-based election algorithm was implemented, as required for the basic specification. An interface was used for providing a generic 'election algorithm' API, allowing different algorithms to be switched out easily. 
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=0.6\linewidth]{images/msgstructure}
+	\caption{ER diagram of the database schema for persisting the network topology.}
+	\label{fig:msgstructure}
+\end{figure}
+
+% TODO
 
 \section{Receive/Send Posts}
 
