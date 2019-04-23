@@ -1,18 +1,18 @@
-package node.messagequeue;
+package node.clientmessaging.messagequeue;
 
 import java.sql.Time;
 
-public class ClientMessage {
+public class UserMessage {
     /**
      * Time message was sent
      */
     private Time sentAt;
     /**
-     * Name of client that sent message
+     * Name of clientmessaging that sent message
      */
     private String fromName;
     /**
-     * Name of client/group that message is for
+     * Name of clientmessaging/group that message is for
      */
     private String toName;
     /**
@@ -20,12 +20,12 @@ public class ClientMessage {
      */
     private String messageContent;
     /**
-     * If true, message is for all members that belong to the group with the name given in {@link ClientMessage#toName}.
-     * If false, message is for an individual client
+     * If true, message is for all members that belong to the group with the name given in {@link UserMessage#toName}.
+     * If false, message is for an individual clientmessaging
      */
     private boolean forGroup;
 
-    public ClientMessage(Time sentAt, String fromName, String toName, String messageContent, boolean forGroup) {
+    public UserMessage(Time sentAt, String fromName, String toName, String messageContent, boolean forGroup) {
         this.sentAt = sentAt;
         this.fromName = fromName;
         this.toName = toName;

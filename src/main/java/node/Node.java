@@ -1,7 +1,7 @@
 package node;
 
 import config.Configuration;
-import node.clienthandler.HttpClientHandler;
+import node.clientmessaging.ChatEndpoint;
 import node.ringstore.DatabaseRingStore;
 import node.ringstore.VirtualNode;
 import node.ringstore.RingStore;
@@ -10,7 +10,7 @@ import messages.Message;
 import messages.MessageType;
 import messages.SuccessorMessage;
 import messages.election.ElectionMessageHeader;
-import node.clienthandler.ClientHandler;
+import node.clientmessaging.ClientHandler;
 import node.electionhandlers.*;
 import node.sockets.UDPSocket;
 import util.Token;
@@ -60,7 +60,7 @@ public class Node {
                 .findFirst()
                 .orElseThrow(() -> new IOException("Node missing from database."));
 
-        this.clientHandler = new HttpClientHandler(thisNode.getAddress(), thisNode.getClientPort());
+        this.clientHandler = new ChatEndpoint(thisNode.getAddress(), thisNode.getClientPort());
 
         final AddressTranslator addressTranslator = new AddressTranslator(allNodes);
         this.udpSocket = new UDPSocket(addressTranslator, config.getNodeId());
