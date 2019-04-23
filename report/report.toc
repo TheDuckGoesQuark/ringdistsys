@@ -8,7 +8,7 @@
 \contentsline {subsection}{\numberline {2.5}Topology Persistence}{7}
 \contentsline {section}{\numberline {3}Leader/Coordinator Election}{10}
 \contentsline {subsection}{\numberline {3.1}Election API}{10}
-\contentsline {subsection}{\numberline {3.2}Triggering Elections}{11}
+\contentsline {subsection}{\numberline {3.2}Triggering Elections}{10}
 \contentsline {subsection}{\numberline {3.3}Ring-Based}{11}
 \contentsline {subsection}{\numberline {3.4}Chang Roberts}{11}
 \contentsline {subsection}{\numberline {3.5}Bully}{12}
