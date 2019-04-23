@@ -100,19 +100,16 @@ To demonstrate an understanding of leader election and mutual exclusion in distr
 
 Java 8 was chosen for this project due to it's friendly socket API, and Maven \cite{maven} was used as the build tool. 
 
-\subsection{Configuration}
-
 Since each node would be running on an isolated machine, the planned testing environment would involve using \emph{ssh} to start the nodes remotely. Providing the configuration as command line arguments was considered simpler than other methods, and was implemented using the Apache Commons CLI library \cite{apachecli}. 
+
 
 In order to run the program, the arguments shown in table \ref{tbl:arguments} had to be specified. The purpose of each argument is explained later.
 
 \renewcommand{\arraystretch}{1.5}
 \begin{table}[!ht]
-\begin{tabular}{l l}
-	\multicolumn{2}{l}{}
-\begin{lstlisting}[breaklines=true]
-usage: java -jar <program>.jar
-\end{lstlisting} 
+\centering
+\begin{tabular}{ll}
+\multicolumn{2}{l}{usage: java -jar $\langle$program$\rangle$.jar}
 \\ 
 
  -d,--drop           &  Include if this node should trigger a database refresh. \\
@@ -124,26 +121,10 @@ usage: java -jar <program>.jar
 \label{tbl:arguments}
 \end{table}
 
-\subsection{Sockets}
-
-Due to different patterns of communication during recovery and regular message passing phases both TCP and UDP were used for this project, as shown in Figure \ref{fig:pattern}.
-
-\noindent TCP was used for communication \textbf{around} the ring:
-\begin{enumerate}
-    \item Reliable communication avoids token being lost.
-    \item Connection is reused frequently between predecessors and successors, justifying handshake overhead.
-\end{enumerate}
-
-\noindent UDP was used for communication \textbf{across} the ring: 
-\begin{enumerate}
-    \item Low communication overhead allows for messages to be sent to multiple nodes quickly, improving recovery time from node failure.
-    \item No session maintenance allows coordinator to handle more members in the ring.
-    \item Multicast communication possible which would greatly simplify broadcasting.
-\end{enumerate}
 
 \section{Ring Formation}
 
-\subsection{Message Structure}
+\subsection{Messages}
 
 In order for nodes to understand and parse the messages that were sent between them, a message protocol was designed. Figure \ref{fig:mainmsg} shows the header that would be part of every message sent. The possible types of messages are summarised in table \ref{tbl:messagetypes}.
 
@@ -165,7 +146,7 @@ Message Type                               & Usage                              
 \label{tbl:messagetypes}
 \end{table}
 
-The messages consist of serialized Java objects, which requires that they all implement the \emph{Serializable} interface. Figure \ref{fig:mainmsg} 
+The messages consist of serialized Java objects, which requires that they all implement the \emph{Serializable} interface. A more versatile format such as JSON would be preferred, but since all nodes would be using Java this method of serializing messages was kept. Figure \ref{fig:mainmsg} shows the header of every message, and figure \ref{fig:elecmsg} shows the header for an election message. 
 
 \begin{figure}[!h]
 \centering
@@ -183,6 +164,24 @@ The messages consist of serialized Java objects, which requires that they all im
 \end{minipage}
 \end{figure}
 
+The election message header would be in the payload of the main message. This allowed multiple election methods to be used and easy routing of election related messages to an election handler class.
+
+\subsection{Communication}
+
+Due to different patterns of communication during recovery and regular message passing phases both TCP and UDP were used for this project, as shown in Figure \ref{fig:pattern}.
+
+\noindent TCP was used for communication \textbf{around} the ring:
+\begin{enumerate}
+    \item Reliable communication avoids token being lost.
+    \item Connection is reused frequently between predecessors and successors, justifying handshake overhead.
+\end{enumerate}
+
+\noindent UDP was used for communication \textbf{across} the ring: 
+\begin{enumerate}
+    \item Low communication overhead allows for messages to be sent to multiple nodes quickly, improving recovery time from node failure.
+    \item No session maintenance allows coordinator to handle more members in the ring.
+    \item Multicast communication possible which would greatly simplify broadcasting.
+\end{enumerate}
 
 \subsection{Initialization}
 
