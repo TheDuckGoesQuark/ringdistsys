@@ -125,7 +125,7 @@ public class Node {
 
         joinRing();
 
-        // Begin election and token handler on another thread
+        // Begin token handler on another thread
         executorService.submit((Callable<Void>) () -> {
             while (!killswitch())
                 try {
@@ -151,6 +151,7 @@ public class Node {
             return null;
         });
 
+        // Serve clients on main thread
         while (!killswitch()) {
             try {
                 final Token token = usableTokenQueue.take();
