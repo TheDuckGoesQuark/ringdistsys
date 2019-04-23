@@ -2,9 +2,14 @@
 \contentsline {section}{\numberline {1}Initial Set-up}{1}
 \contentsline {section}{\numberline {2}Ring Formation}{1}
 \contentsline {subsection}{\numberline {2.1}Messages}{1}
-\contentsline {subsection}{\numberline {2.2}Communication}{2}
-\contentsline {subsection}{\numberline {2.3}Initialization}{3}
-\contentsline {subsection}{\numberline {2.4}General Node Recovery}{4}
-\contentsline {subsection}{\numberline {2.5}Ring Topology Persistence}{5}
-\contentsline {section}{\numberline {3}Leader/Coordinator Election}{7}
-\contentsline {section}{\numberline {4}Receive/Send Posts}{8}
+\contentsline {subsection}{\numberline {2.2}Transport Protocol}{2}
+\contentsline {subsection}{\numberline {2.3}Initialization and Joining}{3}
+\contentsline {subsection}{\numberline {2.4}Topology Recovery and Maintenance}{4}
+\contentsline {subsection}{\numberline {2.5}Topology Persistence}{6}
+\contentsline {section}{\numberline {3}Leader/Coordinator Election}{8}
+\contentsline {subsection}{\numberline {3.1}Election API}{8}
+\contentsline {subsection}{\numberline {3.2}Triggering Elections}{9}
+\contentsline {subsection}{\numberline {3.3}Ring-Based}{9}
+\contentsline {subsection}{\numberline {3.4}Chang Roberts}{9}
+\contentsline {subsection}{\numberline {3.5}Bully}{10}
+\contentsline {section}{\numberline {4}Receive/Send Posts}{10}

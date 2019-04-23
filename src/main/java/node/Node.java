@@ -410,7 +410,6 @@ public class Node {
             final Message message = udpSocket.receiveMessage(3);
 
             if (message == null) continue;
-            logger.info(String.format("Received from %d : %s", message.getSrcId(), message.toString()));
 
             switch (message.getType()) {
                 case SUCCESSOR:
@@ -423,6 +422,11 @@ public class Node {
                     }
                     break;
             }
+        }
+
+        // Try get elected if my ID is higher than the current coordinator
+        if (coordinatorId < config.getNodeId()) {
+            beginElection();
         }
     }
 

@@ -147,6 +147,13 @@ INPUT ./images/mainmsg.png
 INPUT ./images/elecmsg.png
 INPUT ./images/elecmsg.png
 INPUT ./images/elecmsg.png
+INPUT ./images/tcp.png
+INPUT ./images/tcp.png
+INPUT ./images/tcp.png
+INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmr10.tfm
+INPUT ./images/udp.png
+INPUT ./images/udp.png
+INPUT ./images/udp.png
 INPUT ./images/join.png
 INPUT ./images/join.png
 INPUT ./images/join.png
@@ -168,6 +175,7 @@ INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmtt12.tfm
 INPUT report.aux
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmcsc10.pfb
+INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb
 INPUT /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb

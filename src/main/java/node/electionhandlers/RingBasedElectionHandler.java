@@ -2,9 +2,7 @@ package node.electionhandlers;
 
 import logging.LoggerFactory;
 import messages.Message;
-import messages.MessageType;
 import messages.election.ElectionMessageHeader;
-import messages.election.ElectionMessageType;
 import messages.election.ringbased.CoordinatorMessage;
 import messages.election.ringbased.ElectionMessage;
 import node.RingCommunicationHandler;

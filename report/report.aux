@@ -11,32 +11,45 @@
 \newlabel{tbl:arguments}{{1}{1}}
 \@writefile{toc}{\contentsline {section}{\numberline {2}Ring Formation}{1}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Messages}{1}}
-\citation{join}
 \@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Possible values for the type field in the message header, with their usage and payload.\relax }}{2}}
 \newlabel{tbl:messagetypes}{{2}{2}}
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Main message header.\relax }}{2}}
 \newlabel{fig:mainmsg}{{1}{2}}
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Election message header.\relax }}{2}}
 \newlabel{fig:elecmsg}{{2}{2}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Communication}{2}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Initialization}{3}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Joining protocol over time, with topology shown on right.\relax }}{3}}
-\newlabel{fig:join}{{3}{3}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces State of each connection as a new node joins the ring. The red arrow shows the edge that is replaced with the new node, and solid and dashed arrows represent ongoing and pending connections respectively. Either A or B can be the coordinator in this scenario.\relax }}{3}}
-\newlabel{fig:bigjoin}{{4}{3}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}General Node Recovery}{4}}
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Network topology during the recovery from node B failing. Either A or C are the coordinator in this scenario.\relax }}{5}}
-\newlabel{fig:failure}{{5}{5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Ring Topology Persistence}{5}}
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Two predecessor disconnect scenarios that are identical to the thread polling the predecessor socket.\relax }}{6}}
-\newlabel{fig:hard}{{6}{6}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces ER diagram of the database schema for persisting the network topology.\relax }}{6}}
-\newlabel{fig:er}{{7}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Transport Protocol}{2}}
+\citation{join}
+\newlabel{fig:tcp}{{3a}{3}}
+\newlabel{sub@fig:tcp}{{a}{3}}
+\newlabel{fig:udp}{{3b}{3}}
+\newlabel{sub@fig:udp}{{b}{3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces The different types of communication used\relax }}{3}}
+\newlabel{fig:pattern}{{3}{3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Initialization and Joining}{3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Joining protocol over time, with topology shown on right.\relax }}{3}}
+\newlabel{fig:join}{{4}{3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces State of each connection as a new node joins the ring. The red arrow shows the edge that is replaced with the new node, and solid and dashed arrows represent ongoing and pending connections respectively. Either A or B can be the coordinator in this scenario.\relax }}{4}}
+\newlabel{fig:bigjoin}{{5}{4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Topology Recovery and Maintenance}{4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Network topology during the recovery from node B failing. Either A or C are the coordinator in this scenario.\relax }}{5}}
+\newlabel{fig:failure}{{6}{5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Two predecessor disconnect scenarios that are identical to the thread polling the predecessor socket.\relax }}{6}}
+\newlabel{fig:hard}{{7}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}Topology Persistence}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces ER diagram of the database schema for persisting the network topology.\relax }}{7}}
+\newlabel{fig:er}{{8}{7}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Leader/Coordinator Election}{8}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Election API}{8}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Methods of the election handler interface.\relax }}{9}}
+\newlabel{tbl:elecapi}{{3}{9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Triggering Elections}{9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Ring-Based}{9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Chang Roberts}{9}}
 \bibstyle{unsrt}
 \bibdata{mybib}
 \bibcite{maven}{{1}{}{{}}{{}}}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Leader/Coordinator Election}{7}}
 \bibcite{apachecli}{{2}{}{{}}{{}}}
 \bibcite{join}{{3}{}{{}}{{}}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
-\@writefile{toc}{\contentsline {section}{\numberline {4}Receive/Send Posts}{8}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Bully}{10}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Receive/Send Posts}{10}}

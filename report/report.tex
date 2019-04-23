@@ -100,10 +100,7 @@ To demonstrate an understanding of leader election and mutual exclusion in distr
 
 Java 8 was chosen for this project due to it's friendly socket API, and Maven \cite{maven} was used as the build tool. 
 
-Since each node would be running on an isolated machine, the planned testing environment would involve using \emph{ssh} to start the nodes remotely. Providing the configuration as command line arguments was considered simpler than other methods, and was implemented using the Apache Commons CLI library \cite{apachecli}. 
-
-
-In order to run the program, the arguments shown in table \ref{tbl:arguments} had to be specified. The purpose of each argument is explained later.
+Since each node would be running on an isolated machine, the planned testing environment would involve using \emph{ssh} to start the nodes remotely. Providing the configuration as command line arguments was considered simpler than other methods, and was implemented using the Apache Commons CLI library \cite{apachecli}. In order to run the program, the arguments shown in table \ref{tbl:arguments} had to be specified. The purpose of each argument is explained later.
 
 \renewcommand{\arraystretch}{1.5}
 \begin{table}[!ht]
@@ -146,9 +143,9 @@ Message Type                               & Usage                              
 \label{tbl:messagetypes}
 \end{table}
 
-The messages consist of serialized Java objects, which requires that they all implement the \emph{Serializable} interface. A more versatile format such as JSON would be preferred, but since all nodes would be using Java this method of serializing messages was kept. Figure \ref{fig:mainmsg} shows the header of every message, and figure \ref{fig:elecmsg} shows the header for an election message. 
+The messages are sent as serialized Java objects, which requires that all message classes implement the \emph{Serializable} interface. A more platform independent format such as JSON would be preferred, but since all nodes would be using Java this method of serializing messages was kept. Figure \ref{fig:elecmsg} shows the header for an election message. The election message header would be in the payload of the main message. This allowed multiple election methods to be used and easy routing of election related messages to an election handler class.
 
-\begin{figure}[!h]
+\begin{figure}[!ht]
 \centering
 \begin{minipage}{.5\textwidth}
   \centering
@@ -164,13 +161,11 @@ The messages consist of serialized Java objects, which requires that they all im
 \end{minipage}
 \end{figure}
 
-The election message header would be in the payload of the main message. This allowed multiple election methods to be used and easy routing of election related messages to an election handler class.
-
-\subsection{Communication}
+\subsection{Transport Protocol}
 
 Due to different patterns of communication during recovery and regular message passing phases both TCP and UDP were used for this project, as shown in Figure \ref{fig:pattern}.
 
-\noindent TCP was used for communication \textbf{around} the ring:
+\noindent \linebreak TCP was used for communication \textbf{around} the ring:
 \begin{enumerate}
     \item Reliable communication avoids token being lost.
     \item Connection is reused frequently between predecessors and successors, justifying handshake overhead.
@@ -183,7 +178,25 @@ Due to different patterns of communication during recovery and regular message p
     \item Multicast communication possible which would greatly simplify broadcasting.
 \end{enumerate}
 
-\subsection{Initialization}
+\begin{figure}[!h]
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=.6\linewidth]{images/tcp}
+  \caption{TCP Around Ring}
+  \label{fig:tcp}
+\end{subfigure}%
+\begin{subfigure}{.5\textwidth}
+  \centering
+  \includegraphics[width=.6\linewidth]{images/udp}
+  \caption{UDP Across Ring}
+  \label{fig:udp}
+\end{subfigure}
+\caption{The different types of communication used}
+\label{fig:pattern}
+\end{figure}
+
+\subsection{Initialization and Joining}
 
 On initialization, each node sends out join messages to the coordinator. The
 joining protocol is similiar to that described in \cite{join}, and is shown in Figure \ref{fig:join}.
@@ -224,7 +237,7 @@ would then request the connection to itself. For two nodes and more the
 joining node would be able to first connect to its new successor once its
 predecessor had disconnected from its old successor as shown in figure \ref{fig:bigjoin}. 
 
-\subsection{General Node Recovery}
+\subsection{Topology Recovery and Maintenance}
 
 When designing a distributed system, it should be assumed that failure will occur, and so as an extension this implementation included a mechanism for recovering from failure. Node failure is detected by either:
 \begin{enumerate}
@@ -256,7 +269,7 @@ Knowing this meant that it could be assumed if there were only two nodes in the 
 	\label{fig:hard}
 \end{figure}
 
-\subsection{Ring Topology Persistence}
+\subsection{Topology Persistence}
 
 Initially, the coordinator node was always the node with the ID 6. This node would maintain an in-memory virtual representation of the network topology using a cyclic linked list of node IDs. This obviously would be useless if the coordinator was to change, and so it was necessary to persist the network topology somehow. 
 
@@ -281,10 +294,54 @@ In order to ensure that only one coordinator existed at any time, the coordinato
 
 Whilst another row could be added with the value FALSE for \emph{singleRowLock}, permissions would be configured such that only the hosts and a system administrator would be able to perform updates so it could be assumed that as long as the application code always used TRUE for inserts, only one row would ever exist. 
 
-
 \section{Leader/Coordinator Election}
 
-Firstly the ring-based election algorithm was implemented, as required for the basic specification. An interface was used for providing a generic 'election algorithm' API, allowing different algorithms to be switched out easily. Any messages that arrived from either the UDP socket or the ring sockets that were related 
+\subsection{Election API}
+
+An interface was used for providing a generic 'election algorithm' API, allowing different algorithms to be switched out easily. Any messages that arrived from either the UDP socket or the ring sockets that had the COORDINATOR\_ELECTION type would be routed to the handler for the election algorithm specified in the election header. For example, an election message that required the bully algorithm would be routed to the bully election handler.
+
+In the configuration for each node, a default election algorithm is specified. Therefore the type of election that would be started could vary depending on which node initiated it. If a node received an election message for a different algorithm to the one they are currently using, then they would replace their election handler with one that could process the arriving message. 
+
+The methods required by the election API are summarised in table \ref{tbl:elecapi}. The constructors could vary since different resources may be necessary. For example, the ring-based and Chang Roberts algorithms both only require communication around the ring, whilst the Bully algorithm only requires communication across the ring.
+
+\begin{table}[!ht]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{ll}
+\hline
+Method                                 & Usage                                                                                      \\ \hline
+\multicolumn{1}{l|}{getMethodName}     & Returns the name of the underlying algorithm used by the implementation of this interface. \\
+\multicolumn{1}{l|}{startElection}     & Starts an election.                                                                        \\
+\multicolumn{1}{l|}{handleMessage}     & Handles any election messages.                                                             \\
+\multicolumn{1}{l|}{getResult}         & Returns the result of the election (if concluded).                                         \\
+\multicolumn{1}{l|}{electionConcluded} & Returns true if a result has been obtained.                                                \\ \hline
+\end{tabular}%
+}
+\caption{Methods of the election handler interface.}
+\label{tbl:elecapi}
+\end{table}
+
+\subsection{Triggering Elections}
+
+Initially, elections could only be triggered by the predecessor of a failed coordinator. This meant that if a new node joined with a higher ID, it would not be elected until the current coordinator failed. This was resolved by adding logic to the joining procedure that once part of the ring, the new node would trigger an election if it found that its ID was greater than the current coordinators. 
+
+This meant it would be possible for multiple elections to be ongoing simultaneously if many nodes joined the ring in quick succession with higher IDs than the current coordinator. 
+
+\subsection{Ring-Based}
+
+The ring based algorithm was the simplest to implement and test. The node starting the election would initialise the ELECTION message with its own ID and forward this to its successor and set the \emph{ongoing} flag to true. The message would be forwarded around the ring by each node after appending their ID to the list of candidates until it returned to the node that started the election. 
+
+This node then chose the new coordinator from the list of candidates based on which had the highest ID, and forwarded the result to its successors as a COORDINATOR message. The result would be forwarded by each node until it reached a node that was already aware of the new coordinator.
+
+\subsection{Chang Roberts}
+
+The Chang Roberts algorithm reused most of the components from the ring-based algorithm, other than the forwarding logic for ELECTION messages. 
+
+If the ELECTION message contained the receiving nodes ID, then it would conclude the election and forward the COORDINATOR message as in the ring-based algorithm. However, in order to avoid redundant forwarding of election messages if two elections are started at the same time, ELECTION messages would only be forwarded if the receiving node was a better candidate (i.e. had a greater ID), or if it had not already participated by forwarding a message previously.
+
+\subsection{Bully}
+
+The bully algorithm 
 
 \section{Receive/Send Posts}
 
