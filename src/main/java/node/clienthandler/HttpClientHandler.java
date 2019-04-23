@@ -3,7 +3,6 @@ package node.clienthandler;
 import com.sun.net.httpserver.HttpServer;
 import logging.LoggerFactory;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.logging.Logger;
 
@@ -16,10 +15,10 @@ public class HttpClientHandler implements ClientHandler {
      */
     private final HttpServer server;
 
-    public HttpClientHandler(String hostAddress, int clientPort) throws IOException {
+    public HttpClientHandler(String hostAddress, int clientPort) throws Exception {
         this.server = HttpServer.create(new InetSocketAddress(hostAddress, clientPort), 0);
-        server.createContext("/", new WebPageHandler());
-        server.createContext("/api", new RequestHandler());
+        server.createContext("/", new HTMLHandler());
+        server.setExecutor(null);
         server.start();
     }
 
@@ -40,6 +39,11 @@ public class HttpClientHandler implements ClientHandler {
 
     @Override
     public void cleanup() {
-
+        try {
+            server.stop(0);
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.warning(e.getMessage());
+        }
     }
 }

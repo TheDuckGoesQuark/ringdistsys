@@ -47,7 +47,7 @@ public class Node {
     private boolean lostCoordinator = false;
     private ElectionHandler currentElectionHandler;
 
-    public Node(Configuration config) throws IOException {
+    public Node(Configuration config) throws Exception {
         this.config = config;
         this.executorService = Executors.newCachedThreadPool();
 
