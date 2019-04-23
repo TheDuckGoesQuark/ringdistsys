@@ -18,7 +18,8 @@ public class HttpClientHandler implements ClientHandler {
 
     public HttpClientHandler(String hostAddress, int clientPort) throws IOException {
         this.server = HttpServer.create(new InetSocketAddress(hostAddress, clientPort), 0);
-        server.createContext("/", new HttpHandlerImpl());
+        server.createContext("/", new WebPageHandler());
+        server.createContext("/api", new RequestHandler());
         server.start();
     }
 

@@ -6,7 +6,10 @@ import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class HttpHandlerImpl implements HttpHandler {
+/**
+ * Responsible for serving web page
+ */
+public class WebPageHandler implements HttpHandler {
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
         final String response = "Hello world!\n";
