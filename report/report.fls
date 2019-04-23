@@ -155,6 +155,9 @@ INPUT ./images/hard.png
 INPUT ./images/er.png
 INPUT ./images/er.png
 INPUT ./images/er.png
+INPUT ./images/msgstructure.png
+INPUT ./images/msgstructure.png
+INPUT ./images/msgstructure.png
 INPUT report.bbl
 INPUT report.bbl
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmtt12.tfm

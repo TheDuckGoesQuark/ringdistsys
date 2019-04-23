@@ -7,4 +7,4 @@
 \contentsline {subsection}{\numberline {2.2}General Node Recovery}{4}
 \contentsline {subsection}{\numberline {2.3}Ring Topology Persistence}{6}
 \contentsline {section}{\numberline {3}Leader/Coordinator Election}{7}
-\contentsline {section}{\numberline {4}Receive/Send Posts}{7}
+\contentsline {section}{\numberline {4}Receive/Send Posts}{8}

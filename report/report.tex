@@ -258,7 +258,16 @@ Whilst another row could be added with the value FALSE for \emph{singleRowLock},
 
 \section{Leader/Coordinator Election}
 
-% TODO LIMITATION: Cant have multiple nodes start up at the same time since node assumes itself coordinator
+Firstly the ring-based election algorithm was implemented, as required for the basic specification. An interface was used for providing a generic 'election algorithm' API, allowing different algorithms to be switched out easily. 
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=0.6\linewidth]{images/msgstructure}
+	\caption{ER diagram of the database schema for persisting the network topology.}
+	\label{fig:msgstructure}
+\end{figure}
+
+% TODO
 
 \section{Receive/Send Posts}
 
