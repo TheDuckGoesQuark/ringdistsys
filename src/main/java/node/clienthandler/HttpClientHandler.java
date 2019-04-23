@@ -16,8 +16,8 @@ public class HttpClientHandler implements ClientHandler {
      */
     private final HttpServer server;
 
-    public HttpClientHandler() throws IOException {
-        this.server = HttpServer.create(new InetSocketAddress(8080), 0);
+    public HttpClientHandler(String hostAddress, int clientPort) throws IOException {
+        this.server = HttpServer.create(new InetSocketAddress(hostAddress, clientPort), 0);
         server.createContext("/", new HttpHandlerImpl());
         server.start();
     }

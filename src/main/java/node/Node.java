@@ -1,6 +1,7 @@
 package node;
 
 import config.Configuration;
+import node.clienthandler.HttpClientHandler;
 import node.ringstore.DatabaseRingStore;
 import node.ringstore.VirtualNode;
 import node.ringstore.RingStore;
@@ -10,7 +11,6 @@ import messages.MessageType;
 import messages.SuccessorMessage;
 import messages.election.ElectionMessageHeader;
 import node.clienthandler.ClientHandler;
-import node.clienthandler.HttpClientHandler;
 import node.electionhandlers.*;
 import node.sockets.UDPSocket;
 import util.Token;
@@ -36,7 +36,7 @@ public class Node {
     private final ExecutorService executorService;
     private final RingStore ringStore;
     private final RingCommunicationHandler ringComms;
-    private final ClientHandler clientHandler = new HttpClientHandler();
+    private final ClientHandler clientHandler;
     private final UDPSocket udpSocket;
 
     private final BlockingQueue<Token> usableTokenQueue = new ArrayBlockingQueue<>(1);
@@ -55,6 +55,13 @@ public class Node {
         this.ringStore.initialize();
 
         final List<VirtualNode> allNodes = this.ringStore.getAllNodes();
+        final VirtualNode thisNode = allNodes.stream()
+                .filter(node -> node.getNodeId() == config.getNodeId())
+                .findFirst()
+                .orElseThrow(() -> new IOException("Node missing from database."));
+
+        this.clientHandler = new HttpClientHandler(thisNode.getAddress(), thisNode.getClientPort());
+
         final AddressTranslator addressTranslator = new AddressTranslator(allNodes);
         this.udpSocket = new UDPSocket(addressTranslator, config.getNodeId());
         this.ringComms = new RingCommunicationHandler(config.getNodeId(), addressTranslator, executorService);
