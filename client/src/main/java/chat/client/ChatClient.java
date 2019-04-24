@@ -4,7 +4,6 @@ import chat.client.messages.ClientMessage;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 public interface ChatClient {
@@ -23,12 +22,12 @@ public interface ChatClient {
     /**
      * @return the username currently logged in as.
      */
-    Optional<String> getUsername();
+    String getUsername() throws IOException;
 
     /**
      * @return the set of groups the current user belongs to
      */
-    Set<String> getGroups();
+    Set<String> getGroups() throws IOException;
 
     /**
      * Adds the currently logged in user to the group with the given name
@@ -60,7 +59,7 @@ public interface ChatClient {
      * @param message  message to send
      * @param username user to send to
      */
-    void sendMessageToUser(String message, String username);
+    void sendMessageToUser(String message, String username) throws IOException;
 
     /**
      * @return messages received since last show

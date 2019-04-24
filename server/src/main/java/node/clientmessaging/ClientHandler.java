@@ -116,15 +116,17 @@ class ClientHandler implements Runnable {
     }
 
     private void handleChatMessage(ChatMessage clientMessage) {
-        // TODO
+        outgoingMessages.add(clientMessage);
     }
 
     private void handleLeaveGroup(LeaveGroupMessage clientMessage) {
-        // TODO
+        user.removeFromGroup(clientMessage.getGroup());
+        sendMessage(clientMessage);
     }
 
     private void handleJoinGroup(JoinGroupMessage clientMessage) {
-        // TODO
+        user.addToGroup(clientMessage.getGroup());
+        sendMessage(clientMessage);
     }
 
     private void handleLogin(LoginMessage clientMessage) {
@@ -134,13 +136,15 @@ class ClientHandler implements Runnable {
         } else {
             logger.info("Logging in as " + clientMessage.getUsername());
             user = new User(clientMessage.getUsername());
+            // Reply with same login message for confirmation
+            sendMessage(clientMessage);
         }
     }
 
     /**
      * Sends a message to the client
      */
-    private void sendMessage(ClientMessage clientMessage) {
+    public void sendMessage(ClientMessage clientMessage) {
         logger.info(String.format("Sending message: %s", clientMessage.toString()));
         out.println(ENCODER.encode(clientMessage));
     }
