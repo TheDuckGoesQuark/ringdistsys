@@ -5,14 +5,12 @@ import node.clientmessaging.messages.ClientMessage;
 import node.clientmessaging.messages.ClientMessageJsonEncoder;
 import node.clientmessaging.messages.Encoder;
 
-import javax.swing.text.html.Option;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
 
 class ClientHandler implements Runnable {
@@ -64,6 +62,8 @@ class ClientHandler implements Runnable {
             case LEAVE_GROUP:
                 break;
             case CHAT_MESSAGE:
+                break;
+            case ERROR:
                 break;
         }
 

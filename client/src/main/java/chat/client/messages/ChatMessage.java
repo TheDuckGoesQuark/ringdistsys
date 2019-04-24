@@ -1,8 +1,9 @@
-package chat.messages;
+package chat.client.messages;
 
 import java.time.Instant;
 
-import static chat.messages.ClientMessageType.CHAT_MESSAGE;
+import static chat.client.messages.ClientMessageType.CHAT_MESSAGE;
+
 
 /**
  * Message sent by user to other user or group

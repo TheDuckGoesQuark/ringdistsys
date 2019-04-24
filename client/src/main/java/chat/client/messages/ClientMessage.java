@@ -1,4 +1,4 @@
-package chat.messages;
+package chat.client.messages;
 
 public class ClientMessage {
 

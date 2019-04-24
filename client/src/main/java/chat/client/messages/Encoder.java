@@ -1,4 +1,4 @@
-package chat.messages;
+package chat.client.messages;
 
 import java.util.Optional;
 

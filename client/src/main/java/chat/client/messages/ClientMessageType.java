@@ -1,4 +1,4 @@
-package node.clientmessaging.messages;
+package chat.client.messages;
 
 public enum ClientMessageType {
 

@@ -1,6 +1,6 @@
-package chat.messages;
+package chat.client.messages;
 
-import static chat.messages.ClientMessageType.LOGIN;
+import static chat.client.messages.ClientMessageType.LOGIN;
 
 public class LoginMessage extends ClientMessage {
 
@@ -13,5 +13,12 @@ public class LoginMessage extends ClientMessage {
 
     public String getUsername() {
         return username;
+    }
+
+    @Override
+    public String toString() {
+        return "LoginMessage{" +
+                "username='" + username + '\'' +
+                '}';
     }
 }

@@ -1,9 +1,10 @@
 package chat.client;
 
-import chat.messages.ClientMessage;
-import chat.messages.ClientMessageJsonEncoder;
-import chat.messages.Encoder;
-import chat.messages.LoginMessage;
+
+import chat.client.messages.ClientMessage;
+import chat.client.messages.ClientMessageJsonEncoder;
+import chat.client.messages.Encoder;
+import chat.client.messages.LoginMessage;
 
 import java.io.BufferedReader;
 import java.io.IOException;

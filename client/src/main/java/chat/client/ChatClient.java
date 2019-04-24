@@ -1,6 +1,6 @@
 package chat.client;
 
-import chat.messages.ClientMessage;
+import chat.client.messages.ClientMessage;
 
 import java.io.IOException;
 import java.util.Optional;
