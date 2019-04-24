@@ -1,6 +1,8 @@
 package chat.client.messages;
 
 import java.time.Instant;
+import java.time.LocalTime;
+import java.time.ZoneId;
 
 import static chat.client.messages.ClientMessageType.CHAT_MESSAGE;
 
@@ -71,4 +73,11 @@ public class ChatMessage extends ClientMessage {
                 '}';
     }
 
+    public String toPrettyString() {
+        if (forGroup) {
+            return String.format("Sent from user '%s' to group '%s' at %s: \n%s\n", fromName, toName, sentAt.atZone(ZoneId.systemDefault()).toLocalDateTime().toString(), messageContent);
+        } else {
+            return String.format("Sent from user '%s' at %s: \n%s\n", fromName, sentAt.atZone(ZoneId.systemDefault()).toLocalDateTime().toString(), messageContent);
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package node.clientmessaging;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -13,7 +14,7 @@ public class User {
     /**
      * The names of the groups that this user belongs to
      */
-    private Set<String> groups;
+    private Set<String> groups = new HashSet<>();
 
     public User(String username) {
         this.username = username;

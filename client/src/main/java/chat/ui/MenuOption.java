@@ -7,8 +7,12 @@ public enum MenuOption {
     LOGOUT("Leave chat."),
     JOIN("Join a group."),
     LEAVE("Leave a group."),
-    SENDMESSAGE("Send message to a group or user"),
-    SHOW("Show recent messages");
+    SEND("Send message to a group or user."),
+    SHOW("Show recent messages."),
+    USER("Send message to user."),
+    GROUP("Send message to group."),
+    BACK("Go back."),
+    GROUPS("Show current groups.");
 
     private String description;
 

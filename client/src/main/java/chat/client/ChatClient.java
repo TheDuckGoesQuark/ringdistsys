@@ -1,5 +1,6 @@
 package chat.client;
 
+import chat.client.messages.ChatMessage;
 import chat.client.messages.ClientMessage;
 
 import java.io.IOException;
@@ -64,7 +65,7 @@ public interface ChatClient {
     /**
      * @return messages received since last show
      */
-    List<ClientMessage> receiveMessages() throws IOException;
+    List<ChatMessage> receiveMessages() throws IOException;
 
     /**
      * Logs user out

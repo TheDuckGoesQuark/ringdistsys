@@ -16,7 +16,7 @@ import java.util.concurrent.*;
 public class RingChatClient implements ChatClient {
 
     private final Encoder<ClientMessage, String> encoder = new ClientMessageJsonEncoder();
-    private final Executor executor = Executors.newSingleThreadExecutor();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final LinkedBlockingQueue<ChatMessage> inboundMessages = new LinkedBlockingQueue<>();
     private final String serverAddress;
     private final int serverPort;
@@ -80,7 +80,7 @@ public class RingChatClient implements ChatClient {
             // Start listening for chat messages
             this.executor.execute(() -> {
                 while (loggedIn()) {
-                    pollForChatMessage();
+                    pollForMessage();
                 }
             });
         }
@@ -93,6 +93,7 @@ public class RingChatClient implements ChatClient {
         this.username = null;
         this.groups.clear();
         this.socket.close();
+        this.executor.shutdownNow();
     }
 
     @Override
@@ -147,16 +148,17 @@ public class RingChatClient implements ChatClient {
     }
 
     @Override
-    public List<ClientMessage> receiveMessages() throws IOException {
+    public List<ChatMessage> receiveMessages() throws IOException {
         if (!loggedIn()) throw new IOException("Not logged in.");
 
-        final List<ClientMessage> receivedMessages = new ArrayList<>();
+        final List<ChatMessage> receivedMessages = new ArrayList<>();
         inboundMessages.drainTo(receivedMessages);
         return receivedMessages;
     }
 
-    private void pollForChatMessage() {
+    private void pollForMessage() {
         final Optional<ClientMessage> message = receiveMessage();
+
         if (message.isPresent()) {
             System.out.println("Received message: " + message.get().toString());
             switch (message.get().getMessageType()) {
@@ -174,7 +176,13 @@ public class RingChatClient implements ChatClient {
                     break;
             }
         } else {
-            System.err.println("Disconnected from client.");
+            if (loggedIn()) {
+                try {
+                    logout();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -182,7 +190,7 @@ public class RingChatClient implements ChatClient {
      * Informs user that they have joined a group
      */
     private void handleGroupJoinReply(JoinGroupMessage joinGroupMessage) {
-        System.out.println("Successfully joined group %s" + joinGroupMessage.getGroup());
+        System.out.println("Successfully joined group " + joinGroupMessage.getGroup());
         groups.add(joinGroupMessage.getGroup());
     }
 
@@ -190,7 +198,7 @@ public class RingChatClient implements ChatClient {
      * Informs user that they have left a group
      */
     private void handleLeaveGroupReply(LeaveGroupMessage leaveGroupMessage) {
-        System.out.println("Successfully left group %s" + leaveGroupMessage.getGroup());
+        System.out.println("Successfully left group " + leaveGroupMessage.getGroup());
         groups.remove(leaveGroupMessage.getGroup());
     }
 
@@ -208,8 +216,7 @@ public class RingChatClient implements ChatClient {
 
         try {
             input = in.readLine();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException ignored) {
         }
 
         if (input != null) return encoder.decode(input);
