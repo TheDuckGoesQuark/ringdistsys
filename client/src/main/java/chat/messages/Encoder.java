@@ -1,4 +1,4 @@
-package node.clientmessaging.messages;
+package chat.messages;
 
 import java.util.Optional;
 

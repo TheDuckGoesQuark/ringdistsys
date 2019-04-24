@@ -1,8 +1,19 @@
-package node.clientmessaging.messages;
+package chat.messages;
 
 import java.time.Instant;
 
-public class UserMessage {
+import static chat.messages.ClientMessageType.CHAT_MESSAGE;
+
+/**
+ * Message sent by user to other user or group
+ */
+public class ChatMessage extends ClientMessage {
+
+    @Override
+    public ClientMessageType getMessageType() {
+        return CHAT_MESSAGE;
+    }
+
     /**
      * Time message was sent
      */
@@ -20,12 +31,12 @@ public class UserMessage {
      */
     private String messageContent;
     /**
-     * If true, message is for all members that belong to the group with the name given in {@link UserMessage#toName}.
+     * If true, message is for all members that belong to the group with the name given in {@link ChatMessage#toName}.
      * If false, message is for an individual clientmessaging
      */
     private boolean forGroup;
 
-    public UserMessage(Instant sentAt, String fromName, String toName, String messageContent, boolean forGroup) {
+    public ChatMessage(Instant sentAt, String fromName, String toName, String messageContent, boolean forGroup) {
         this.sentAt = sentAt;
         this.fromName = fromName;
         this.toName = toName;
@@ -55,7 +66,7 @@ public class UserMessage {
 
     @Override
     public String toString() {
-        return "UserMessage{" +
+        return "ChatMessage{" +
                 "sentAt=" + sentAt +
                 ", fromName='" + fromName + '\'' +
                 ", toName='" + toName + '\'' +
@@ -63,4 +74,5 @@ public class UserMessage {
                 ", forGroup=" + forGroup +
                 '}';
     }
+
 }
