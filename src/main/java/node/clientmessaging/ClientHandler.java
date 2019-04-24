@@ -5,7 +5,6 @@ import node.clientmessaging.messages.Encoder;
 import node.clientmessaging.messages.UserMessage;
 import node.clientmessaging.messages.UserMessageEncoder;
 
-import javax.websocket.DecodeException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -16,7 +15,7 @@ import java.util.logging.Logger;
 
 class ClientHandler implements Runnable {
 
-    private static final UserMessageEncoder ENCODER = new UserMessageEncoder();
+    private static final Encoder<UserMessage, String> ENCODER = new UserMessageEncoder();
 
     private final Logger logger = LoggerFactory.getLogger();
     private final Socket clientSocket;

@@ -61,7 +61,6 @@ public class Node {
                 .orElseThrow(() -> new IOException("Node missing from database."));
 
         this.chatServer = new SocketChatServer(thisNode.getAddress(), thisNode.getClientPort());
-        this.chatServer.start();
 
         final AddressTranslator addressTranslator = new AddressTranslator(allNodes);
         this.udpSocket = new UDPSocket(addressTranslator, config.getNodeId());
@@ -163,7 +162,10 @@ public class Node {
             return null;
         });
 
-        // Serve clients on main thread
+        // Begin accepting client connections
+        executorService.submit(this.chatServer);
+
+        // Manage client messages and mutual exclusion on main thread
         while (!killswitch()) {
             try {
                 final Token token = usableTokenQueue.take();

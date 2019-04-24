@@ -5,9 +5,6 @@ import logging.LoggerFactory;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
@@ -25,11 +22,8 @@ public class SocketChatServer implements ChatServer {
         serverSocket.bind(new InetSocketAddress(hostAddress, clientPort));
     }
 
-    /**
-     * Wait for client connection, and spawns a thread to handle each client once they connect
-     */
     @Override
-    public void start() {
+    public void run() {
         stopped = false;
         while (!stopped) {
             try {
@@ -66,4 +60,5 @@ public class SocketChatServer implements ChatServer {
             logger.warning("Error occurred while closing server socket: " + e.getMessage());
         }
     }
+
 }

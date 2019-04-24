@@ -3,12 +3,7 @@ package node.clientmessaging;
 /**
  * User handler forwards node.nodemessaging to clients for them, and adds node.nodemessaging to the queue
  */
-public interface ChatServer {
-
-    /**
-     * Instructs the client handler to begin accepting and processing clients
-     */
-    void start();
+public interface ChatServer extends Runnable {
 
     /**
      * Allows the clientmessaging to remove any node.nodemessaging for its clients from the message queue (Q)
