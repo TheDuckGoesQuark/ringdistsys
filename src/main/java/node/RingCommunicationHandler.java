@@ -1,8 +1,8 @@
 package node;
 
 import logging.LoggerFactory;
-import messages.Message;
-import messages.MessageType;
+import node.nodemessaging.Message;
+import node.nodemessaging.MessageType;
 import node.sockets.RingSocket;
 
 import java.io.IOException;
@@ -87,7 +87,7 @@ public class RingCommunicationHandler {
                 return null;
             });
         } else {
-            // Boolean flag to inform thread listening for messages from self that it just disconnected due to
+            // Boolean flag to inform thread listening for node.nodemessaging from self that it just disconnected due to
             // forming a link with a new node, and not because any failure has occurred
             disconnectedFromSelf = successorId == thisNodeId;
         }

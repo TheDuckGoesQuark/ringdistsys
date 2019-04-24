@@ -1,4 +1,4 @@
-package messages;
+package node.nodemessaging;
 
 import java.io.Serializable;
 

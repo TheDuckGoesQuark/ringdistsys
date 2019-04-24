@@ -1,9 +1,8 @@
 package node.electionhandlers;
 
-import messages.Message;
+import node.nodemessaging.Message;
 
 import java.io.IOException;
-import java.util.Optional;
 
 public interface ElectionHandler {
 
@@ -20,7 +19,7 @@ public interface ElectionHandler {
     void startElection() throws IOException;
 
     /**
-     * Handles messages relevant to the election protocol
+     * Handles node.nodemessaging relevant to the election protocol
      *
      * @param message election message
      */

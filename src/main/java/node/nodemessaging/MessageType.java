@@ -1,4 +1,4 @@
-package messages;
+package node.nodemessaging;
 
 public enum MessageType {
 

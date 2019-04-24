@@ -123,7 +123,7 @@ Since each node would be running on an isolated machine, the planned testing env
 
 \subsection{Messages}
 
-In order for nodes to understand and parse the messages that were sent between them, a message protocol was designed. Figure \ref{fig:mainmsg} shows the header that would be part of every message sent. The possible types of messages are summarised in table \ref{tbl:messagetypes}.
+In order for nodes to understand and parse the node.nodemessaging that were sent between them, a message protocol was designed. Figure \ref{fig:mainmsg} shows the header that would be part of every message sent. The possible types of node.nodemessaging are summarised in table \ref{tbl:messagetypes}.
 
 \begin{table}[!h]
 \centering
@@ -143,7 +143,7 @@ Message Type                               & Usage                              
 \label{tbl:messagetypes}
 \end{table}
 
-The messages are sent as serialized Java objects, which requires that all message classes implement the \emph{Serializable} interface. A more platform independent format such as JSON would be preferred, but since all nodes would be using Java this method of serializing messages was kept. Figure \ref{fig:elecmsg} shows the header for an election message. The election message header would be in the payload of the main message. This allowed multiple election methods to be used and easy routing of election related messages to an election handler class.
+The node.nodemessaging are sent as serialized Java objects, which requires that all message classes implement the \emph{Serializable} interface. A more platform independent format such as JSON would be preferred, but since all nodes would be using Java this method of serializing node.nodemessaging was kept. Figure \ref{fig:elecmsg} shows the header for an election message. The election message header would be in the payload of the main message. This allowed multiple election methods to be used and easy routing of election related node.nodemessaging to an election handler class.
 
 \begin{figure}[!ht]
 \centering
@@ -173,7 +173,7 @@ Due to different patterns of communication during recovery and regular message p
 
 \noindent UDP was used for communication \textbf{across} the ring: 
 \begin{enumerate}
-    \item Low communication overhead allows for messages to be sent to multiple nodes quickly, improving recovery time from node failure.
+    \item Low communication overhead allows for node.nodemessaging to be sent to multiple nodes quickly, improving recovery time from node failure.
     \item No session maintenance allows coordinator to handle more members in the ring.
     \item Multicast communication possible which would greatly simplify broadcasting.
 \end{enumerate}
@@ -198,7 +198,7 @@ Due to different patterns of communication during recovery and regular message p
 
 \subsection{Initialization and Joining}
 
-On initialization, each node sends out join messages to the coordinator. The
+On initialization, each node sends out join node.nodemessaging to the coordinator. The
 joining protocol is similiar to that described in \cite{join}, and is shown in Figure \ref{fig:join}.
 Figure \ref{fig:bigjoin} shows how the state of each connection changes over the course of
 the joining procedure.
@@ -367,7 +367,7 @@ Figure \ref{fig:dbstate} shows the state of the database after 8 nodes join in a
 
 \subsection{Election API}
 
-An interface was used for providing a generic 'election algorithm' API, allowing different algorithms to be switched out easily. Any messages that arrived from either the UDP socket or the ring sockets that had the COORDINATOR\_ELECTION type would be routed to the handler for the election algorithm specified in the election header. For example, an election message that required the bully algorithm would be routed to the bully election handler.
+An interface was used for providing a generic 'election algorithm' API, allowing different algorithms to be switched out easily. Any node.nodemessaging that arrived from either the UDP socket or the ring sockets that had the COORDINATOR\_ELECTION type would be routed to the handler for the election algorithm specified in the election header. For example, an election message that required the bully algorithm would be routed to the bully election handler.
 
 In the configuration for each node, a default election algorithm is specified. Therefore the type of election that would be started could vary depending on which node initiated it. If a node received an election message for a different algorithm to the one they are currently using, then they would replace their election handler with one that could process the arriving message. 
 
@@ -381,7 +381,7 @@ The methods required by the election API are summarised in table \ref{tbl:elecap
 Method                                 & Usage                                                                                      \\ \hline
 \multicolumn{1}{l|}{getMethodName}     & Returns the name of the underlying algorithm used by the implementation of this interface. \\
 \multicolumn{1}{l|}{startElection}     & Starts an election.                                                                        \\
-\multicolumn{1}{l|}{handleMessage}     & Handles any election messages.                                                             \\
+\multicolumn{1}{l|}{handleMessage}     & Handles any election node.nodemessaging.                                                             \\
 \multicolumn{1}{l|}{getResult}         & Returns the result of the election (if concluded).                                         \\
 \multicolumn{1}{l|}{electionConcluded} & Returns true if a result has been obtained.                                                \\ \hline
 \end{tabular}%
@@ -411,9 +411,9 @@ This node then chose the new coordinator from the list of candidates based on wh
 
 \subsection{Chang Roberts}
 
-The Chang Roberts algorithm reused most of the components from the ring-based algorithm, other than the forwarding logic for ELECTION messages. 
+The Chang Roberts algorithm reused most of the components from the ring-based algorithm, other than the forwarding logic for ELECTION node.nodemessaging.
 
-If the ELECTION message contained the receiving nodes ID, then it would conclude the election and forward the COORDINATOR message as in the ring-based algorithm. However, in order to avoid redundant forwarding of election messages if two elections are started at the same time, ELECTION messages would only be forwarded if the receiving node was a better candidate (i.e. had a greater ID), or if it had not already participated by forwarding a message previously.
+If the ELECTION message contained the receiving nodes ID, then it would conclude the election and forward the COORDINATOR message as in the ring-based algorithm. However, in order to avoid redundant forwarding of election node.nodemessaging if two elections are started at the same time, ELECTION node.nodemessaging would only be forwarded if the receiving node was a better candidate (i.e. had a greater ID), or if it had not already participated by forwarding a message previously.
 
 Figure \ref{fig:chang} shows logs from a new node that has joined the ring and triggered an election. Initially the election message is sent, and later it returns with the same ID and so node 8 elects itself. It then forwards the coordinator message until it arrives back to itself at which point it is dropped.
 
@@ -428,7 +428,7 @@ Figure \ref{fig:chang} shows logs from a new node that has joined the ring and t
 
 The bully algorithm was the most difficult to implement due to its dependence on timing. An election would be started by a node by sending an ELECTION message to all nodes with IDs greater than it's own. It would then create a thread which would sleep for a preset time before assuming it is to be the coordinator. If one of the other nodes that received the ELECTION message replied with an OK message, the sleeping thread would simply terminate after the preset time had expired. Another thread would be spawned to again sleep for a duration of time after receiving the OK message. If no coordinator message was received before this second duration elapsed, then the node would restart the election.
 
-Each node that received an ELECTION message would reply with an OK message if it had not already started an election, and then carry out the same procedure as the first node had to trigger the election. Eventually the node with the highest ID would not have any other nodes to send ELECTION messages to, and so it would consider itself the coordinator and inform all the other nodes in the ring using the COORDINATOR message.
+Each node that received an ELECTION message would reply with an OK message if it had not already started an election, and then carry out the same procedure as the first node had to trigger the election. Eventually the node with the highest ID would not have any other nodes to send ELECTION node.nodemessaging to, and so it would consider itself the coordinator and inform all the other nodes in the ring using the COORDINATOR message.
 
 Figure \ref{fig:bully} shows how effective the bully algorithm is at dealing with failure and demonstrates a node being bullied into letting another node be coordinator. The order of events in the logs shown are:
 
@@ -469,9 +469,9 @@ In order to ensure that the token is at least delivered successfully, the token 
 
 In order for clients to make and receive posts, a simple web server was configured. In order to isolate coordination traffic from client traffic, the two are served on different ports. In a real-life scenario, the web server would run on port 80 as standard and coordination traffic would also run on a consistent port across all hosts. However, to allow for local testing, it was necessary to use port numbers to differentiate between host sockets. 
 
-This was actually the first time I had implemented a HTTP web server at such a low level, and so it was constructed step by step. First a simple hello world message was sent to clients, then a HTML document, then the ability to receive and send messages was added. 
+This was actually the first time I had implemented a HTTP web server at such a low level, and so it was constructed step by step. First a simple hello world message was sent to clients, then a HTML document, then the ability to receive and send node.nodemessaging was added.
 
-In a production environment, a ring topology would likely be abstracted by a load balancer. This load balancer is what clients would connect to when wanting to use the service by connecting at some FQDN. It would then proxy messages between clients and the server in the ring that is responsible for them, which it could choose based on how many clients each server is already serving. 
+In a production environment, a ring topology would likely be abstracted by a load balancer. This load balancer is what clients would connect to when wanting to use the service by connecting at some FQDN. It would then proxy node.nodemessaging between clients and the server in the ring that is responsible for them, which it could choose based on how many clients each server is already serving.
 
 \section{Testing}
 

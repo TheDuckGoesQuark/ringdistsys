@@ -1,4 +1,4 @@
-package messages.election.ringbased;
+package node.nodemessaging.election.ringbased;
 
 import java.io.Serializable;
 

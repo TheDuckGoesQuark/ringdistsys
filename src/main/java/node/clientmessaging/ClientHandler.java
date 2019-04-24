@@ -1,32 +1,67 @@
 package node.clientmessaging;
 
-/**
- * User handler forwards messages to clients for them, and adds messages to the queue
- */
-public interface ClientHandler {
+import logging.LoggerFactory;
+import node.clientmessaging.messages.Encoder;
+import node.clientmessaging.messages.UserMessage;
+import node.clientmessaging.messages.UserMessageEncoder;
+
+import javax.websocket.DecodeException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.Optional;
+import java.util.logging.Logger;
+
+class ClientHandler implements Runnable {
+
+    private static final UserMessageEncoder ENCODER = new UserMessageEncoder();
+
+    private final Logger logger = LoggerFactory.getLogger();
+    private final Socket clientSocket;
+    private final PrintWriter out;
+    private final BufferedReader in;
+
+    ClientHandler(Socket clientSocket) throws IOException {
+        this.clientSocket = clientSocket;
+        this.in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        this.out = new PrintWriter(clientSocket.getOutputStream(), true);
+    }
 
     /**
-     * Allows the clientmessaging to remove any messages for its clients from the message queue (Q)
+     * Polls for messages from the client
+     */
+    @Override
+    public void run() {
+        logger.info(String.format("Client connected from %s", clientSocket.getRemoteSocketAddress()));
+
+        while (clientSocket.isConnected()) {
+            readJSON().ifPresent(this::handleMessage);
+        }
+    }
+
+    private void handleMessage(UserMessage userMessage) {
+        logger.info(String.format("Received message: %s", userMessage.toString()));
+        out.println(ENCODER.encode(userMessage));
+    }
+
+    /**
+     * Attempts to parse JSON from string sent over socket
      *
-     * @return true if a message was received
+     * @return maybe parsed message.
      */
-    boolean receiveMessage();
+    private Optional<UserMessage> readJSON() {
+        final UserMessage message;
 
-    /**
-     * Allows the clientmessaging to add a message that its clientmessaging has sent to the message queue (Q)
-     *
-     * @return true if a message was sent
-     */
-    boolean sendMessage();
+        try {
+            final String input = in.readLine();
+            message = ENCODER.decode(input);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return Optional.empty();
+        }
 
-    /**
-     * @return the number of clients currently being served by this handler
-     */
-    int getNumberOfClients();
-
-    /**
-     * Terminates the clientmessaging and safely cleans up any resources it is using such as node.sockets.
-     */
-    void cleanup();
-
+        return Optional.ofNullable(message);
+    }
 }

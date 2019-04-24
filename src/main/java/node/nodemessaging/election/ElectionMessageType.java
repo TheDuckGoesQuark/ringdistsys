@@ -1,4 +1,4 @@
-package messages.election;
+package node.nodemessaging.election;
 
 public enum ElectionMessageType {
 

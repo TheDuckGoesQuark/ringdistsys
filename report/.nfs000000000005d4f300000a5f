@@ -133,7 +133,7 @@ Due to different patterns of communication during recovery and regular message p
 
 \noindent UDP was used for communication \textbf{across} the ring: 
 \begin{enumerate}
-    \item Low communication overhead allows for messages to be sent to multiple nodes quickly, improving recovery time from node failure.
+    \item Low communication overhead allows for node.nodemessaging to be sent to multiple nodes quickly, improving recovery time from node failure.
     \item No session maintenance allows coordinator to handle more members in the ring.
     \item Multicast communication possible which would greatly simplify broadcasting.
 \end{enumerate}
@@ -160,7 +160,7 @@ Due to different patterns of communication during recovery and regular message p
 
 \subsection{Initialization}
 
-On initialization, each node sends out join messages to the coordinator. The
+On initialization, each node sends out join node.nodemessaging to the coordinator. The
 joining protocol is similiar to that described in \cite{join}, and is shown in Figure \ref{fig:join}.
 Figure \ref{fig:bigjoin} shows how the state of each connection changes over the course of
 the joining procedure.

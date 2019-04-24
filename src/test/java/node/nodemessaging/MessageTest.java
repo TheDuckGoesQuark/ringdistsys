@@ -1,6 +1,5 @@
-package messages;
+package node.nodemessaging;
 
-import node.electionhandlers.ElectionMethod;
 import org.junit.Test;
 
 import java.io.IOException;

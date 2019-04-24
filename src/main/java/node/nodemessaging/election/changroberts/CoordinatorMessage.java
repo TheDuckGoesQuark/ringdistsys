@@ -1,4 +1,4 @@
-package messages.election.changroberts;
+package node.nodemessaging.election.changroberts;
 
 import java.io.Serializable;
 

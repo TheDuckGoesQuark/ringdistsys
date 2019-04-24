@@ -1,17 +1,17 @@
 package node.electionhandlers;
 
 import logging.LoggerFactory;
-import messages.Message;
-import messages.election.ElectionMessageHeader;
-import messages.election.ringbased.CoordinatorMessage;
-import messages.election.ringbased.ElectionMessage;
+import node.nodemessaging.Message;
+import node.nodemessaging.election.ElectionMessageHeader;
+import node.nodemessaging.election.ringbased.CoordinatorMessage;
+import node.nodemessaging.election.ringbased.ElectionMessage;
 import node.RingCommunicationHandler;
 
 import java.io.IOException;
 import java.util.logging.Logger;
 
-import static messages.MessageType.COORDINATOR_ELECTION;
-import static messages.election.ElectionMessageType.*;
+import static node.nodemessaging.MessageType.COORDINATOR_ELECTION;
+import static node.nodemessaging.election.ElectionMessageType.*;
 import static node.electionhandlers.ElectionMethod.RING_BASED;
 
 public class RingBasedElectionHandler implements ElectionHandler {

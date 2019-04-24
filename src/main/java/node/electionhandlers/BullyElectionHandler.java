@@ -3,9 +3,9 @@ package node.electionhandlers;
 import node.ringstore.VirtualNode;
 import node.ringstore.RingStore;
 import logging.LoggerFactory;
-import messages.Message;
-import messages.election.ElectionMessageHeader;
-import messages.election.bully.CoordinatorMessage;
+import node.nodemessaging.Message;
+import node.nodemessaging.election.ElectionMessageHeader;
+import node.nodemessaging.election.bully.CoordinatorMessage;
 import node.sockets.UDPSocket;
 
 import java.io.IOException;
@@ -15,8 +15,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.logging.Logger;
 
 import static java.lang.Thread.sleep;
-import static messages.MessageType.*;
-import static messages.election.ElectionMessageType.*;
+import static node.nodemessaging.MessageType.*;
+import static node.nodemessaging.election.ElectionMessageType.*;
 import static node.electionhandlers.ElectionMethod.*;
 
 public class BullyElectionHandler implements ElectionHandler {

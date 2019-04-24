@@ -1,8 +1,6 @@
-package messages.election.changroberts;
+package node.nodemessaging.election.changroberts;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ElectionMessage implements Serializable {
 

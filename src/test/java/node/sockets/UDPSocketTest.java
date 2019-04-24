@@ -1,8 +1,8 @@
 package node.sockets;
 
 import node.ringstore.VirtualNode;
-import messages.Message;
-import messages.MessageType;
+import node.nodemessaging.Message;
+import node.nodemessaging.MessageType;
 import node.AddressTranslator;
 import org.junit.*;
 

@@ -1,6 +1,4 @@
-package messages;
-
-import node.electionhandlers.ElectionMethod;
+package node.nodemessaging;
 
 import java.io.*;
 

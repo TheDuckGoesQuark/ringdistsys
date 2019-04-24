@@ -1,16 +1,16 @@
 package node;
 
 import config.Configuration;
-import node.clientmessaging.ChatEndpoint;
+import node.clientmessaging.SocketChatServer;
 import node.ringstore.DatabaseRingStore;
 import node.ringstore.VirtualNode;
 import node.ringstore.RingStore;
 import logging.LoggerFactory;
-import messages.Message;
-import messages.MessageType;
-import messages.SuccessorMessage;
-import messages.election.ElectionMessageHeader;
-import node.clientmessaging.ClientHandler;
+import node.nodemessaging.Message;
+import node.nodemessaging.MessageType;
+import node.nodemessaging.SuccessorMessage;
+import node.nodemessaging.election.ElectionMessageHeader;
+import node.clientmessaging.ChatServer;
 import node.electionhandlers.*;
 import node.sockets.UDPSocket;
 import util.Token;
@@ -24,7 +24,7 @@ import java.util.concurrent.*;
 import java.util.logging.Logger;
 
 import static java.lang.Thread.sleep;
-import static messages.MessageType.SUCCESSOR;
+import static node.nodemessaging.MessageType.SUCCESSOR;
 
 
 public class Node {
@@ -36,7 +36,7 @@ public class Node {
     private final ExecutorService executorService;
     private final RingStore ringStore;
     private final RingCommunicationHandler ringComms;
-    private final ClientHandler clientHandler;
+    private final ChatServer chatServer;
     private final UDPSocket udpSocket;
 
     private final BlockingQueue<Token> usableTokenQueue = new ArrayBlockingQueue<>(1);
@@ -60,7 +60,8 @@ public class Node {
                 .findFirst()
                 .orElseThrow(() -> new IOException("Node missing from database."));
 
-        this.clientHandler = new ChatEndpoint(thisNode.getAddress(), thisNode.getClientPort());
+        this.chatServer = new SocketChatServer(thisNode.getAddress(), thisNode.getClientPort());
+        this.chatServer.start();
 
         final AddressTranslator addressTranslator = new AddressTranslator(allNodes);
         this.udpSocket = new UDPSocket(addressTranslator, config.getNodeId());
@@ -119,7 +120,7 @@ public class Node {
             this.udpSocket.close();
 
         ringComms.cleanup();
-        clientHandler.cleanup();
+        chatServer.cleanup();
 
         executorService.shutdown();
 
@@ -127,7 +128,7 @@ public class Node {
     }
 
     /**
-     * Begins node execution by initializing the token ring manager and listening for messages
+     * Begins node execution by initializing the token ring manager and listening for node.nodemessaging
      *
      * @throws IOException something goes wrong.
      */
@@ -177,7 +178,7 @@ public class Node {
     }
 
     /**
-     * Handles token passing and election messages
+     * Handles token passing and election node.nodemessaging
      */
     private void handleRingMessages() throws IOException, InterruptedException {
         if (!forwardableTokenQueue.isEmpty()) {
@@ -334,7 +335,7 @@ public class Node {
     }
 
     /**
-     * Handles coordinator messages for maintaining ring
+     * Handles coordinator node.nodemessaging for maintaining ring
      */
     private void handleCoordinationMessages() throws IOException {
         final Message message = udpSocket.receiveMessage(5);

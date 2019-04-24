@@ -1,12 +1,12 @@
-package node.clientmessaging.messagequeue;
+package node.clientmessaging.messages;
 
-import java.sql.Time;
+import java.time.Instant;
 
 public class UserMessage {
     /**
      * Time message was sent
      */
-    private Time sentAt;
+    private Instant sentAt;
     /**
      * Name of clientmessaging that sent message
      */
@@ -25,7 +25,7 @@ public class UserMessage {
      */
     private boolean forGroup;
 
-    public UserMessage(Time sentAt, String fromName, String toName, String messageContent, boolean forGroup) {
+    public UserMessage(Instant sentAt, String fromName, String toName, String messageContent, boolean forGroup) {
         this.sentAt = sentAt;
         this.fromName = fromName;
         this.toName = toName;
@@ -33,7 +33,7 @@ public class UserMessage {
         this.forGroup = forGroup;
     }
 
-    public Time getSentAt() {
+    public Instant getSentAt() {
         return sentAt;
     }
 
@@ -51,5 +51,16 @@ public class UserMessage {
 
     public boolean isForGroup() {
         return forGroup;
+    }
+
+    @Override
+    public String toString() {
+        return "UserMessage{" +
+                "sentAt=" + sentAt +
+                ", fromName='" + fromName + '\'' +
+                ", toName='" + toName + '\'' +
+                ", messageContent='" + messageContent + '\'' +
+                ", forGroup=" + forGroup +
+                '}';
     }
 }

@@ -1,18 +1,18 @@
 package node.electionhandlers;
 
 import logging.LoggerFactory;
-import messages.Message;
-import messages.election.ElectionMessageHeader;
-import messages.election.changroberts.CoordinatorMessage;
-import messages.election.changroberts.ElectionMessage;
+import node.nodemessaging.Message;
+import node.nodemessaging.election.ElectionMessageHeader;
+import node.nodemessaging.election.changroberts.CoordinatorMessage;
+import node.nodemessaging.election.changroberts.ElectionMessage;
 import node.RingCommunicationHandler;
 
 import java.io.IOException;
 import java.util.logging.Logger;
 
-import static messages.MessageType.COORDINATOR_ELECTION;
-import static messages.election.ElectionMessageType.COORDINATOR;
-import static messages.election.ElectionMessageType.ELECTION;
+import static node.nodemessaging.MessageType.COORDINATOR_ELECTION;
+import static node.nodemessaging.election.ElectionMessageType.COORDINATOR;
+import static node.nodemessaging.election.ElectionMessageType.ELECTION;
 import static node.electionhandlers.ElectionMethod.CHANG_ROBERTS;
 
 public class ChangeRobertsElectionHandler implements ElectionHandler {

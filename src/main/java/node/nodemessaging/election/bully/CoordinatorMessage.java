@@ -1,4 +1,4 @@
-package messages.election.bully;
+package node.nodemessaging.election.bully;
 
 import java.io.Serializable;
 

@@ -1,7 +1,7 @@
 package node.sockets;
 
 import logging.LoggerFactory;
-import messages.Message;
+import node.nodemessaging.Message;
 import node.AddressTranslator;
 
 import java.io.*;
