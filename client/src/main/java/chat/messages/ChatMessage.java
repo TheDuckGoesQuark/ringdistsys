@@ -8,12 +8,6 @@ import static chat.messages.ClientMessageType.CHAT_MESSAGE;
  * Message sent by user to other user or group
  */
 public class ChatMessage extends ClientMessage {
-
-    @Override
-    public ClientMessageType getMessageType() {
-        return CHAT_MESSAGE;
-    }
-
     /**
      * Time message was sent
      */
@@ -37,6 +31,7 @@ public class ChatMessage extends ClientMessage {
     private boolean forGroup;
 
     public ChatMessage(Instant sentAt, String fromName, String toName, String messageContent, boolean forGroup) {
+        super(CHAT_MESSAGE);
         this.sentAt = sentAt;
         this.fromName = fromName;
         this.toName = toName;

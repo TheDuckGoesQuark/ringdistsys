@@ -15,5 +15,6 @@ public class Main {
         final ChatUI ui = new ChatCLI(serverAddress, serverPort);
 
         ui.start();
+
     }
 }

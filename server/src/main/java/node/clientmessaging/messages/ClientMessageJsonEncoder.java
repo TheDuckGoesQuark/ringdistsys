@@ -29,7 +29,7 @@ public class ClientMessageJsonEncoder implements Encoder<ClientMessage, String> 
             case JOIN_GROUP:
                 return Optional.of(gson.fromJson(obj, ChatMessage.class));
             case LOGIN:
-                return Optional.of(gson.fromJson(obj, ChatMessage.class));
+                return Optional.of(gson.fromJson(obj, LoginMessage.class));
             default:
                 return Optional.empty();
         }

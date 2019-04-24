@@ -5,6 +5,7 @@ import node.clientmessaging.messages.ClientMessage;
 import node.clientmessaging.messages.ClientMessageJsonEncoder;
 import node.clientmessaging.messages.Encoder;
 
+import javax.swing.text.html.Option;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -37,7 +38,13 @@ class ClientHandler implements Runnable {
         logger.info(String.format("Client connected from %s", clientSocket.getRemoteSocketAddress()));
 
         while (clientSocket.isConnected()) {
-            receiveMessage().ifPresent(this::handleMessage);
+            final Optional<ClientMessage> message = receiveMessage();
+            if (message.isPresent()) {
+                handleMessage(message.get());
+            } else {
+                logger.info("Disconnected from client.");
+                break;
+            }
         }
     }
 

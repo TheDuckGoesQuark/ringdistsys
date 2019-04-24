@@ -4,17 +4,17 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.Scanner;
 
-public class CLIMenu {
+class CLIMenu {
 
     private final MenuOption[] options;
     private final Scanner reader;
 
-    public CLIMenu(MenuOption[] options, Scanner reader) {
+    CLIMenu(MenuOption[] options, Scanner reader) {
         this.options = options;
         this.reader = reader;
     }
 
-    public MenuOption getChoice() {
+    MenuOption getChoice() {
         Optional<MenuOption> choice;
 
         do {

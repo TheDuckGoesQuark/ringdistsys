@@ -1,7 +1,18 @@
 package node.clientmessaging.messages;
 
-public abstract class ClientMessage {
+public class ClientMessage {
 
-    public abstract ClientMessageType getMessageType();
+    private ClientMessageType messageType;
+
+    public ClientMessage() {
+    }
+
+    public ClientMessage(ClientMessageType messageType) {
+        this.messageType = messageType;
+    }
+
+    public ClientMessageType getMessageType() {
+        return messageType;
+    }
 
 }
