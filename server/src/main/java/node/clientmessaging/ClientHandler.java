@@ -94,7 +94,10 @@ class ClientHandler implements Runnable {
      * @param clientMessage message from client
      */
     private void handleMessage(ClientMessage clientMessage) {
-        logger.info(String.format("Received message: %s", clientMessage.toString()));
+        logger.info(String.format("Received message from %s: %s",
+                getUser().map(User::getUsername).orElse("new user"),
+                clientMessage.toString())
+        );
 
         switch (clientMessage.getMessageType()) {
             case LOGIN:
@@ -145,7 +148,7 @@ class ClientHandler implements Runnable {
      * Sends a message to the client
      */
     public void sendMessage(ClientMessage clientMessage) {
-        logger.info(String.format("Sending message: %s", clientMessage.toString()));
+        logger.info(String.format("Sending message to %s: %s", user.getUsername(), clientMessage.toString()));
         out.println(ENCODER.encode(clientMessage));
     }
 

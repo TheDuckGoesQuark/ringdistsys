@@ -1,12 +1,12 @@
 # Fdb version 3
-["bibtex report"] 1556146573 "report.aux" "report.bbl" "report" 1556146617
+["bibtex report"] 1556146877 "report.aux" "report.bbl" "report" 1556146880
   "/usr/share/texlive/texmf-dist/bibtex/bst/base/unsrt.bst" 1553009394 18030 1376b4b231b50c66211e47e42eda2875 ""
   "mybib.bib" 1556113840 1201 81b66571f657eedded0b635fd67e6c71 ""
-  "report.aux" 1556146617 6629 f94769b4d9b7dcd19db2718ed818c9e1 "pdflatex"
+  "report.aux" 1556146879 6832 a12295b86b5405d1ea438b52db6cb014 "pdflatex"
   (generated)
   "report.bbl"
   "report.blg"
-["pdflatex"] 1556146615 "report.tex" "report.pdf" "report" 1556146617
+["pdflatex"] 1556146877 "report.tex" "report.pdf" "report" 1556146880
   "/cs/home/jm354/.texlive2018/texmf-var/web2c/pdftex/pdflatex.fmt" 1554308594 3682910 97d3137c964bcb660c39ffc53a11bf1b ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1511824771 3332 103109f5612ad95229751940c61aada0 ""
   "/usr/share/texlive/texmf-dist/fonts/map/pdftex/updmap/pdftex.map" 1530836625 2850648 765161d183c5509465c2744baf096a7a ""
@@ -91,6 +91,7 @@
   "images/bigflow.png" 1556113840 26246 926202e97e91a48555e7acc53f896d47 ""
   "images/bully.png" 1556113840 133782 d0d5e9c22b1913273fe5c7f5b61e5308 ""
   "images/chang.png" 1556113840 74626 32b762ccb2d15e31b0a4c2e1041bf891 ""
+  "images/chat.png" 1556146781 65975 8a93b05bbe0df5bb86fc2a3a57db680f ""
   "images/coord.png" 1556113840 35934 446bda77b197d310a60c349f29035b0d ""
   "images/elecmsg.png" 1556113840 5953 3e2c2b4205c99d74bb56a109c39dee00 ""
   "images/er.png" 1556113840 4132 ad93305dc451cfa7f9746e9649029103 ""
@@ -107,12 +108,12 @@
   "images/succreqcoord.png" 1556113840 22194 197c3ec5d5320e9922043c16d058c8c7 ""
   "images/tcp.png" 1556113840 8481 612430959ec0e038f1bf4864baf64d03 ""
   "images/udp.png" 1556113840 7693 e8f0b198c0dc13644383ce980e86a00f ""
-  "report.aux" 1556146617 6629 f94769b4d9b7dcd19db2718ed818c9e1 "pdflatex"
-  "report.bbl" 1556146573 538 f6f0843ec138b4ddbf1536e382e9fb40 "bibtex report"
-  "report.tex" 1556146614 32399 04675d4459d4e9a833048d55ce4346c2 ""
-  "report.toc" 1556146617 1337 b349cd61465dbda7d7876903c1495fdf "pdflatex"
+  "report.aux" 1556146879 6832 a12295b86b5405d1ea438b52db6cb014 "pdflatex"
+  "report.bbl" 1556146877 538 f6f0843ec138b4ddbf1536e382e9fb40 "bibtex report"
+  "report.tex" 1556146874 32612 7cbfde8f6b47537c1ff162d410088dc5 ""
+  "report.toc" 1556146879 1337 b349cd61465dbda7d7876903c1495fdf "pdflatex"
   (generated)
   "report.toc"
-  "report.aux"
-  "report.log"
   "report.pdf"
+  "report.log"
+  "report.aux"
