@@ -1,13 +1,14 @@
-package chat.ui;
+package chat.ui.cli;
 
 import chat.client.ChatClient;
 import chat.client.RingChatClient;
 import chat.client.messages.ChatMessage;
+import chat.ui.ChatUI;
 
 import java.io.IOException;
 import java.util.Scanner;
 
-import static chat.ui.MenuOption.*;
+import static chat.ui.cli.MenuOption.*;
 
 public class ChatCLI implements ChatUI {
 
@@ -22,8 +23,34 @@ public class ChatCLI implements ChatUI {
         this.client = new RingChatClient(serverAddress, serverPort);
     }
 
+    private void printTotallyAwesomeBanner() {
+        System.out.println("        _____                    _____                    _____                    _____                    _____                    _____                    _____                _____             ");
+        System.out.println("         /\\    \\                  /\\    \\                  /\\    \\                  /\\    \\                  /\\    \\                  /\\    \\                  /\\    \\              /\\    \\          ");
+        System.out.println("        /::\\    \\                /::\\    \\                /::\\____\\                /::\\    \\                /::\\    \\                /::\\____\\                /::\\    \\            /::\\    \\         ");
+        System.out.println("       /::::\\    \\               \\:::\\    \\              /::::|   |               /::::\\    \\              /::::\\    \\              /:::/    /               /::::\\    \\           \\:::\\    \\        ");
+        System.out.println("      /::::::\\    \\               \\:::\\    \\            /:::::|   |              /::::::\\    \\            /::::::\\    \\            /:::/    /               /::::::\\    \\           \\:::\\    \\       ");
+        System.out.println("     /:::/\\:::\\    \\               \\:::\\    \\          /::::::|   |             /:::/\\:::\\    \\          /:::/\\:::\\    \\          /:::/    /               /:::/\\:::\\    \\           \\:::\\    \\      ");
+        System.out.println("    /:::/__\\:::\\    \\               \\:::\\    \\        /:::/|::|   |            /:::/  \\:::\\    \\        /:::/  \\:::\\    \\        /:::/____/               /:::/__\\:::\\    \\           \\:::\\    \\     ");
+        System.out.println("   /::::\\   \\:::\\    \\              /::::\\    \\      /:::/ |::|   |           /:::/    \\:::\\    \\      /:::/    \\:::\\    \\      /::::\\    \\              /::::\\   \\:::\\    \\          /::::\\    \\    ");
+        System.out.println("  /::::::\\   \\:::\\    \\    ____    /::::::\\    \\    /:::/  |::|   | _____    /:::/    / \\:::\\    \\    /:::/    / \\:::\\    \\    /::::::\\    \\   _____    /::::::\\   \\:::\\    \\        /::::::\\    \\   ");
+        System.out.println(" /:::/\\:::\\   \\:::\\____\\  /\\ \\  /:::/\\:::\\    \\  /:::/   |::|   |/\\    \\  /:::/    /   \\:::\\ ___\\  /:::/    /   \\:::\\    \\  /:::/\\:::\\    \\ /\\    \\  /:::/\\:::\\   \\:::\\    \\      /:::/\\:::\\    \\  ");
+        System.out.println("/:::/  \\:::\\   \\:::|    |/::\\   \\/:::/  \\:::\\____\\/:: /    |::|   /::\\____\\/:::/____/  ___\\:::|    |/:::/____/     \\:::\\____\\/:::/  \\:::\\    /::\\____\\/:::/  \\:::\\   \\:::\\____\\    /:::/  \\:::\\____\\ ");
+        System.out.println("\\::/   |::::\\  /:::|____|\\:::\\  /:::/    \\::/    /\\::/    /|::|  /:::/    /\\:::\\    \\ /\\  /:::|____|\\:::\\    \\      \\::/    /\\::/    \\:::\\  /:::/    /\\::/    \\:::\\  /:::/    /   /:::/    \\::/    / ");
+        System.out.println(" \\/____|:::::\\/:::/    /  \\:::\\/:::/    / \\/____/  \\/____/ |::| /:::/    /  \\:::\\    /::\\ \\::/    /  \\:::\\    \\      \\/____/  \\/____/ \\:::\\/:::/    /  \\/____/ \\:::\\/:::/    /   /:::/    / \\/____/  ");
+        System.out.println("        |:::::::::/    /    \\::::::/    /                   |::|/:::/    /    \\:::\\   \\:::\\ \\/____/    \\:::\\    \\                       \\::::::/    /            \\::::::/    /   /:::/    /  ");
+        System.out.println("        |::|\\::::/    /      \\::::/____/                    |::::::/    /      \\:::\\   \\:::\\____\\       \\:::\\    \\                       \\::::/    /              \\::::/    /   /:::/    /            ");
+        System.out.println("        |::| \\::/____/        \\:::\\    \\                    |:::::/    /        \\:::\\  /:::/    /        \\:::\\    \\                      /:::/    /               /:::/    /    \\::/    /             ");
+        System.out.println("        |::|  ~|               \\:::\\    \\                   |::::/    /          \\:::\\/:::/    /          \\:::\\    \\                    /:::/    /               /:::/    /      \\/____/              ");
+        System.out.println("        |::|   |                \\:::\\    \\                  /:::/    /            \\::::::/    /            \\:::\\    \\                  /:::/    /               /:::/    /                   ");
+        System.out.println("       \\::|   |                 \\:::\\____\\                /:::/    /              \\::::/    /              \\:::\\____\\                /:::/    /               /:::/    /                             ");
+        System.out.println("        \\:|   |                  \\::/    /                \\::/    /                \\::/____/                \\::/    /                \\::/    /                \\::/    /                              ");
+        System.out.println("         \\|___|                   \\/____/                  \\/____/                                           \\/____/                  \\/____/                  \\/____/                               ");
+    }
+
     @Override
     public void start() {
+        printTotallyAwesomeBanner();
+
         MenuOption currentOption;
 
         do {
@@ -124,8 +151,10 @@ public class ChatCLI implements ChatUI {
         switch (whoTo) {
             case USER:
                 handleSendToUser();
+                break;
             case GROUP:
                 handleSendToGroup();
+                break;
             case BACK:
                 break;
         }

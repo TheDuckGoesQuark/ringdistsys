@@ -1,4 +1,4 @@
-package chat.ui;
+package chat.ui.cli;
 
 public enum MenuOption {
 

@@ -1,4 +1,4 @@
-import chat.ui.ChatCLI;
+import chat.ui.cli.ChatCLI;
 import chat.ui.ChatUI;
 
 import java.io.IOException;
