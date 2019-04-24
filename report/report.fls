@@ -198,6 +198,8 @@ INPUT ./images/chang.png
 INPUT ./images/bully.png
 INPUT ./images/bully.png
 INPUT ./images/bully.png
+INPUT /usr/share/texlive/texmf-dist/tex/latex/base/omscmr.fd
+INPUT /usr/share/texlive/texmf-dist/tex/latex/base/omscmr.fd
 INPUT report.bbl
 INPUT report.bbl
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmtt12.tfm

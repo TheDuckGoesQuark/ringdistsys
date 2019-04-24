@@ -49,7 +49,6 @@ public class ChatCLI implements ChatUI {
                     handleLogout();
                     break;
             }
-
         } while (currentOption != EXIT);
     }
 

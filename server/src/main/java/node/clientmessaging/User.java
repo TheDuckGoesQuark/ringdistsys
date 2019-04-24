@@ -15,11 +15,6 @@ public class User {
      */
     private Set<String> groups;
 
-    public User(String username, Set<String> groups) {
-        this.username = username;
-        this.groups = groups;
-    }
-
     public User(String username) {
         this.username = username;
     }
@@ -28,15 +23,15 @@ public class User {
         return username;
     }
 
-    public Set<String> getGroups() {
+    public synchronized Set<String> getGroups() {
         return groups;
     }
 
-    public void addToGroup(String groupname) {
+    public synchronized void addToGroup(String groupname) {
         groups.add(groupname);
     }
 
-    public void removeFromGroup(String groupname) {
+    public synchronized void removeFromGroup(String groupname) {
         groups.remove(groupname);
     }
 

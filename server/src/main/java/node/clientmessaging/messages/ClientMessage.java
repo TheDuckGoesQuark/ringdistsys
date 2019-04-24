@@ -15,4 +15,10 @@ public class ClientMessage {
         return messageType;
     }
 
+    @Override
+    public String toString() {
+        return "ClientMessage{" +
+                "messageType=" + messageType +
+                '}';
+    }
 }

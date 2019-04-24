@@ -14,8 +14,9 @@
 \contentsline {subsection}{\numberline {3.5}Bully}{12}
 \contentsline {section}{\numberline {4}Receive/Send Posts}{13}
 \contentsline {subsection}{\numberline {4.1}Mutual Exclusion}{13}
-\contentsline {subsection}{\numberline {4.2}Web Server}{14}
-\contentsline {section}{\numberline {5}Testing}{15}
-\contentsline {section}{\numberline {6}Evaluation}{15}
-\contentsline {section}{\numberline {7}Summary}{15}
-\contentsline {section}{\numberline {8}How to Run}{15}
+\contentsline {subsection}{\numberline {4.2}Server}{14}
+\contentsline {subsection}{\numberline {4.3}Client}{16}
+\contentsline {section}{\numberline {5}Testing}{16}
+\contentsline {section}{\numberline {6}Evaluation}{16}
+\contentsline {section}{\numberline {7}Summary}{16}
+\contentsline {section}{\numberline {8}How to Run}{16}

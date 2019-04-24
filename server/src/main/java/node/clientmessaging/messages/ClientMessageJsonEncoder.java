@@ -2,6 +2,7 @@ package node.clientmessaging.messages;
 
 import com.google.gson.Gson;
 
+import javax.swing.text.html.Option;
 import java.util.Optional;
 
 public class ClientMessageJsonEncoder implements Encoder<ClientMessage, String> {
@@ -31,6 +32,8 @@ public class ClientMessageJsonEncoder implements Encoder<ClientMessage, String> 
                 return Optional.of(gson.fromJson(obj, LoginMessage.class));
             case ERROR:
                 return Optional.of(gson.fromJson(obj, ErrorMessage.class));
+            case ALIVE:
+                return Optional.of(gson.fromJson(obj, ClientMessage.class));
             default:
                 return Optional.empty();
         }

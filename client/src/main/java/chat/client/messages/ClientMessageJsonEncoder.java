@@ -31,6 +31,8 @@ public class ClientMessageJsonEncoder implements Encoder<ClientMessage, String> 
                 return Optional.of(gson.fromJson(obj, LoginMessage.class));
             case ERROR:
                 return Optional.of(gson.fromJson(obj, ErrorMessage.class));
+            case ALIVE:
+                return Optional.of(gson.fromJson(obj, ClientMessage.class));
             default:
                 return Optional.empty();
         }

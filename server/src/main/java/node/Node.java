@@ -170,6 +170,7 @@ public class Node {
             try {
                 final Token token = usableTokenQueue.take();
                 logger.info("Holding token.");
+                manageChatServer();
                 forwardableTokenQueue.put(token);
             } catch (InterruptedException e) {
                 break;
@@ -177,6 +178,16 @@ public class Node {
         }
 
         end();
+    }
+
+    /**
+     * Either:
+     * Chat server receives one message for one of its clients.
+     * Chat server sends one message from one of its clients.
+     */
+    private void manageChatServer() {
+        if (!chatServer.receiveMessage())
+            chatServer.sendMessage();
     }
 
     /**

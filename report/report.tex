@@ -460,18 +460,39 @@ In order to ensure that the token is at least delivered successfully, the token 
 \begin{enumerate}
 	\item Ring message handling thread polls predecessor socket for token.
 	\item Client handling thread polls the single element \emph{usableTokenQueue} waiting for the token to become available.
-	\item When the token arrives, the ring message thread replies with an ACK, and puts the token in the \emph{usableTokenQueue} for the client to consume. It then begins polling the single element \emph{forwardableTokenQueue} where the client will return the token.
-	\item The client dequeues the token from the \emph{usableTokenQueue} and uses it to serve it's clients then returns it to ring thread via the \emph{forwardableTokenQueue}.
+	\item When the token arrives, the ring message thread replies with an ACK, and puts the token in the \emph{usableTokenQueue} for the client thread to consume. It then begins polling the single element \emph{forwardableTokenQueue} where the client thread will return the token.
+	\item The client thread dequeues the token from the \emph{usableTokenQueue} and uses it to serve it's clients then returns it to ring thread via the \emph{forwardableTokenQueue}.
 	\item Ring thread then removes the token from the \emph{forwardableTokenQueue} and forwards it onto it's successor.
 \end{enumerate}
 
-\subsection{Web Server}
+\subsection{Server}
 
-In order for clients to make and receive posts, a simple web server was configured. In order to isolate coordination traffic from client traffic, the two are served on different ports. In a real-life scenario, the web server would run on port 80 as standard and coordination traffic would also run on a consistent port across all hosts. However, to allow for local testing, it was necessary to use port numbers to differentiate between host sockets. 
+In order for each node in the ring to serve clients, they each provide a TCP server socket. In order to isolate coordination traffic from client traffic, clients used a different port to connect to the node than other nodes. To allow for local testing, it was necessary to use port numbers to differentiate between host sockets on the same machine. In a realistic scenario, each node would have a different host address (and even a different FQDN) and a consistent port for client traffic and coordination traffic. 
 
-This was actually the first time I had implemented a HTTP web server at such a low level, and so it was constructed step by step. First a simple hello world message was sent to clients, then a HTML document, then the ability to receive and send node.nodemessaging was added.
+I had hoped to use an existing protocol such as Websockets so that the client-to-server communication followed some standard. Due to time constraints however, I opted for simply sending messages over the TCP socket, using line breaks to seperate each message. This time I serialized the messages to JSON to allow any application to consume and communicate with the server as a client, in contrast to the direct serialization of POJOs which is used for communication between nodes.
 
-In a production environment, a ring topology would likely be abstracted by a load balancer. This load balancer is what clients would connect to when wanting to use the service by connecting at some FQDN. It would then proxy node.nodemessaging between clients and the server in the ring that is responsible for them, which it could choose based on how many clients each server is already serving.
+The web server consisted of a fixed size thread pool for serving up to two clients. A server socket would would wait for a client to connect, and then spin up a client handler thread for processing the new client. Clients and servers would send messages as JSON, using a newline (\lstinline{\n}) as a delimiter for messages. Each JSON object sent included a \emph{messageType} field with one of the values in table \ref{tbl:clientmessagetypes}. JSON encoding and decoding was performed using the Gson library. 
+
+A publish-subscribe pattern was used for communication. Clients would send a log in message with a username so that the server knew which messages to send their way. They could also join groups would allow for messages to be broadcast to multiple clients. 
+
+\begin{table}[!h]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lll@{}}
+\toprule
+Message Type                               & Usage                                                                                                                        & Payload                  \\ \midrule
+\multicolumn{1}{l|}{LOGIN}                  & \multicolumn{1}{l|}{Sent by client to declare a username to the node.}                                              & Username \\
+\multicolumn{1}{l|}{JOIN\_GROUP}             & \multicolumn{1}{l|}{Sent by client to subscribe to a group.}                                     & Name of group to join.\\
+\multicolumn{1}{l|}{LEAVE\_GROUP}    & \multicolumn{1}{l|}{Sent by client to unsubscribe from a group.} & Name of group to leave.\\
+\multicolumn{1}{l|}{CHAT\_MESSAGE}                 & \multicolumn{1}{l|}{Text sent between clients.}                                                                        & To, From, Time, Contents \\
+\multicolumn{1}{l|}{ERROR}            & \multicolumn{1}{l|}{Sent by server if an error occurs}                   & Explanation \\ \bottomrule
+\end{tabular}%
+}
+\caption{Messages sent between client and server.}
+\label{tbl:clientmessagetypes}
+\end{table}
+
+\subsection{Client}
 
 \section{Testing}
 
