@@ -2,9 +2,10 @@ package node;
 
 import config.Configuration;
 import node.clientmessaging.SocketChatServer;
-import node.ringstore.DatabaseRingStore;
-import node.ringstore.VirtualNode;
-import node.ringstore.RingStore;
+import node.jdbc.MessagingDatabaseConnection;
+import node.jdbc.RingDatabaseConnection;
+import node.ringrepository.VirtualNode;
+import node.ringrepository.RingRepository;
 import logging.LoggerFactory;
 import node.nodemessaging.Message;
 import node.nodemessaging.MessageType;
@@ -34,7 +35,7 @@ public class Node {
     private final Logger logger = LoggerFactory.getLogger();
     private final Configuration config;
     private final ExecutorService executorService;
-    private final RingStore ringStore;
+    private final RingRepository ringRepository;
     private final RingCommunicationHandler ringComms;
     private final ChatServer chatServer;
     private final UDPSocket udpSocket;
@@ -51,20 +52,24 @@ public class Node {
         this.config = config;
         this.executorService = Executors.newCachedThreadPool();
 
-        this.ringStore = new DatabaseRingStore(config.getListFilePath(), config.shouldDropEverything());
-        this.ringStore.initialize();
+        final RingDatabaseConnection ringDatabaseConnection = new RingDatabaseConnection(config.getListFilePath(), config.shouldDropEverything());
+        ringDatabaseConnection.initialize();
 
-        final List<VirtualNode> allNodes = this.ringStore.getAllNodes();
+        this.ringRepository = ringDatabaseConnection;
+
+        final List<VirtualNode> allNodes = this.ringRepository.getAllNodes();
         final VirtualNode thisNode = allNodes.stream()
                 .filter(node -> node.getNodeId() == config.getNodeId())
                 .findFirst()
                 .orElseThrow(() -> new IOException("Node missing from database."));
 
-        this.chatServer = new SocketChatServer(thisNode.getAddress(), thisNode.getClientPort());
 
         final AddressTranslator addressTranslator = new AddressTranslator(allNodes);
         this.udpSocket = new UDPSocket(addressTranslator, config.getNodeId());
         this.ringComms = new RingCommunicationHandler(config.getNodeId(), addressTranslator, executorService);
+
+        final MessagingDatabaseConnection messagingDatabaseConnection = new MessagingDatabaseConnection(config.shouldDropEverything());
+        this.chatServer = new SocketChatServer(thisNode.getAddress(), thisNode.getClientPort(), messagingDatabaseConnection, messagingDatabaseConnection);
 
         this.initializeCoordinator(allNodes);
     }
@@ -87,7 +92,7 @@ public class Node {
         if (!optCoordinator.isPresent() || coordinatorId == config.getNodeId()) {
             // WARN Possible race condition : make sure first node in
             // ring is started and set as coordinator before more join
-            ringStore.updateCoordinator(config.getNodeId());
+            ringRepository.updateCoordinator(config.getNodeId());
             coordinatorId = config.getNodeId();
             forwardableTokenQueue.add(new Token());
         }
@@ -205,7 +210,7 @@ public class Node {
         if (message == null) {
             logger.info("Lost connection to predecessor");
 
-            if (!ringComms.justDisconnectedFromSelf() && ringStore.getSizeOfRing() == 2) {
+            if (!ringComms.justDisconnectedFromSelf() && ringRepository.getSizeOfRing() == 2) {
                 // COUNT == 2 occurs when:
                 // * connected to self and new node joins,
                 // * ring contains me and other node, and that other node has failed
@@ -248,7 +253,7 @@ public class Node {
             logger.info(String.format("Election concluded, new coordinator: %d", coordinatorId));
 
             if (isCoordinator()) {
-                ringStore.updateCoordinator(coordinatorId);
+                ringRepository.updateCoordinator(coordinatorId);
             }
         }
     }
@@ -267,7 +272,7 @@ public class Node {
                 currentElectionHandler = new ChangeRobertsElectionHandler(ringComms, config.getNodeId());
                 break;
             case BULLY:
-                currentElectionHandler = new BullyElectionHandler(udpSocket, config.getNodeId(), executorService, ringStore);
+                currentElectionHandler = new BullyElectionHandler(udpSocket, config.getNodeId(), executorService, ringRepository);
                 break;
             default:
                 logger.warning("Unknown election type.");
@@ -384,7 +389,7 @@ public class Node {
      * @param requestingNodeId id of node requesting successor
      */
     private void handleSuccessorRequest(int requestingNodeId) throws IOException {
-        final List<VirtualNode> ringNodes = ringStore.getAllNodesWithSuccessors();
+        final List<VirtualNode> ringNodes = ringRepository.getAllNodesWithSuccessors();
 
         final Optional<VirtualNode> requestingNode = ringNodes.stream()
                 .filter(nodeRow -> nodeRow.getNodeId() == requestingNodeId)
@@ -404,7 +409,7 @@ public class Node {
                 .findFirst().get().getSuccessorId().get();
 
         // Succ(requestingNode) == succ(lostNode)
-        ringStore.removeFromRing(requestingNodeId, successorOfLostNodeId, lostNodeId);
+        ringRepository.removeFromRing(requestingNodeId, successorOfLostNodeId, lostNodeId);
 
         sendSuccessorMessage(requestingNodeId, successorOfLostNodeId);
     }
@@ -476,13 +481,13 @@ public class Node {
      * @throws IOException something goes wrong while sending reply or connecting to DB
      */
     private void handleJoinRequest(Message request) throws IOException {
-        List<VirtualNode> allNodes = ringStore.getAllNodesWithSuccessors();
+        List<VirtualNode> allNodes = ringRepository.getAllNodesWithSuccessors();
 
         int requestingNodeId = request.getSrcId();
         if (allNodes.isEmpty()) {
             logger.info("Assigning node to self");
             // Assign requesting node to itself
-            ringStore.setNodeSuccessor(requestingNodeId, requestingNodeId);
+            ringRepository.setNodeSuccessor(requestingNodeId, requestingNodeId);
             sendSuccessorMessage(requestingNodeId, requestingNodeId);
         } else {
             logger.info("Inserting node into ring randomly");
@@ -491,7 +496,7 @@ public class Node {
             final VirtualNode predecessor = allNodes.get(rand.nextInt(allNodes.size()));
             final int successor = predecessor.getSuccessorId().get();
 
-            ringStore.insertIntoRing(predecessor.getNodeId(), successor, requestingNodeId);
+            ringRepository.insertIntoRing(predecessor.getNodeId(), successor, requestingNodeId);
             sendSuccessorMessage(requestingNodeId, successor);
             sendSuccessorMessage(predecessor.getNodeId(), requestingNodeId);
 

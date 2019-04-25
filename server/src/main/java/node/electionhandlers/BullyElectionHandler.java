@@ -1,7 +1,7 @@
 package node.electionhandlers;
 
-import node.ringstore.VirtualNode;
-import node.ringstore.RingStore;
+import node.ringrepository.VirtualNode;
+import node.ringrepository.RingRepository;
 import logging.LoggerFactory;
 import node.nodemessaging.Message;
 import node.nodemessaging.election.ElectionMessageHeader;
@@ -25,7 +25,7 @@ public class BullyElectionHandler implements ElectionHandler {
     private static final int SECONDS_BEFORE_RETRYING = 5;
 
     private final Logger logger = LoggerFactory.getLogger();
-    private final RingStore ringStore;
+    private final RingRepository ringRepository;
     private final UDPSocket udpSocket;
     private final int thisNodeId;
     private final ExecutorService executorService;
@@ -37,11 +37,11 @@ public class BullyElectionHandler implements ElectionHandler {
     private boolean ongoing = false;
 
 
-    public BullyElectionHandler(UDPSocket udpSocket, int nodeId, ExecutorService executorService, RingStore ringStore) {
+    public BullyElectionHandler(UDPSocket udpSocket, int nodeId, ExecutorService executorService, RingRepository ringRepository) {
         this.udpSocket = udpSocket;
         this.thisNodeId = nodeId;
         this.executorService = executorService;
-        this.ringStore = ringStore;
+        this.ringRepository = ringRepository;
     }
 
     @Override
@@ -78,7 +78,7 @@ public class BullyElectionHandler implements ElectionHandler {
      * @throws IOException
      */
     private void sendSelfAsCandidate() throws IOException {
-        final List<VirtualNode> allNodesAboveMe = ringStore.getAllNodesInRingWithIdGreaterThan(thisNodeId);
+        final List<VirtualNode> allNodesAboveMe = ringRepository.getAllNodesInRingWithIdGreaterThan(thisNodeId);
         final ElectionMessageHeader header = new ElectionMessageHeader(BULLY, ELECTION);
         final Message message = new Message(COORDINATOR_ELECTION, thisNodeId, header);
 
@@ -108,7 +108,7 @@ public class BullyElectionHandler implements ElectionHandler {
      * @throws IOException if unable to send for some reason...
      */
     private void broadcastCoordinator() throws IOException {
-        final List<VirtualNode> allNodes = ringStore.getAllNodesWithSuccessors();
+        final List<VirtualNode> allNodes = ringRepository.getAllNodesWithSuccessors();
         final CoordinatorMessage coordinatorMessage = new CoordinatorMessage(electedCoordinatorId);
         final ElectionMessageHeader header = new ElectionMessageHeader(BULLY, COORDINATOR, coordinatorMessage);
         final Message message = new Message(COORDINATOR_ELECTION, thisNodeId, header);

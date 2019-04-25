@@ -1,7 +1,6 @@
 package chat.client.messages;
 
 import java.time.Instant;
-import java.time.LocalTime;
 import java.time.ZoneId;
 
 import static chat.client.messages.ClientMessageType.CHAT_MESSAGE;

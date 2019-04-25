@@ -1,17 +1,17 @@
-package node.ringstore;
+package node.jdbc;
 
 import logging.LoggerFactory;
+import node.ringrepository.RingRepository;
+import node.ringrepository.VirtualNode;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 
-public class DatabaseRingStore implements RingStore {
+public class RingDatabaseConnection implements RingRepository {
 
     private static final String CONNECTION_STRING = "jdbc:mariadb://jm354.host.cs.st-andrews.ac.uk/jm354_distsys";
     private static final String USERNAME = "jm354";
@@ -85,7 +85,7 @@ public class DatabaseRingStore implements RingStore {
      *
      * @param nodelistpath path to file with node ids and socket addresses
      */
-    public DatabaseRingStore(String nodelistpath, boolean doFullRestart) {
+    public RingDatabaseConnection(String nodelistpath, boolean doFullRestart) {
         this.nodelistpath = nodelistpath;
         this.doFullRestart = doFullRestart;
     }
@@ -209,7 +209,9 @@ public class DatabaseRingStore implements RingStore {
         }
     }
 
-    @Override
+    /**
+     * Initializes the database connection
+     */
     public void initialize() {
         Connection conn = null;
 

@@ -2,6 +2,8 @@ package node.clientmessaging;
 
 import logging.LoggerFactory;
 import node.clientmessaging.messages.ChatMessage;
+import node.clientmessaging.repositories.MessageRepository;
+import node.clientmessaging.repositories.UserGroupRepository;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -17,19 +19,22 @@ public class SocketChatServer implements ChatServer {
 
     private final Logger logger = LoggerFactory.getLogger();
 
-    /**
-     * Thread for each client + thread for checking keepalives
-     */
-    private final ExecutorService threadPool = Executors.newFixedThreadPool(MAX_CLIENTS + 1);
+    private final ExecutorService threadPool = Executors.newFixedThreadPool(MAX_CLIENTS);
+    private final MessageRepository messageRepository;
+    private final UserGroupRepository userGroupRepository;
+
     private final ClientHandler[] clients = new ClientHandler[MAX_CLIENTS];
     private final Queue<ChatMessage> outgoingMessages = new ConcurrentLinkedQueue<>();
     private final ServerSocket serverSocket;
 
     private boolean stopped = true;
 
-    public SocketChatServer(String hostAddress, int clientPort) throws Exception {
-        serverSocket = new ServerSocket();
-        serverSocket.bind(new InetSocketAddress(hostAddress, clientPort));
+    public SocketChatServer(String hostAddress, int clientPort, MessageRepository messageRepository, UserGroupRepository userGroupRepository) throws Exception {
+        this.messageRepository = messageRepository;
+        this.userGroupRepository = userGroupRepository;
+        this.serverSocket = new ServerSocket();
+        this.serverSocket.bind(new InetSocketAddress(hostAddress, clientPort));
+
     }
 
     @Override
@@ -46,8 +51,14 @@ public class SocketChatServer implements ChatServer {
         }
     }
 
+    /**
+     * Checks if this server can handle another client before beginning to serve them
+     *
+     * @param socket connection to new potential client
+     * @throws IOException
+     */
     private void registerNewClient(Socket socket) throws IOException {
-        final ClientHandler handler = new ClientHandler(socket, outgoingMessages);
+        final ClientHandler handler = new ClientHandler(socket, outgoingMessages, userGroupRepository);
 
         boolean registered = false;
         for (int i = 0; i < clients.length; i++) {
@@ -74,7 +85,7 @@ public class SocketChatServer implements ChatServer {
 
     @Override
     public boolean sendMessage() {
-        // TODO check outgoign queue for messages to send
+        // TODO check outgoing queue for messages to send
         return false;
     }
 

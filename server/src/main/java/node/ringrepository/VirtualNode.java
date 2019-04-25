@@ -1,4 +1,4 @@
-package node.ringstore;
+package node.ringrepository;
 
 import java.util.Optional;
 

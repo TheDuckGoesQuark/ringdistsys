@@ -2,6 +2,8 @@ package node.clientmessaging;
 
 import logging.LoggerFactory;
 import node.clientmessaging.messages.*;
+import node.clientmessaging.repositories.MessageRepository;
+import node.clientmessaging.repositories.UserGroupRepository;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,14 +35,21 @@ class ClientHandler implements Runnable {
      * Messages to be sent to other clients/groups
      */
     private final Queue<ChatMessage> outgoingMessages;
-
+    /**
+     * Store of users and the groups they belong to
+     */
+    private final UserGroupRepository userGroupRepository;
+    /**
+     * Local representation of user
+     */
     private User user = null;
 
-    ClientHandler(Socket clientSocket, Queue<ChatMessage> outgoingMessages) throws IOException {
+    ClientHandler(Socket clientSocket, Queue<ChatMessage> outgoingMessages, UserGroupRepository userGroupRepository) throws IOException {
         this.clientSocket = clientSocket;
         this.in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
         this.out = new PrintWriter(clientSocket.getOutputStream(), true);
         this.outgoingMessages = outgoingMessages;
+        this.userGroupRepository = userGroupRepository;
     }
 
     /**
@@ -118,20 +127,52 @@ class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Adds the given message to the outgoing queue, to be added once the token is available
+     *
+     * @param clientMessage message to be sent
+     */
     private void handleChatMessage(ChatMessage clientMessage) {
         outgoingMessages.add(clientMessage);
     }
 
+    /**
+     * Attempts to remove user from group
+     *
+     * @param clientMessage group leave request
+     */
     private void handleLeaveGroup(LeaveGroupMessage clientMessage) {
-        user.removeFromGroup(clientMessage.getGroup());
+        try {
+            userGroupRepository.removeUserFromGroup(user.getUsername(), clientMessage.getGroup());
+        } catch (IOException e) {
+            sendError("Unable to leave group: " + e.getMessage());
+            return;
+        }
+
         sendMessage(clientMessage);
     }
 
+    /**
+     * Attempts to register user as part of group
+     *
+     * @param clientMessage group join request
+     */
     private void handleJoinGroup(JoinGroupMessage clientMessage) {
-        user.addToGroup(clientMessage.getGroup());
+        try {
+            userGroupRepository.addUserToGroup(user.getUsername(), clientMessage.getGroup());
+        } catch (IOException e) {
+            sendError("Unable to join group: " + e.getMessage());
+            return;
+        }
+
         sendMessage(clientMessage);
     }
 
+    /**
+     * Checks user is not already logged, and otherwise initalizes the user object and sends confirmation
+     *
+     * @param clientMessage login requeset
+     */
     private void handleLogin(LoginMessage clientMessage) {
         if (isLoggedIn()) {
             logger.warning("Already logged in.");
@@ -142,6 +183,15 @@ class ClientHandler implements Runnable {
             // Reply with same login message for confirmation
             sendMessage(clientMessage);
         }
+    }
+
+    /**
+     * Sends error message to user, typically after an exception has occurred
+     *
+     * @param message message to send
+     */
+    private void sendError(String message) {
+        sendMessage(new ErrorMessage(message));
     }
 
     /**

@@ -1,13 +1,8 @@
-package node.ringstore;
+package node.ringrepository;
 
 import java.util.List;
 
-public interface RingStore {
-
-    /**
-     * Initializes database by inserting local node list if its empty for some reason
-     */
-    void initialize();
+public interface RingRepository {
 
     /**
      * Gets the list of all nodes

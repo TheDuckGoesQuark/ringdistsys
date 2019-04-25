@@ -1,7 +1,7 @@
 package node;
 
 
-import node.ringstore.VirtualNode;
+import node.ringrepository.VirtualNode;
 
 import java.net.InetSocketAddress;
 import java.util.HashMap;

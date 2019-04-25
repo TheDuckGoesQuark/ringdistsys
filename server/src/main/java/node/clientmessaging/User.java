@@ -11,29 +11,12 @@ public class User {
      */
     private String username;
 
-    /**
-     * The names of the groups that this user belongs to
-     */
-    private Set<String> groups = new HashSet<>();
-
     public User(String username) {
         this.username = username;
     }
 
     public String getUsername() {
         return username;
-    }
-
-    public synchronized Set<String> getGroups() {
-        return groups;
-    }
-
-    public synchronized void addToGroup(String groupname) {
-        groups.add(groupname);
-    }
-
-    public synchronized void removeFromGroup(String groupname) {
-        groups.remove(groupname);
     }
 
     @Override
