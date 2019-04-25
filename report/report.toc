@@ -17,6 +17,6 @@
 \contentsline {subsection}{\numberline {4.2}Server}{15}
 \contentsline {subsection}{\numberline {4.3}Client (RingChat)}{17}
 \contentsline {section}{\numberline {5}Testing}{17}
-\contentsline {section}{\numberline {6}Potential Issues}{18}
-\contentsline {section}{\numberline {7}Summary}{18}
-\contentsline {section}{\numberline {8}How to Run}{18}
+\contentsline {section}{\numberline {6}Potential Issues}{19}
+\contentsline {section}{\numberline {7}Summary}{19}
+\contentsline {section}{\numberline {8}How to Run}{20}

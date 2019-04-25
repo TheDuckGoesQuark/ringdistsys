@@ -170,7 +170,7 @@ public class ChatCLI implements ChatUI {
         final String message = reader.nextLine();
 
         try {
-            client.sendMessageToUser(message, groupName);
+            client.sendMessageToGroup(message, groupName);
         } catch (IOException e) {
             System.err.println(String.format("Unable to send to group %s: %s", groupName, e.getMessage()));
         }

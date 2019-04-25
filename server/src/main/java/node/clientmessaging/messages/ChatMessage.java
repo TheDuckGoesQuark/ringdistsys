@@ -1,5 +1,7 @@
 package node.clientmessaging.messages;
 
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -13,7 +15,7 @@ public class ChatMessage extends ClientMessage {
     /**
      * Time message was sent
      */
-    private Instant sentAt;
+    private Timestamp sentAt;
     /**
      * Name of client that sent message
      */
@@ -31,7 +33,7 @@ public class ChatMessage extends ClientMessage {
      */
     private String messageContent;
 
-    public ChatMessage(Instant sentAt, String fromName, String toUsername, String toGroup, String messageContent) {
+    public ChatMessage(Timestamp sentAt, String fromName, String toUsername, String toGroup, String messageContent) {
         super(CHAT_MESSAGE);
         this.sentAt = sentAt;
         this.fromName = fromName;
@@ -40,7 +42,7 @@ public class ChatMessage extends ClientMessage {
         this.messageContent = messageContent;
     }
 
-    public Instant getSentAt() {
+    public Timestamp getSentAt() {
         return sentAt;
     }
 
@@ -57,7 +59,7 @@ public class ChatMessage extends ClientMessage {
     }
 
     public Optional<String> getToGroup() {
-        return Optional.of(toGroup);
+        return Optional.ofNullable(toGroup);
     }
 
     public boolean forGroup() {

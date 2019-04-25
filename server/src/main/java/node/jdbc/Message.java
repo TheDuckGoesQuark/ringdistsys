@@ -1,6 +1,6 @@
 package node.jdbc;
 
-import java.time.Instant;
+import java.sql.Timestamp;
 
 /**
  * Database row from messages table
@@ -8,25 +8,25 @@ import java.time.Instant;
 public class Message {
 
     private int messageId;
-    private long sentAt;
+    private Timestamp sentAt;
     private String contents;
     private String fromUsername;
     private String toGroup;
 
-    public Message(long sentAt, String contents, String fromUsername) {
+    public Message(Timestamp sentAt, String contents, String fromUsername) {
         this.sentAt = sentAt;
         this.contents = contents;
         this.fromUsername = fromUsername;
     }
 
-    public Message(long sentAt, String contents, String fromUsername, String toGroup) {
+    public Message(Timestamp sentAt, String contents, String fromUsername, String toGroup) {
         this.sentAt = sentAt;
         this.contents = contents;
         this.fromUsername = fromUsername;
         this.toGroup = toGroup;
     }
 
-    public Message(long sentAt, String contents, String fromUsername, String toGroup, int messageId) {
+    public Message(Timestamp sentAt, String contents, String fromUsername, String toGroup, int messageId) {
         this.messageId = messageId;
         this.sentAt = sentAt;
         this.contents = contents;
@@ -42,7 +42,7 @@ public class Message {
         this.messageId = messageId;
     }
 
-    public long getSentAt() {
+    public Timestamp getSentAt() {
         return sentAt;
     }
 

@@ -7,7 +7,6 @@ import node.clientmessaging.repositories.UserGroupRepository;
 
 import java.io.IOException;
 import java.sql.*;
-import java.time.Instant;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -22,7 +21,7 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
     private static final String PART_OF_GROUP_TABLE_NAME = "partofgroup";
 
     private static final String MESSAGE_TABLE_NAME = "messages";
-    private static final String MESSAGE_DESTINATIONS_NAME = "messagedestinations";
+    private static final String MESSAGE_DESTINATION_TABLE_NAME = "messagedestinations";
 
     private static final String CLIENT_SCHEMA =
             "CREATE TABLE " + CLIENT_TABLE_NAME + " ( " +
@@ -50,7 +49,7 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
     private static final String MESSAGE_SCHEMA =
             "CREATE TABLE " + MESSAGE_TABLE_NAME + " ( " +
                     "messageId INT AUTO_INCREMENT," +
-                    "sentAt INT," +
+                    "sentAt TIMESTAMP," +
                     "contents VARCHAR(255)," +
                     "fromUsername VARCHAR(255)," +
                     "toGroup VARCHAR(255)," +
@@ -60,7 +59,7 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
                     ")";
 
     private static final String DESTINATION_SCHEMA =
-            "CREATE TABLE " + MESSAGE_DESTINATIONS_NAME + " ( " +
+            "CREATE TABLE " + MESSAGE_DESTINATION_TABLE_NAME + " ( " +
                     "messageId INT," +
                     "toUsername VARCHAR(255) NOT NULL," +
                     "PRIMARY KEY (messageId, toUsername)," +
@@ -75,13 +74,13 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
             " (sentAt, contents, fromUsername, toGroup) " +
             "VALUES (?, ?, ?, ?)";
 
-    private static final String INSERT_DESTINATION = "INSERT INTO " + MESSAGE_DESTINATIONS_NAME +
+    private static final String INSERT_DESTINATION = "INSERT INTO " + MESSAGE_DESTINATION_TABLE_NAME +
             " (messageId, toUsername)" +
             " VALUES (?, ?)";
 
     private static final String GET_MESSAGES_FOR_TWO_USERS_LIMIT_ONE_OLDEST_FIRST =
             "SELECT m.*, d.toUsername FROM " + MESSAGE_TABLE_NAME + " m " +
-                    "INNER JOIN " + MESSAGE_DESTINATIONS_NAME + " d ON m.messageId = d.messageId " +
+                    "INNER JOIN " + MESSAGE_DESTINATION_TABLE_NAME + " d ON m.messageId = d.messageId " +
                     "WHERE toUsername IN (?, ?) ORDER BY sentAt " +
                     "LIMIT 1";
 
@@ -89,16 +88,16 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
             "DELETE FROM " + MESSAGE_TABLE_NAME + " WHERE messageId IN " +
                     "(" +
                     "SELECT m.messageId FROM " + MESSAGE_TABLE_NAME + " m " +
-                    "LEFT JOIN " + MESSAGE_DESTINATIONS_NAME + " d ON m.messageId = d.messageId " +
+                    "LEFT JOIN " + MESSAGE_DESTINATION_TABLE_NAME + " d ON m.messageId = d.messageId " +
                     "WHERE d.messageId IS NULL " +
                     "GROUP BY m.messageId" +
                     ")";
 
     private static final String DELETE_RECIPIENT =
-            "DELETE FROM " + MESSAGE_DESTINATIONS_NAME + " d WHERE d.messageId = ? AND d.toUsername = ?";
+            "DELETE FROM " + MESSAGE_DESTINATION_TABLE_NAME + " WHERE messageId = ? AND toUsername = ?";
 
     private static final String INSERT_USER =
-            "INSERT INTO " + CLIENT_TABLE_NAME + " VALUES (?)";
+            "INSERT IGNORE INTO " + CLIENT_TABLE_NAME + " VALUES (?)";
 
     private static final String DELETE_USER =
             "DELETE FROM " + CLIENT_TABLE_NAME + " WHERE username = ?";
@@ -168,7 +167,7 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
                 final PreparedStatement dropGroupSchema = conn.prepareStatement(DROP_TABLE_PREFIX + GROUP_TABLE_NAME);
                 final PreparedStatement dropPartOfGroupSchema = conn.prepareStatement(DROP_TABLE_PREFIX + PART_OF_GROUP_TABLE_NAME);
                 final PreparedStatement dropMessageSchema = conn.prepareStatement(DROP_TABLE_PREFIX + MESSAGE_TABLE_NAME);
-                final PreparedStatement dropMessageDestSchema = conn.prepareStatement(DROP_TABLE_PREFIX + MESSAGE_DESTINATIONS_NAME)
+                final PreparedStatement dropMessageDestSchema = conn.prepareStatement(DROP_TABLE_PREFIX + MESSAGE_DESTINATION_TABLE_NAME)
         ) {
             conn.setAutoCommit(false);
             dropMessageDestSchema.executeUpdate();
@@ -207,7 +206,7 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
                 final PreparedStatement insertDestination = conn.prepareStatement(INSERT_DESTINATION)
         ) {
             conn.setAutoCommit(true);
-            insertMessage.setLong(1, message.getSentAt());
+            insertMessage.setTimestamp(1, message.getSentAt());
             insertMessage.setString(2, message.getContents());
             insertMessage.setString(3, message.getFromUsername());
             insertMessage.setString(4, message.getToGroup());
@@ -234,7 +233,7 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
                 insertDestination.addBatch();
             }
 
-            insertDestination.executeUpdate();
+            insertDestination.executeBatch();
             conn.commit();
         } catch (SQLException e) {
             throw new IOException(e.getMessage());
@@ -252,7 +251,7 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
                 final String toGroup = chatMessage.getToGroup().get();
                 recipients = getAllUsersInGroup(toGroup, conn);
                 message = new Message(
-                        chatMessage.getSentAt().toEpochMilli(),
+                        chatMessage.getSentAt(),
                         chatMessage.getMessageContent(),
                         chatMessage.getFromName(),
                         toGroup
@@ -260,7 +259,7 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
             } else {
                 recipients = Collections.singleton(chatMessage.getToUsername());
                 message = new Message(
-                        chatMessage.getSentAt().toEpochMilli(),
+                        chatMessage.getSentAt(),
                         chatMessage.getMessageContent(),
                         chatMessage.getFromName()
                 );
@@ -323,7 +322,7 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
             }
 
             // Construct message
-            final Instant sentAt = Instant.ofEpochMilli(rs.getLong("sentAt"));
+            final Timestamp sentAt = rs.getTimestamp("sentAt");
             final String fromName = rs.getString("fromUsername");
             final String toUsername = rs.getString("toUsername");
             final String toGroup = rs.getString("toGroup");
@@ -340,7 +339,7 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
     }
 
     @Override
-    public void addUser(String username) throws IOException {
+    public void registerUser(String username) throws IOException {
         try (
                 final Connection conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
                 final PreparedStatement insertUser = conn.prepareStatement(INSERT_USER)

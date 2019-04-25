@@ -2,7 +2,6 @@ package node.clientmessaging;
 
 import logging.LoggerFactory;
 import node.clientmessaging.messages.*;
-import node.clientmessaging.repositories.MessageRepository;
 import node.clientmessaging.repositories.UserGroupRepository;
 
 import java.io.BufferedReader;
@@ -182,8 +181,8 @@ class ClientHandler implements Runnable {
         } else {
             logger.info("Logging in as " + clientMessage.getUsername());
             try {
-                userGroupRepository.addUser(user.getUsername());
                 user = new User(clientMessage.getUsername());
+                userGroupRepository.registerUser(user.getUsername());
                 // Reply with same login message for confirmation
                 sendMessage(clientMessage);
             } catch (IOException e) {

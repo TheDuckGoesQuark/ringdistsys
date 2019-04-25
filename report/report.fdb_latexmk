@@ -1,12 +1,12 @@
 # Fdb version 3
-["bibtex report"] 1556200342 "report.aux" "report.bbl" "report" 1556200344
+["bibtex report"] 1556211316 "report.aux" "report.bbl" "report" 1556211321
   "/usr/share/texlive/texmf-dist/bibtex/bst/base/unsrt.bst" 1553009394 18030 1376b4b231b50c66211e47e42eda2875 ""
   "mybib.bib" 1556113840 1201 81b66571f657eedded0b635fd67e6c71 ""
-  "report.aux" 1556200344 7008 1a97c0c948b0ec6cfc00589b4df6330c "pdflatex"
+  "report.aux" 1556211321 7948 c34d1a5693c7390f7b0e645b70635566 "pdflatex"
   (generated)
   "report.blg"
   "report.bbl"
-["pdflatex"] 1556200342 "report.tex" "report.pdf" "report" 1556200344
+["pdflatex"] 1556211319 "report.tex" "report.pdf" "report" 1556211321
   "/cs/home/jm354/.texlive2018/texmf-var/web2c/pdftex/pdflatex.fmt" 1554308594 3682910 97d3137c964bcb660c39ffc53a11bf1b ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1511824771 3332 103109f5612ad95229751940c61aada0 ""
   "/usr/share/texlive/texmf-dist/fonts/map/pdftex/updmap/pdftex.map" 1530836625 2850648 765161d183c5509465c2744baf096a7a ""
@@ -95,12 +95,16 @@
   "images/coord.png" 1556113840 35934 446bda77b197d310a60c349f29035b0d ""
   "images/elecmsg.png" 1556113840 5953 3e2c2b4205c99d74bb56a109c39dee00 ""
   "images/er.png" 1556113840 4132 ad93305dc451cfa7f9746e9649029103 ""
+  "images/exclusion.png" 1556209855 13749 359e719e52529e3729b6ba4d14325360 ""
   "images/failure.png" 1556113840 24433 217c670a32856b00721dac509692231e ""
   "images/fullring.png" 1556113840 104929 ae2dc532e3f709e4f80977c9c9c1789d ""
   "images/hard.png" 1556113840 15532 e464337e2e6fb2b4d00bfa5f1dd37aa0 ""
   "images/join.png" 1556113840 11921 06384c667670d7d60efdd067ae3787a5 ""
+  "images/joingroup.png" 1556209913 12206 de4fd93c2c6e4a8533daea04d511a4ae ""
+  "images/login.png" 1556209830 43323 99374896e3469470d0b68a4340344222 ""
   "images/mainmsg.png" 1556113840 4066 f46cf6ef191805a38e9d463ae097dbe6 ""
   "images/msgdb.png" 1556156464 13131 6b9c0d1f7de95fee8152996736b9e0de ""
+  "images/received.png" 1556209739 11976 16de6d5c85d4aeb968aedce36f7598dd ""
   "images/recovery.png" 1556113840 44421 b1eeb4535dc1d9722e4231c59ec2547d ""
   "images/ringelec.png" 1556113840 54012 3a3bdc3cb4e149c5203f30f84e767ac1 ""
   "images/singlenodejoin.png" 1556113840 58751 c0c7c764788db133afd9e95519db00a7 ""
@@ -109,12 +113,12 @@
   "images/succreqcoord.png" 1556113840 22194 197c3ec5d5320e9922043c16d058c8c7 ""
   "images/tcp.png" 1556113840 8481 612430959ec0e038f1bf4864baf64d03 ""
   "images/udp.png" 1556113840 7693 e8f0b198c0dc13644383ce980e86a00f ""
-  "report.aux" 1556200344 7008 1a97c0c948b0ec6cfc00589b4df6330c "pdflatex"
-  "report.bbl" 1556200342 538 f6f0843ec138b4ddbf1536e382e9fb40 "bibtex report"
-  "report.tex" 1556200338 36798 6d2e839def17b09fce1d051072df2964 ""
-  "report.toc" 1556200344 1341 83cad9e8ae4646e143b1d6fa18bc3159 "pdflatex"
+  "report.aux" 1556211321 7948 c34d1a5693c7390f7b0e645b70635566 "pdflatex"
+  "report.bbl" 1556211316 538 f6f0843ec138b4ddbf1536e382e9fb40 "bibtex report"
+  "report.tex" 1556211318 39386 68974c3b82b2403b6eef5cf0f147a219 ""
+  "report.toc" 1556211321 1341 44a714a58ec386af193686d5cb069d66 "pdflatex"
   (generated)
   "report.log"
-  "report.aux"
   "report.toc"
   "report.pdf"
+  "report.aux"

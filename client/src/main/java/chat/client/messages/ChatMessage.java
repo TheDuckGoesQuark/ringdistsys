@@ -1,7 +1,6 @@
 package chat.client.messages;
 
-import java.time.Instant;
-import java.time.ZoneId;
+import java.sql.Timestamp;
 import java.util.Optional;
 
 import static chat.client.messages.ClientMessageType.CHAT_MESSAGE;
@@ -14,7 +13,7 @@ public class ChatMessage extends ClientMessage {
     /**
      * Time message was sent
      */
-    private Instant sentAt;
+    private Timestamp sentAt;
     /**
      * Name of client that sent message
      */
@@ -35,7 +34,7 @@ public class ChatMessage extends ClientMessage {
     /**
      * Creates an instance of a group message
      */
-    public static ChatMessage buildGroupMessage(String fromUsername, Instant sentAt, String toGroupName, String messageContent) {
+    public static ChatMessage buildGroupMessage(String fromUsername, Timestamp sentAt, String toGroupName, String messageContent) {
         final ChatMessage chatMessage = new ChatMessage(sentAt, fromUsername, messageContent);
         chatMessage.setToGroup(toGroupName);
         return chatMessage;
@@ -44,20 +43,20 @@ public class ChatMessage extends ClientMessage {
     /**
      * Creates an instance of a user message
      */
-    public static ChatMessage buildUserMessage(String fromUsername, Instant sentAt, String toUsername, String messageContent) {
+    public static ChatMessage buildUserMessage(String fromUsername, Timestamp sentAt, String toUsername, String messageContent) {
         final ChatMessage chatMessage = new ChatMessage(sentAt, fromUsername, messageContent);
         chatMessage.setToUsername(toUsername);
         return chatMessage;
     }
 
-    public ChatMessage(Instant sentAt, String fromName, String contents) {
+    public ChatMessage(Timestamp sentAt, String fromName, String contents) {
         super(CHAT_MESSAGE);
         this.sentAt = sentAt;
         this.messageContent = contents;
         this.fromName = fromName;
     }
 
-    public void setSentAt(Instant sentAt) {
+    public void setSentAt(Timestamp sentAt) {
         this.sentAt = sentAt;
     }
 
@@ -77,7 +76,7 @@ public class ChatMessage extends ClientMessage {
         this.messageContent = messageContent;
     }
 
-    public Instant getSentAt() {
+    public Timestamp getSentAt() {
         return sentAt;
     }
 
@@ -94,18 +93,29 @@ public class ChatMessage extends ClientMessage {
     }
 
     public Optional<String> getToGroup() {
-        return Optional.of(toGroup);
+        return Optional.ofNullable(toGroup);
     }
 
     public boolean forGroup() {
         return getToGroup().isPresent();
     }
 
+    @Override
+    public String toString() {
+        return "ChatMessage{" +
+                "sentAt=" + sentAt +
+                ", fromName='" + fromName + '\'' +
+                ", toUsername='" + toUsername + '\'' +
+                ", toGroup='" + toGroup + '\'' +
+                ", messageContent='" + messageContent + '\'' +
+                '}';
+    }
+
     public String toPrettyString() {
         if (forGroup()) {
-            return String.format("Sent from user '%s' to group '%s' at %s: \n%s\n", fromName, toGroup, sentAt.atZone(ZoneId.systemDefault()).toLocalDateTime().toString(), messageContent);
+            return String.format("Sent from user '%s' to group '%s' at %s: \n%s\n", fromName, toGroup, sentAt.toString(), messageContent);
         } else {
-            return String.format("Sent from user '%s' at %s: \n%s\n", fromName, sentAt.atZone(ZoneId.systemDefault()).toLocalDateTime().toString(), messageContent);
+            return String.format("Sent from user '%s' at %s: \n%s\n", fromName, sentAt.toString(), messageContent);
         }
     }
 }

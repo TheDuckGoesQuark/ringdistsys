@@ -106,7 +106,7 @@ Since each node would be running on an isolated machine, the planned testing env
 \begin{table}[!ht]
 \centering
 \begin{tabular}{ll}
-\multicolumn{2}{l}{usage: java -jar $\langle$program$\rangle$.jar}
+\multicolumn{2}{l}{usage: java -jar $\langle$program$\rangle$-with-dependencies.jar}
 \\ 
 
  -d,--drop           &  Include if this node should trigger a database refresh. \\
@@ -492,7 +492,7 @@ Message Type                               & Usage                              
 \label{tbl:clientmessagetypes}
 \end{table}
 
-Figure \ref{fig:msgdb} shows the ER diagram of the tables added to the database in order to handle users, groups, and messages. To avoid duplicating the entire message for every member of a group, messages are inserted once, and in another table each destination for that message ID is inserted. 
+Figure \ref{fig:msgdb} shows the ER diagram of the tables added to the database in order to handle users, groups, and messages. To avoid duplicating the entire message for every member of a group, messages are inserted once, and in another table each destination for that message ID is inserted. When a message is received, the receiving server will delete the user as a recipient of the message and then delete any messages that no longer have any recipients.
 
 \begin{figure}[!ht]
 	\centering
@@ -505,8 +505,27 @@ Each server is responsible for adding and removing their users to groups when re
 
 While writing the SQL queries, one of the issues I came across was using a variable number of values as part of the IN clause in a prepared statement. This was necessary for the client to fetch messages for all its users. Due to the way prepared statements are compiled and cached by the database, creating a new prepared statement for different numbers of users would reduce performance as databases typically limit the number of prepared statements cached. Alternatives included querying for each user individually (slow due to possibly high number of requests), or using binned sizes of IN lists and nulling any unused values (i.e. a different statement for 1, 3, 5 users). The best solution required knowing how many clients would be served by each server, and so with the assumption that each server would only handle two clients, a single prepared statement with two possible users in the IN clause was used.
 
-% TODO screenshot of server adding user to group, sending message, receiving message
-% TODO screenshot of messages in database for group and for users.
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\linewidth]{images/login}
+	\caption{Logs from client connecting and logging in, and then joining a group.}
+	\label{fig:login}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\linewidth]{images/joingroup}
+	\caption{Other user connected to other node joining same group as user in figure \ref{fig:login}}
+	\label{fig:joingroup}
+\end{figure}
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\linewidth]{images/exclusion}
+	\caption{Messages only being sent to user once the server holds the token.}
+	\label{fig:exclusion}
+\end{figure}
+
 
 \subsection{Client (RingChat)}
 
@@ -519,10 +538,27 @@ The client UI is a simple command line interface, though an interface was enforc
 	\label{fig:clientchat}
 \end{figure}
 
-The user is able to login, join and leave groups, send messages to other users and groups, and read messages for them. Asynchronous communication is used, and so when requesting to join or leave a group the server may immediately reply with confirmation. 
+The user is able to login, join and leave groups, send messages to other users and groups, and read messages for them. Asynchronous communication is used, and so when requesting to join or leave a group the server may immediately reply with confirmation. The client can be started by following the instructions in table \ref{tbl:clientargs}.
 
-% TODO how to run
-% Screenshot message being sent and received to other user, and other group.
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=\linewidth]{images/received}
+	\caption{Messages received by user 'otherguy'. Both a group message and direct message can be seen.}
+	\label{fig:received}
+\end{figure}
+
+\renewcommand{\arraystretch}{1.5}
+\begin{table}[!ht]
+\begin{tabular}{ll}
+\multicolumn{2}{l}{usage: java -jar $\langle$program$\rangle$-with-dependencies.jar}
+\\ 
+
+ hostname           &  Address of server node to connect to. \\
+ hostport	    &  Port on server to connect to.  \\
+\end{tabular}
+\caption{Arguments for running client.}
+\label{tbl:clientargs}
+\end{table}
 
 \section{Testing}
 
@@ -532,28 +568,41 @@ However, the project was tested thoroughly by hand as it was developed which hel
 
 \section{Potential Issues}
 
-% TODO
-% Node messages are serialized POJOs, so all servers in the ring have to be running the exact same application.
-% Assumes silence from a node is failure, and not just that traffic is delayed. Though the node can rejoin after absolute failure.
-% Must know all possible nodes addresses when initializing the network, though it wouldnt be too difficult to introduce a mechanism for registering completetly nodes.
-% Doesnt handle node failure while coordinator is being elected
-% Doesnt retry election messages
-% Doesnt check for client delivery
-% Doesnt recover token if failing node was holding it 
-% Clients and messages are never removed from database, but the destination rows are.
+Issues with the implementation:
+\begin{enumerate}
+	\item Messages between nodes are serialzed POJOs, which would make it difficult to monitor message passing using another application, or adding an implementation of the ring server in another language.
+	\item If a server stalls rather than fails, it will be treated as failed by its surrounding nodes, and recovery for the stalling node is not ensured unless it is restarted.
+	\item Clients have to connect to a specific server. Could be avoided by implementing another service to provide clients with a server to connect to, which could provide load balancing.
+	\item All server addresses have to be known on startup. Since the addresses are stored in a database however, it would be possible to add a mechanism for introducing new nodes.
+	\item No acknowledgements or retry mechanisms exist for election messages, only for token passing.
+	\item No read/delivery reciepts for clients.
+	\item If failing node was holding token, token is lost and no recovery mechanism exists.
+	\item Bully algorithm uses seperate UDP message when broadcasting coordinator message, when multicast would be more effecient in terms of network traffic. 
+	\item Lack of unit testing.
+\end{enumerate}
 
 \section{Summary}
 
-% Does ensure token isnt lost during handover
-% Does recover from coordinator loss
-% Does implement multiple 
-% Does recover from node loss
-% Does ensure mutual exclusion to message database
-% Check for other extensions man we did it all <3
+Functionalities implemented:
+\begin{enumerate}
+	\item Dynamic ring formation
+	\item Recovery from node loss
+	\item Recovery from coordinator loss
+	\item Multiple methods of coordinator election.
+	\item Ensured token delivery
+	\item Database connection using transactions for resources P and Q.
+	\item Mutual exclusion using token-ring algorithm.
+	\item CLI for clients to send and receive messages, and login and join groups.
+	\item Multicast communication using group membership.
+\end{enumerate}
+
+This practical was very enjoyable to work on. It greatly improved my understanding and ability to design distributed systems. Given more time I would have liked to tackle the issues discussed and introduce a GUI rather than the CLI, but the CLI was enough to demonstrate that the token ring mutual exclusion and token passing functionalities worked whilst still being fairly user friendly.
 
 \section{How to Run}
 
-Both the server nodes and client are provided as a executable jar file. The arguments required for both are provided in the relevant sections. The database server connection URL and credentialy is that of the databases provided by the school. The first node to start up should be provided with the \lstinline{-d} flag in order to restart the database and clear any previous coordinators.
+Both the server nodes and client are provided as a executable jar file, and these jars can be built by using \lstinline{mvn clean install} whilst in the directory of the \lstinline{pom.xml} files. The jar file with dependencies should be used.
+
+The arguments required for both are provided in the relevant sections. The database server connection URL and credentialy is that of the databases provided by the school. The first node to start up should be provided with the \lstinline{-d} flag in order to restart the database and clear any previous coordinators.
 
 \bibliographystyle{unsrt}
 \bibliography{mybib}

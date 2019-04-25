@@ -9,12 +9,12 @@ import java.util.Set;
 public interface UserGroupRepository {
 
     /**
-     * Adds a user to the database
+     * Adds a user to the database if they don't already exist
      *
      * @param username user to add
      * @throws IOException if unable to add to database
      */
-    void addUser(String username) throws IOException;
+    void registerUser(String username) throws IOException;
 
     /**
      * Removes user from the database

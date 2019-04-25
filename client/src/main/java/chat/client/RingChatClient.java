@@ -9,6 +9,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
@@ -78,7 +80,7 @@ public class RingChatClient implements ChatClient {
             this.groups.clear();
 
             // Start listening for chat messages
-            this.executor.execute(() -> {
+            this.executor.submit(() -> {
                 while (loggedIn()) {
                     pollForMessage();
                 }
@@ -93,7 +95,6 @@ public class RingChatClient implements ChatClient {
         this.username = null;
         this.groups.clear();
         this.socket.close();
-        this.executor.shutdownNow();
     }
 
     @Override
@@ -135,7 +136,7 @@ public class RingChatClient implements ChatClient {
     public void sendMessageToGroup(String message, String groupname) throws IOException {
         if (!loggedIn()) throw new IOException("Not logged in.");
 
-        final ChatMessage chatMessage = ChatMessage.buildGroupMessage(this.username, Instant.now(), groupname, message);
+        final ChatMessage chatMessage = ChatMessage.buildGroupMessage(this.username, Timestamp.from(Instant.now()), groupname, message);
         sendToServer(chatMessage);
     }
 
@@ -143,7 +144,7 @@ public class RingChatClient implements ChatClient {
     public void sendMessageToUser(String message, String username) throws IOException {
         if (!loggedIn()) throw new IOException("Not logged in.");
 
-        final ChatMessage chatMessage = ChatMessage.buildUserMessage(this.username, Instant.now(), username, message);
+        final ChatMessage chatMessage = ChatMessage.buildUserMessage(this.username, Timestamp.from(Instant.now()), username, message);
         sendToServer(chatMessage);
     }
 
