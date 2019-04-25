@@ -1,7 +1,6 @@
 package node.clientmessaging.messages;
 
 import java.time.Instant;
-import java.time.ZoneId;
 import java.util.Optional;
 
 import static node.clientmessaging.messages.ClientMessageType.CHAT_MESSAGE;
@@ -32,48 +31,12 @@ public class ChatMessage extends ClientMessage {
      */
     private String messageContent;
 
-    /**
-     * Creates an instance of a group message
-     */
-    public static ChatMessage buildGroupMessage(String fromUsername, Instant sentAt, String toGroupName, String messageContent) {
-        final ChatMessage chatMessage = new ChatMessage(sentAt, fromUsername, messageContent);
-        chatMessage.setToGroup(toGroupName);
-        return chatMessage;
-    }
-
-    /**
-     * Creates an instance of a user message
-     */
-    public static ChatMessage buildUserMessage(String fromUsername, Instant sentAt, String toUsername, String messageContent) {
-        final ChatMessage chatMessage = new ChatMessage(sentAt, fromUsername, messageContent);
-        chatMessage.setToUsername(toUsername);
-        return chatMessage;
-    }
-
-    public ChatMessage(Instant sentAt, String fromName, String contents) {
+    public ChatMessage(Instant sentAt, String fromName, String toUsername, String toGroup, String messageContent) {
         super(CHAT_MESSAGE);
         this.sentAt = sentAt;
-        this.messageContent = contents;
         this.fromName = fromName;
-    }
-
-    public void setSentAt(Instant sentAt) {
-        this.sentAt = sentAt;
-    }
-
-    public void setFromName(String fromName) {
-        this.fromName = fromName;
-    }
-
-    public void setToUsername(String toUsername) {
         this.toUsername = toUsername;
-    }
-
-    public void setToGroup(String toGroup) {
         this.toGroup = toGroup;
-    }
-
-    public void setMessageContent(String messageContent) {
         this.messageContent = messageContent;
     }
 
@@ -99,13 +62,5 @@ public class ChatMessage extends ClientMessage {
 
     public boolean forGroup() {
         return getToGroup().isPresent();
-    }
-
-    public String toPrettyString() {
-        if (forGroup()) {
-            return String.format("Sent from user '%s' to group '%s' at %s: \n%s\n", fromName, toGroup, sentAt.atZone(ZoneId.systemDefault()).toLocalDateTime().toString(), messageContent);
-        } else {
-            return String.format("Sent from user '%s' at %s: \n%s\n", fromName, sentAt.atZone(ZoneId.systemDefault()).toLocalDateTime().toString(), messageContent);
-        }
     }
 }

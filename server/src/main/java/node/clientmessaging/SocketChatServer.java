@@ -95,11 +95,16 @@ public class SocketChatServer implements ChatServer {
 
     @Override
     public boolean receiveMessage() {
-        final Optional<ChatMessage> message = messageRepository.getNextMessageForUser(getCurrentUsers());
-        if (message.isPresent()) {
-            forwardToRecipient(message.get());
-            return true;
-        } else {
+        try {
+            final Optional<ChatMessage> message = messageRepository.getNextMessageForUser(getCurrentUsers());
+
+            if (message.isPresent()) {
+                forwardToRecipient(message.get());
+                return true;
+            } else {
+                return false;
+            }
+        } catch (IOException e) {
             return false;
         }
     }

@@ -7,9 +7,8 @@ import node.clientmessaging.repositories.UserGroupRepository;
 
 import java.io.IOException;
 import java.sql.*;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
+import java.time.Instant;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class MessagingDatabaseConnection implements UserGroupRepository, MessageRepository {
@@ -70,15 +69,51 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
                     "ON DELETE CASCADE" +
                     ")";
 
-    private static final String DROP_TABLE = "DROP TABLE IF EXISTS ";
+    private static final String DROP_TABLE_PREFIX = "DROP TABLE IF EXISTS ";
+
     private static final String INSERT_MESSAGE = "INSERT INTO " + MESSAGE_TABLE_NAME +
             " (sentAt, contents, fromUsername, toGroup) " +
             "VALUES (?, ?, ?, ?)";
+
     private static final String INSERT_DESTINATION = "INSERT INTO " + MESSAGE_DESTINATIONS_NAME +
             " (messageId, toUsername)" +
             " VALUES (?, ?)";
 
-    private static final String GET_MESSAGES_FOR_USERS_LIMIT_ONE_OLDEST_FIRST = "SELECT FROM " + ME;
+    private static final String GET_MESSAGES_FOR_TWO_USERS_LIMIT_ONE_OLDEST_FIRST =
+            "SELECT m.*, d.toUsername FROM " + MESSAGE_TABLE_NAME + " m " +
+                    "INNER JOIN " + MESSAGE_DESTINATIONS_NAME + " d ON m.messageId = d.messageId " +
+                    "WHERE toUsername IN (?, ?) ORDER BY sentAt " +
+                    "LIMIT 1";
+
+    private static final String DELETE_MESSAGES_WITHOUT_RECIPIENTS =
+            "DELETE FROM " + MESSAGE_TABLE_NAME + " WHERE messageId IN " +
+                    "(" +
+                    "SELECT m.messageId FROM " + MESSAGE_TABLE_NAME + " m " +
+                    "LEFT JOIN " + MESSAGE_DESTINATIONS_NAME + " d ON m.messageId = d.messageId " +
+                    "WHERE d.messageId IS NULL " +
+                    "GROUP BY m.messageId" +
+                    ")";
+
+    private static final String DELETE_RECIPIENT =
+            "DELETE FROM " + MESSAGE_DESTINATIONS_NAME + " d WHERE d.messageId = ? AND d.toUsername = ?";
+
+    private static final String INSERT_USER =
+            "INSERT INTO " + CLIENT_TABLE_NAME + " VALUES (?)";
+
+    private static final String DELETE_USER =
+            "DELETE FROM " + CLIENT_TABLE_NAME + " WHERE username = ?";
+
+    private static final String INSERT_GROUP_IF_NOT_EXIST =
+            "INSERT IGNORE INTO " + GROUP_TABLE_NAME + " VALUES (?)";
+
+    private static final String INSERT_USER_INTO_GROUP =
+            "INSERT INTO " + PART_OF_GROUP_TABLE_NAME + " VALUES (?, ?)";
+
+    private static final String REMOVE_USER_FROM_GROUP =
+            "DELETE FROM " + PART_OF_GROUP_TABLE_NAME + " WHERE username = ? AND groupname = ?";
+
+    private static final String GET_ALL_USERS_IN_GROUP =
+            "SELECT username FROM " + PART_OF_GROUP_TABLE_NAME + " WHERE groupname = ?";
 
     private final Logger logger = LoggerFactory.getLogger();
 
@@ -129,11 +164,11 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
      */
     private void dropEverything(Connection conn) throws SQLException {
         try (
-                final PreparedStatement dropClientSchema = conn.prepareStatement(DROP_TABLE + CLIENT_TABLE_NAME);
-                final PreparedStatement dropGroupSchema = conn.prepareStatement(DROP_TABLE + GROUP_TABLE_NAME);
-                final PreparedStatement dropPartOfGroupSchema = conn.prepareStatement(DROP_TABLE + PART_OF_GROUP_TABLE_NAME);
-                final PreparedStatement dropMessageSchema = conn.prepareStatement(DROP_TABLE + MESSAGE_TABLE_NAME);
-                final PreparedStatement dropMessageDestSchema = conn.prepareStatement(DROP_TABLE + MESSAGE_DESTINATIONS_NAME)
+                final PreparedStatement dropClientSchema = conn.prepareStatement(DROP_TABLE_PREFIX + CLIENT_TABLE_NAME);
+                final PreparedStatement dropGroupSchema = conn.prepareStatement(DROP_TABLE_PREFIX + GROUP_TABLE_NAME);
+                final PreparedStatement dropPartOfGroupSchema = conn.prepareStatement(DROP_TABLE_PREFIX + PART_OF_GROUP_TABLE_NAME);
+                final PreparedStatement dropMessageSchema = conn.prepareStatement(DROP_TABLE_PREFIX + MESSAGE_TABLE_NAME);
+                final PreparedStatement dropMessageDestSchema = conn.prepareStatement(DROP_TABLE_PREFIX + MESSAGE_DESTINATIONS_NAME)
         ) {
             conn.setAutoCommit(false);
             dropMessageDestSchema.executeUpdate();
@@ -237,63 +272,144 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
         }
     }
 
-    @Override
-    public Optional<ChatMessage> getNextMessageForUser(Set<String> usernames) {
-        final Optional<ChatMessage> chatMessage;
+    /**
+     * Removes the given user as a recipient of the given message.
+     * If there are no more recipients then the message is deleted entirely
+     *
+     * @param messageId  id of message
+     * @param toUsername recipient of message to remove
+     * @param conn       connection to database
+     */
+    private void removeMessage(int messageId, String toUsername, Connection conn) throws SQLException {
+        try (
+                final PreparedStatement deleteRecipient = conn.prepareStatement(DELETE_RECIPIENT);
+                final PreparedStatement deleteUnreferencedMessages = conn.prepareStatement(DELETE_MESSAGES_WITHOUT_RECIPIENTS);
+        ) {
+            conn.setAutoCommit(false);
+            // Delete as recipient
+            deleteRecipient.setInt(1, messageId);
+            deleteRecipient.setString(2, toUsername);
+            deleteRecipient.executeUpdate();
 
+            // Delete messages with no recipients left
+            deleteUnreferencedMessages.executeUpdate();
+
+            // Commit
+            conn.commit();
+        }
+    }
+
+    @Override
+    public Optional<ChatMessage> getNextMessageForUser(Set<String> usernames) throws IOException {
         try (
                 final Connection conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
-                final PreparedStatement getNextMessageForUsers = conn.prepareStatement(GET_MESSAGES_FOR_USERS_LIMIT_ONE_OLDEST_FIRST);
+                final PreparedStatement getNextMessageForUsers = conn.prepareStatement(GET_MESSAGES_FOR_TWO_USERS_LIMIT_ONE_OLDEST_FIRST);
         ) {
+            // Add clients to IN clause
+            final Iterator<String> recipientIter = usernames.iterator();
+            for (int i = 0; i < 2; i++) {
+                if (recipientIter.hasNext()) {
+                    getNextMessageForUsers.setString(i + 1, recipientIter.next());
+                } else {
+                    getNextMessageForUsers.setString(i + 1, null);
+                }
+            }
 
+            // Query
+            final ResultSet rs = getNextMessageForUsers.executeQuery();
 
-            chatMessage = Optional.empty();
+            if (!rs.next()) {
+                return Optional.empty();
+            }
+
+            // Construct message
+            final Instant sentAt = Instant.ofEpochMilli(rs.getLong("sentAt"));
+            final String fromName = rs.getString("fromUsername");
+            final String toUsername = rs.getString("toUsername");
+            final String toGroup = rs.getString("toGroup");
+            final String messageContent = rs.getString("contents");
+            final int messageId = rs.getInt("messageId");
+
+            removeMessage(messageId, toUsername, conn);
+
+            return Optional.of(new ChatMessage(sentAt, fromName, toUsername, toGroup, messageContent));
+
         } catch (SQLException e) {
             throw new IOException(e.getMessage());
         }
-
-        return chatMessage;
     }
 
     @Override
     public void addUser(String username) throws IOException {
-        /*
-            Insert user
-            THROWS if user already exists
-         */
+        try (
+                final Connection conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
+                final PreparedStatement insertUser = conn.prepareStatement(INSERT_USER)
+        ) {
+            conn.setAutoCommit(true);
+            insertUser.setString(1, username);
+            insertUser.executeUpdate();
+        } catch (SQLException e) {
+            throw new IOException(e.getMessage());
+        }
     }
 
     @Override
     public void removeUser(String username) throws IOException {
-        /*
-            delete user
-            THROW if no rows are affected
-         */
+        try (
+                final Connection conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
+                final PreparedStatement deleteUser = conn.prepareStatement(DELETE_USER)
+        ) {
+            conn.setAutoCommit(true);
+            deleteUser.setString(1, username);
+            deleteUser.executeUpdate();
+        } catch (SQLException e) {
+            throw new IOException(e.getMessage());
+        }
     }
 
     @Override
     public void addUserToGroup(String username, String groupname) throws IOException {
-        /*
-            Insert group if not exist
-            Insert user as part of group
-            THROW if user doesn't exist
-         */
+        try (
+                final Connection conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
+                final PreparedStatement insertGroupIfNotExist = conn.prepareStatement(INSERT_GROUP_IF_NOT_EXIST);
+                final PreparedStatement insertUserIntoGroup = conn.prepareStatement(INSERT_USER_INTO_GROUP)
+        ) {
+            conn.setAutoCommit(true);
+
+            insertGroupIfNotExist.setString(1, groupname);
+            insertGroupIfNotExist.executeUpdate();
+
+            insertUserIntoGroup.setString(1, username);
+            insertUserIntoGroup.setString(2, groupname);
+            insertUserIntoGroup.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new IOException(e.getMessage());
+        }
     }
 
     @Override
     public void removeUserFromGroup(String username, String groupname) throws IOException {
-        /*
-            remove user as part of group
-            THROW if user/group doesn't exist.
-         */
+        try (
+                final Connection conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD);
+                final PreparedStatement removeUserFromGroup = conn.prepareStatement(REMOVE_USER_FROM_GROUP)
+        ) {
+            conn.setAutoCommit(true);
+            removeUserFromGroup.setString(1, username);
+            removeUserFromGroup.setString(2, groupname);
+            removeUserFromGroup.executeUpdate();
+        } catch (SQLException e) {
+            throw new IOException(e.getMessage());
+        }
     }
 
     @Override
     public Set<String> getAllUsersInGroup(String groupname) throws IOException {
-        /*
-            Get all users in group
-         */
-        return null;
+        try (final Connection conn = DriverManager.getConnection(CONNECTION_STRING, USERNAME, PASSOWRD)) {
+            return getAllUsersInGroup(groupname, conn);
+        } catch (SQLException e) {
+            throw new IOException(e.getMessage());
+        }
     }
 
     /**
@@ -305,9 +421,17 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
      * @throws IOException
      */
     private Set<String> getAllUsersInGroup(String groupname, Connection conn) throws IOException {
-        /*
-            Get all users in group
-         */
-        return null;
+        try (final PreparedStatement getUsersInGroup = conn.prepareStatement(GET_ALL_USERS_IN_GROUP)) {
+            getUsersInGroup.setString(1, groupname);
+            final ResultSet rs = getUsersInGroup.executeQuery();
+            final Set<String> users = new HashSet<>();
+            while (rs.next()) {
+                users.add(rs.getString("username"));
+            }
+            return users;
+
+        } catch (SQLException e) {
+            throw new IOException(e.getMessage());
+        }
     }
 }

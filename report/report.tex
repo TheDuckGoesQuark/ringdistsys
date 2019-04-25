@@ -503,6 +503,8 @@ Figure \ref{fig:msgdb} shows the ER diagram of the tables added to the database 
 
 Each server is responsible for adding and removing their users to groups when requested. Once the token is available, the oldest message for any of their clients is removed from the database and forwarded to that client. The oldest message is always chosen to ensure the FIFO delivery of messages. If a user disconnects before a message reaches it, the message will remain in the database until the user connects again to any server node.
 
+While writing the SQL queries, one of the issues I came across was using a variable number of values as part of the IN clause in a prepared statement. This was necessary for the client to fetch messages for all its users. Due to the way prepared statements are compiled and cached by the database, creating a new prepared statement for different numbers of users would reduce performance as databases typically limit the number of prepared statements cached. Alternatives included querying for each user individually (slow due to possibly high number of requests), or using binned sizes of IN lists and nulling any unused values (i.e. a different statement for 1, 3, 5 users). The best solution required knowing how many clients would be served by each server, and so with the assumption that each server would only handle two clients, a single prepared statement with two possible users in the IN clause was used.
+
 % TODO screenshot of server adding user to group, sending message, receiving message
 % TODO screenshot of messages in database for group and for users.
 

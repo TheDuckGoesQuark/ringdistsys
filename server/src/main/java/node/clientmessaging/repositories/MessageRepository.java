@@ -25,5 +25,5 @@ public interface MessageRepository {
      * @param usernames users to fetch messages for
      * @return oldest message for one of the given users
      */
-    Optional<ChatMessage> getNextMessageForUser(Set<String> usernames);
+    Optional<ChatMessage> getNextMessageForUser(Set<String> usernames) throws IOException;
 }
