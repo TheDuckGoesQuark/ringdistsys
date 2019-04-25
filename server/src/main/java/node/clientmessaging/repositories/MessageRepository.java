@@ -2,6 +2,7 @@ package node.clientmessaging.repositories;
 
 import node.clientmessaging.messages.ChatMessage;
 
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -17,8 +18,11 @@ public interface MessageRepository {
     void sendMessage(ChatMessage userMessage);
 
     /**
-     * @param usernames list of users
-     * @return true if there is a message available for one of the users in the list.
+     * Gets the oldest waiting message out of any messages waiting for the given users.
+     * Message is removed from database once taken.
+     *
+     * @param usernames users to fetch messages for
+     * @return oldest message for one of the given users
      */
-    boolean checkForMessageForUsers(Set<String> usernames);
+    Optional<ChatMessage> getNextMessageForUser(Set<String> usernames);
 }

@@ -9,7 +9,10 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.logging.Logger;
 
@@ -24,7 +27,7 @@ public class SocketChatServer implements ChatServer {
     private final UserGroupRepository userGroupRepository;
 
     private final ClientHandler[] clients = new ClientHandler[MAX_CLIENTS];
-    private final Queue<ChatMessage> outgoingMessages = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<ChatMessage> outgoingMessages = new ConcurrentLinkedQueue<>();
     private final ServerSocket serverSocket;
 
     private boolean stopped = true;
@@ -77,16 +80,55 @@ public class SocketChatServer implements ChatServer {
         }
     }
 
+    /**
+     * @return the set of current users being served by this server
+     */
+    private Set<String> getCurrentUsers() {
+        final Set<String> users = new HashSet<>();
+        for (ClientHandler clientHandler : clients) {
+            clientHandler.getUser().ifPresent(user -> users.add(user.getUsername()));
+        }
+        return users;
+    }
+
     @Override
     public boolean receiveMessage() {
-        // TODO check resource Q for incoming messages for users and their groups
-        return false;
+        final Optional<ChatMessage> message = messageRepository.getNextMessageForUser(getCurrentUsers());
+        if (message.isPresent()) {
+            forwardToRecipient(message.get());
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Finds which handler is responsible for this user and forwards the message to them
+     *
+     * @param chatMessage message to forward
+     */
+    private void forwardToRecipient(ChatMessage chatMessage) {
+        for (ClientHandler clientHandler : clients) {
+            boolean handlesRecipient = clientHandler.getUser()
+                    .map(user -> user.getUsername().equals(chatMessage.getToUsername()))
+                    .orElse(false);
+
+            if (handlesRecipient) {
+                clientHandler.sendMessage(chatMessage);
+                break;
+            }
+        }
     }
 
     @Override
     public boolean sendMessage() {
-        // TODO check outgoing queue for messages to send
-        return false;
+        final ChatMessage message = outgoingMessages.poll();
+        if (message != null) {
+            messageRepository.sendMessage(message);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -108,5 +150,4 @@ public class SocketChatServer implements ChatServer {
             logger.warning("Error occurred while closing server socket: " + e.getMessage());
         }
     }
-
 }

@@ -7,6 +7,7 @@ import node.clientmessaging.repositories.UserGroupRepository;
 
 import java.io.IOException;
 import java.sql.*;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -16,64 +17,57 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
     private static final String USERNAME = "jm354";
     private static final String PASSOWRD = "722Em!9LLknjhZ";
 
-    private static final String NODE_TABLE_NAME = "nodes";
-    private static final String COORDINATOR_TABLE_NAME = "coordinators";
+    private static final String CLIENT_TABLE_NAME = "clients";
+    private static final String GROUP_TABLE_NAME = "groups";
+    private static final String PART_OF_GROUP_TABLE_NAME = "partofgroup";
 
-    private static final String NODE_SCHEMA =
-            "CREATE TABLE " + NODE_TABLE_NAME + " ( " +
-                    "nodeId INT NOT NULL," +
-                    "address VARCHAR(255) NOT NULL," +
-                    "coordinationPort INT NOT NULL," +
-                    "clientPort INT NOT NULL," +
-                    "successorId INT," +
-                    "PRIMARY KEY (nodeId)," +
-                    "FOREIGN KEY (successorId) REFERENCES " + NODE_TABLE_NAME + "(nodeId)" +
+    private static final String MESSAGE_TABLE_NAME = "messages";
+    private static final String MESSAGE_DESTINATIONS_NAME = "messagedestinations";
+
+    private static final String CLIENT_SCHEMA =
+            "CREATE TABLE " + CLIENT_TABLE_NAME + " ( " +
+                    "username VARCHAR(255)," +
+                    "PRIMARY KEY (username)" +
                     ")";
 
-    private static final String COORDINATOR_SCHEMA =
-            "CREATE TABLE " + COORDINATOR_TABLE_NAME + " ( " +
-                    "coordinatorId INT," +
-                    "singleRowLock BOOLEAN," +
-                    "PRIMARY KEY (singleRowLock)," +
-                    "FOREIGN KEY (coordinatorId) REFERENCES " + NODE_TABLE_NAME + "(nodeId)" +
-                    "ON DELETE SET NULL" +
+    private static final String GROUP_SCHEMA =
+            "CREATE TABLE " + GROUP_TABLE_NAME + " ( " +
+                    "groupname VARCHAR(255)," +
+                    "PRIMARY KEY (groupname)" +
                     ")";
 
-    private static final String DROP_COORDINATOR = "DROP TABLE " + COORDINATOR_TABLE_NAME;
-    private static final String DROP_NODE = "DROP TABLE " + NODE_TABLE_NAME;
+    private static final String PART_OF_GROUP_SCHEMA =
+            "CREATE TABLE " + PART_OF_GROUP_TABLE_NAME + " ( " +
+                    "username VARCHAR(255)," +
+                    "groupname VARCHAR(255)," +
+                    "PRIMARY KEY (username, groupname), " +
+                    "FOREIGN KEY (username) REFERENCES " + CLIENT_TABLE_NAME + "(username)" +
+                    "ON DELETE CASCADE," +
+                    "FOREIGN KEY (groupname) REFERENCES " + GROUP_TABLE_NAME + "(groupname)" +
+                    "ON DELETE CASCADE" +
+                    ")";
 
-    private static final String SELECT_ALL =
-            "SELECT n.*, c.coordinatorId FROM " + NODE_TABLE_NAME + " n " +
-                    "LEFT JOIN " + COORDINATOR_TABLE_NAME + " c ON c.coordinatorId ";
+    private static final String MESSAGE_SCHEMA =
+            "CREATE TABLE " + MESSAGE_TABLE_NAME + " ( " +
+                    "messageId INT AUTO_INCREMENT," +
+                    "sentAt INT," +
+                    "contents VARCHAR(255)," +
+                    "fromUsername VARCHAR(255)," +
+                    "PRIMARY KEY (messageId)," +
+                    "FOREIGN KEY (fromUsername) REFERENCES " + CLIENT_TABLE_NAME + "(username)" +
+                    ")";
 
-    private static final String SELECT_ALL_WITH_SUCCESSOR =
-            "SELECT n.*, c.coordinatorId FROM " + NODE_TABLE_NAME + " n " +
-                    "LEFT JOIN " + COORDINATOR_TABLE_NAME + " c ON c.coordinatorId " +
-                    "WHERE n.successorId IS NOT NULL";
+    private static final String DESTINATION_SCHEMA =
+            "CREATE TABLE " + MESSAGE_DESTINATIONS_NAME + " ( " +
+                    "messageId INT," +
+                    "toUsername VARCHAR(255) NOT NULL," +
+                    "PRIMARY KEY (messageId, toUsername)," +
+                    "FOREIGN KEY (messageId) REFERENCES " + MESSAGE_SCHEMA + "(messageId)," +
+                    "FOREIGN KEY (fromUsername) REFERENCES " + CLIENT_TABLE_NAME + "(username) " +
+                    "ON DELETE CASCADE" +
+                    ")";
 
-    private static final String SELECT_ALL_WITH_SUCCESSOR_AND_IDS_GREATER_THAN =
-            "SELECT n.*, c.coordinatorId FROM " + NODE_TABLE_NAME + " n " +
-                    "LEFT JOIN " + COORDINATOR_TABLE_NAME + " c ON c.coordinatorId " +
-                    "WHERE n.successorId IS NOT NULL AND n.nodeId > ?";
-
-    private static final String COUNT_NODES =
-            "SELECT count(*) as nodeCount FROM " + NODE_TABLE_NAME;
-
-    private static final String COUNT_NODES_IN_RING =
-            "SELECT count(*) as nodeCount FROM " + NODE_TABLE_NAME + " " +
-                    "WHERE successorId IS NOT NULL";
-
-    private static final String INSERT_NODE =
-            "INSERT INTO " + NODE_TABLE_NAME + " VALUES (?, ?, ?, ?, NULL)";
-
-    private static final String INSERT_SUCCESSOR =
-            "UPDATE " + NODE_TABLE_NAME + " SET successorId = ? where nodeId = ?";
-
-    private static final String REMOVE_SUCCESSOR =
-            "UPDATE " + NODE_TABLE_NAME + " SET successorId = NULL where nodeId = ?";
-
-    private static final String INSERT_COORDINATOR =
-            "INSERT INTO " + COORDINATOR_TABLE_NAME + " VALUES (?, True) ON DUPLICATE KEY UPDATE coordinatorId = ?";
+    private static final String DROP_TABLE = "DROP TABLE ";
 
     private final Logger logger = LoggerFactory.getLogger();
 
@@ -91,7 +85,7 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
     private boolean schemaIsInitialized(Connection conn) throws SQLException {
         final DatabaseMetaData meta = conn.getMetaData();
 
-        try (ResultSet rs = meta.getTables(null, null, NODE_TABLE_NAME, null)) {
+        try (ResultSet rs = meta.getTables(null, null, CLIENT_TABLE_NAME, null)) {
             return rs.next();
         }
     }
@@ -103,12 +97,18 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
      */
     private void initializeSchema(Connection conn) throws SQLException {
         try (
-                final PreparedStatement nodeStatement = conn.prepareStatement(NODE_SCHEMA);
-                final PreparedStatement coordinatorStatement = conn.prepareStatement(COORDINATOR_SCHEMA)
+                final PreparedStatement clientSchema = conn.prepareStatement(CLIENT_SCHEMA);
+                final PreparedStatement groupSchema = conn.prepareStatement(GROUP_SCHEMA);
+                final PreparedStatement partOfGroupSchema = conn.prepareStatement(PART_OF_GROUP_SCHEMA);
+                final PreparedStatement messageSchema = conn.prepareStatement(MESSAGE_SCHEMA);
+                final PreparedStatement messageDestSchema = conn.prepareStatement(DESTINATION_SCHEMA)
         ) {
             conn.setAutoCommit(false);
-            nodeStatement.executeUpdate();
-            coordinatorStatement.executeUpdate();
+            clientSchema.executeUpdate();
+            groupSchema.executeUpdate();
+            partOfGroupSchema.executeUpdate();
+            messageSchema.executeUpdate();
+            messageDestSchema.executeUpdate();
             conn.commit();
         }
     }
@@ -118,12 +118,18 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
      */
     private void dropEverything(Connection conn) throws SQLException {
         try (
-                final PreparedStatement dropNode = conn.prepareStatement(DROP_NODE);
-                final PreparedStatement dropCoord = conn.prepareStatement(DROP_COORDINATOR)
+                final PreparedStatement dropClientSchema = conn.prepareStatement(DROP_TABLE + CLIENT_TABLE_NAME);
+                final PreparedStatement dropGroupSchema = conn.prepareStatement(DROP_TABLE + GROUP_TABLE_NAME);
+                final PreparedStatement dropPartOfGroupSchema = conn.prepareStatement(DROP_TABLE + PART_OF_GROUP_TABLE_NAME);
+                final PreparedStatement dropMessageSchema = conn.prepareStatement(DROP_TABLE + MESSAGE_TABLE_NAME);
+                final PreparedStatement dropMessageDestSchema = conn.prepareStatement(DROP_TABLE + MESSAGE_DESTINATIONS_NAME)
         ) {
             conn.setAutoCommit(false);
-            dropCoord.executeUpdate();
-            dropNode.executeUpdate();
+            dropMessageDestSchema.executeUpdate();
+            dropMessageSchema.executeUpdate();
+            dropPartOfGroupSchema.executeUpdate();
+            dropGroupSchema.executeUpdate();
+            dropClientSchema.executeUpdate();
             conn.commit();
         }
     }
@@ -152,8 +158,8 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
     }
 
     @Override
-    public boolean checkForMessageForUsers(Set<String> usernames) {
-        return false;
+    public Optional<ChatMessage> getNextMessageForUser(Set<String> usernames) {
+        return Optional.empty();
     }
 
     @Override

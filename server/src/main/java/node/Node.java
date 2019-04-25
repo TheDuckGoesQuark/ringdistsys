@@ -69,6 +69,7 @@ public class Node {
         this.ringComms = new RingCommunicationHandler(config.getNodeId(), addressTranslator, executorService);
 
         final MessagingDatabaseConnection messagingDatabaseConnection = new MessagingDatabaseConnection(config.shouldDropEverything());
+        messagingDatabaseConnection.initialize();
         this.chatServer = new SocketChatServer(thisNode.getAddress(), thisNode.getClientPort(), messagingDatabaseConnection, messagingDatabaseConnection);
 
         this.initializeCoordinator(allNodes);

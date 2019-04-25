@@ -135,7 +135,7 @@ public class RingChatClient implements ChatClient {
     public void sendMessageToGroup(String message, String groupname) throws IOException {
         if (!loggedIn()) throw new IOException("Not logged in.");
 
-        final ChatMessage chatMessage = new ChatMessage(Instant.now(), username, groupname, message, true);
+        final ChatMessage chatMessage = ChatMessage.buildGroupMessage(this.username, Instant.now(), groupname, message);
         sendToServer(chatMessage);
     }
 
@@ -143,7 +143,7 @@ public class RingChatClient implements ChatClient {
     public void sendMessageToUser(String message, String username) throws IOException {
         if (!loggedIn()) throw new IOException("Not logged in.");
 
-        final ChatMessage chatMessage = new ChatMessage(Instant.now(), this.username, username, message, false);
+        final ChatMessage chatMessage = ChatMessage.buildUserMessage(this.username, Instant.now(), username, message);
         sendToServer(chatMessage);
     }
 

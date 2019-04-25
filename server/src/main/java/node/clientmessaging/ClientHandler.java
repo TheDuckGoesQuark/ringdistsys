@@ -69,6 +69,8 @@ class ClientHandler implements Runnable {
             }
         }
 
+        user = null;
+
         try {
             clientSocket.close();
         } catch (IOException e) {
@@ -94,7 +96,7 @@ class ClientHandler implements Runnable {
      * @return true if the user has supplied a username
      */
     private boolean isLoggedIn() {
-        return isConnected() && user != null;
+        return isConnected() && getUser().isPresent();
     }
 
     /**
