@@ -200,6 +200,9 @@ INPUT ./images/bully.png
 INPUT ./images/bully.png
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/omscmr.fd
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/omscmr.fd
+INPUT ./images/msgdb.png
+INPUT ./images/msgdb.png
+INPUT ./images/msgdb.png
 INPUT ./images/chat.png
 INPUT ./images/chat.png
 INPUT ./images/chat.png

@@ -473,7 +473,7 @@ I had hoped to use an existing protocol such as Websockets so that the client-to
 
 The web server consisted of a fixed size thread pool for serving up to two clients. A server socket would would wait for a client to connect, and then spin up a client handler thread for processing the new client. Clients and servers would send messages as JSON, using a newline (\lstinline{\n}) as a delimiter for messages. Each JSON object sent included a \emph{messageType} field with one of the values in table \ref{tbl:clientmessagetypes}. JSON encoding and decoding was performed using the Gson library. 
 
-A publish-subscribe pattern was used for communication. Clients would send a log in message with a username so that the server knew which messages to send their way. They could also join groups would allow for messages to be broadcast to multiple clients. 
+A publish-subscribe pattern was used for communication. Clients would send a log in message with a username so that the server knew which messages to send their way. They could also join groups which would allow for messages to be broadcast to multiple clients. 
 
 \begin{table}[!h]
 \centering
@@ -492,6 +492,19 @@ Message Type                               & Usage                              
 \label{tbl:clientmessagetypes}
 \end{table}
 
+Figure \ref{fig:msgdb} shows the ER diagram of the tables added to the database in order to handle users, groups, and messages. To avoid duplicating the entire message for every member of a group, messages are inserted once, and in another table each destination for that message ID is inserted. 
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=0.8\linewidth]{images/msgdb}
+	\caption{ER diagram for user and group messaging database.}
+	\label{fig:msgdb}
+\end{figure}
+
+Each server is responsible for adding and removing their users to groups when requested. Once the token is available, the oldest message for any of their clients is removed from the database and forwarded to that client. The oldest message is always chosen to ensure the FIFO ordering of messages. If a user disconnects before a message reaches it, the message will remain in the database until the user connects again to any server node.
+
+% TODO screenshot of server adding user to group, sending message, receiving message
+
 \subsection{Client (RingChat)}
 
 The client implementation is a simple command line interface, though an interface was used for the UI class to allow for other implementations. The client application takes the address and port number of the server it is to connect to in the ring as arguments. 
@@ -503,13 +516,36 @@ The client implementation is a simple command line interface, though an interfac
 	\label{fig:clientchat}
 \end{figure}
 
+% TODO how to run
+% Screenshot message being sent and received to other user, and other group.
+
 \section{Testing}
 
-\section{Evaluation}
+Only some JUnit tests were written during development. Since components were changed many times over the course of this practical, tests were constantly being rewritten and so were eventually abandoned. Given more time I would have unit tested each component by mocking network messages.
+
+However, the project was tested thoroughly by hand as it was developed which helped identify edge cases like those discussed. The ring topology was tested by starting and triggering failure of nodes and observing the logs and database state to ensure that such events were handled correctly. The client was also tested by sending messages to users and groups, attempting to connect to a server that was already handling two clients, and so on.
+
+\section{Potential Issues}
+
+% TODO
+% Doesnt handle node failure while coordinator is being elected
+% Doesnt retry election messages
+% Doesnt check for client delivery
+% Doesnt recover token if failing node was holding it 
+% Clients and messages are never removed from database, but the destination rows are.
 
 \section{Summary}
 
+% Does ensure token isnt lost during handover
+% Does recover from coordinator loss
+% Does implement multiple 
+% Does recover from node loss
+% Does ensure mutual exclusion to message database
+% Check for other extensions man we did it all <3
+
 \section{How to Run}
+
+Both the server nodes and client are provided as a executable jar file. The arguments required for both are provided in the relevant sections. The database server connection URL and credentialy is that of the databases provided by the school. The first node to start up should be provided with the \lstinline{-d} flag in order to restart the database and clear any previous coordinators.
 
 \bibliographystyle{unsrt}
 \bibliography{mybib}

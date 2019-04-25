@@ -40,8 +40,8 @@ public class RingDatabaseConnection implements RingRepository {
                     "ON DELETE SET NULL" +
                     ")";
 
-    private static final String DROP_COORDINATOR = "DROP TABLE " + COORDINATOR_TABLE_NAME;
-    private static final String DROP_NODE = "DROP TABLE " + NODE_TABLE_NAME;
+    private static final String DROP_COORDINATOR = "DROP TABLE IF EXISTS " + COORDINATOR_TABLE_NAME;
+    private static final String DROP_NODE = "DROP TABLE IF EXISTS " + NODE_TABLE_NAME;
 
     private static final String SELECT_ALL =
             "SELECT n.*, c.coordinatorId FROM " + NODE_TABLE_NAME + " n " +

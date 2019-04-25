@@ -53,8 +53,10 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
                     "sentAt INT," +
                     "contents VARCHAR(255)," +
                     "fromUsername VARCHAR(255)," +
+                    "toGroup VARCHAR(255)," +
                     "PRIMARY KEY (messageId)," +
-                    "FOREIGN KEY (fromUsername) REFERENCES " + CLIENT_TABLE_NAME + "(username)" +
+                    "FOREIGN KEY (fromUsername) REFERENCES " + CLIENT_TABLE_NAME + "(username)," +
+                    "FOREIGN KEY (toGroup) REFERENCES " + GROUP_TABLE_NAME + "(groupname)" +
                     ")";
 
     private static final String DESTINATION_SCHEMA =
@@ -62,12 +64,12 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
                     "messageId INT," +
                     "toUsername VARCHAR(255) NOT NULL," +
                     "PRIMARY KEY (messageId, toUsername)," +
-                    "FOREIGN KEY (messageId) REFERENCES " + MESSAGE_SCHEMA + "(messageId)," +
-                    "FOREIGN KEY (fromUsername) REFERENCES " + CLIENT_TABLE_NAME + "(username) " +
+                    "FOREIGN KEY (messageId) REFERENCES " + MESSAGE_TABLE_NAME + "(messageId)," +
+                    "FOREIGN KEY (toUsername) REFERENCES " + CLIENT_TABLE_NAME + "(username) " +
                     "ON DELETE CASCADE" +
                     ")";
 
-    private static final String DROP_TABLE = "DROP TABLE ";
+    private static final String DROP_TABLE = "DROP TABLE IF EXISTS ";
 
     private final Logger logger = LoggerFactory.getLogger();
 
@@ -154,36 +156,42 @@ public class MessagingDatabaseConnection implements UserGroupRepository, Message
 
     @Override
     public void sendMessage(ChatMessage userMessage) {
+        // TODO
 
     }
 
     @Override
     public Optional<ChatMessage> getNextMessageForUser(Set<String> usernames) {
-        return Optional.empty();
+        // TODO
+        return null;
     }
 
     @Override
     public void addUser(String username) throws IOException {
-
+        // TODO
     }
 
     @Override
     public void removeUser(String username) throws IOException {
+        // TODO
 
     }
 
     @Override
     public void addUserToGroup(String username, String groupname) throws IOException {
+        // TODO
 
     }
 
     @Override
     public void removeUserFromGroup(String username, String groupname) throws IOException {
+        // TODO
 
     }
 
     @Override
     public Set<String> getAllUsersInGroup(String groupname) throws IOException {
+        // TODO
         return null;
     }
 }

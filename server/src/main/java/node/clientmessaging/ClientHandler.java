@@ -181,9 +181,14 @@ class ClientHandler implements Runnable {
             sendMessage(new ErrorMessage("Already logged in."));
         } else {
             logger.info("Logging in as " + clientMessage.getUsername());
-            user = new User(clientMessage.getUsername());
-            // Reply with same login message for confirmation
-            sendMessage(clientMessage);
+            try {
+                userGroupRepository.addUser(user.getUsername());
+                user = new User(clientMessage.getUsername());
+                // Reply with same login message for confirmation
+                sendMessage(clientMessage);
+            } catch (IOException e) {
+                sendError(e.getMessage());
+            }
         }
     }
 

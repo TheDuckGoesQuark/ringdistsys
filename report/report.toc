@@ -15,8 +15,8 @@
 \contentsline {section}{\numberline {4}Receive/Send Posts}{13}
 \contentsline {subsection}{\numberline {4.1}Mutual Exclusion}{13}
 \contentsline {subsection}{\numberline {4.2}Server}{14}
-\contentsline {subsection}{\numberline {4.3}Client (RingChat)}{15}
+\contentsline {subsection}{\numberline {4.3}Client (RingChat)}{16}
 \contentsline {section}{\numberline {5}Testing}{16}
-\contentsline {section}{\numberline {6}Evaluation}{16}
-\contentsline {section}{\numberline {7}Summary}{16}
-\contentsline {section}{\numberline {8}How to Run}{16}
+\contentsline {section}{\numberline {6}Potential Issues}{17}
+\contentsline {section}{\numberline {7}Summary}{17}
+\contentsline {section}{\numberline {8}How to Run}{17}

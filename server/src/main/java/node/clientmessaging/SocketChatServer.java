@@ -86,6 +86,7 @@ public class SocketChatServer implements ChatServer {
     private Set<String> getCurrentUsers() {
         final Set<String> users = new HashSet<>();
         for (ClientHandler clientHandler : clients) {
+            if (clientHandler == null) continue;
             clientHandler.getUser().ifPresent(user -> users.add(user.getUsername()));
         }
         return users;
