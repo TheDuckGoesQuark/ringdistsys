@@ -100,7 +100,7 @@ To demonstrate an understanding of leader election and mutual exclusion in distr
 
 Java 8 was chosen for this project due to it's friendly socket API, and Maven \cite{maven} was used as the build tool. 
 
-Since each node would be running on an isolated machine, the planned testing environment would involve using \emph{ssh} to start the nodes remotely. Providing the configuration as command line arguments was considered simpler than other methods, and was implemented using the Apache Commons CLI library \cite{apachecli}. In order to run the program, the arguments shown in table \ref{tbl:arguments} had to be specified. The purpose of each argument is explained later.
+Since each node would be running on an isolated machine, the planned testing environment would involve using \emph{ssh} to start the nodes remotely. Providing the configuration as command line arguments was considered simpler than other methods, and was implemented using the Apache Commons CLI library \cite{apachecli}. In order to run the program, the arguments shown in table \ref{tbl:arguments} need to be supplied. The purpose of each argument is explained later.
 
 \renewcommand{\arraystretch}{1.5}
 \begin{table}[!ht]
@@ -123,7 +123,7 @@ Since each node would be running on an isolated machine, the planned testing env
 
 \subsection{Messages}
 
-In order for nodes to understand and parse the node.nodemessaging that were sent between them, a message protocol was designed. Figure \ref{fig:mainmsg} shows the header that would be part of every message sent. The possible types of node.nodemessaging are summarised in table \ref{tbl:messagetypes}.
+In order for nodes to understand and parse the messages that were sent between them, a message protocol was designed. Figure \ref{fig:mainmsg} shows the header that would be part of every message sent. The possible types of messages are summarised in table \ref{tbl:messagetypes}.
 
 \begin{table}[!h]
 \centering
@@ -143,7 +143,7 @@ Message Type                               & Usage                              
 \label{tbl:messagetypes}
 \end{table}
 
-The node.nodemessaging are sent as serialized Java objects, which requires that all message classes implement the \emph{Serializable} interface. A more platform independent format such as JSON would be preferred, but since all nodes would be using Java this method of serializing node.nodemessaging was kept. Figure \ref{fig:elecmsg} shows the header for an election message. The election message header would be in the payload of the main message. This allowed multiple election methods to be used and easy routing of election related node.nodemessaging to an election handler class.
+The messages are sent as serialized Java objects, which requires that all message classes implement the \emph{Serializable} interface. A more platform independent format such as JSON would be preferred, but since all nodes would be running the same ring client this method of serializing messages was kept. Figure \ref{fig:elecmsg} shows the header for an election message. Election messages are sent in the payload of main messages.
 
 \begin{figure}[!ht]
 \centering
@@ -163,17 +163,18 @@ The node.nodemessaging are sent as serialized Java objects, which requires that 
 
 \subsection{Transport Protocol}
 
-Due to different patterns of communication during recovery and regular message passing phases both TCP and UDP were used for this project, as shown in Figure \ref{fig:pattern}.
+Due to different patterns of communication being required for token passing and coordination, both TCP and UDP were used for this project, as shown in Figure \ref{fig:pattern}.
 
 \noindent \linebreak TCP was used for communication \textbf{around} the ring:
 \begin{enumerate}
     \item Reliable communication avoids token being lost.
     \item Connection is reused frequently between predecessors and successors, justifying handshake overhead.
+    \item Failure can be detected immediately when trying to read or write to a TCP socket.
 \end{enumerate}
 
 \noindent UDP was used for communication \textbf{across} the ring: 
 \begin{enumerate}
-    \item Low communication overhead allows for node.nodemessaging to be sent to multiple nodes quickly, improving recovery time from node failure.
+    \item Low communication overhead allows for messagees to be sent to multiple nodes quickly, improving recovery time from node failure.
     \item No session maintenance allows coordinator to handle more members in the ring.
     \item Multicast communication possible which would greatly simplify broadcasting.
 \end{enumerate}
@@ -198,15 +199,15 @@ Due to different patterns of communication during recovery and regular message p
 
 \subsection{Initialization and Joining}
 
-On initialization, each node sends out join node.nodemessaging to the coordinator. The
-joining protocol is similiar to that described in \cite{join}, and is shown in Figure \ref{fig:join}.
+On initialization, each node sends out join messagees to the coordinator. The
+joining protocol is based on \cite{join}, and is shown in Figure \ref{fig:join}.
 Figure \ref{fig:bigjoin} shows how the state of each connection changes over the course of
 the joining procedure.
 
 \begin{figure}[!ht]
 \centering
   \centering
-  \includegraphics[width=.6\linewidth]{images/join}
+  \includegraphics[width=.8\linewidth]{images/join}
   \caption{Joining protocol over time, with topology shown on right.}
 \label{fig:join}
 \end{figure}
@@ -232,10 +233,8 @@ B can be the coordinator in this scenario.}
 \end{enumerate}
 
 In order for this process to work for a ring network with a single node,
-it required another thread to wait on the connection, and the main thread
-would then request the connection to itself. For two nodes and more the
-joining node would be able to first connect to its new successor once its
-predecessor had disconnected from its old successor as shown in figure \ref{fig:bigjoin}. 
+it required another thread to wait on the incoming connection, and the main thread
+would then request the connection to itself. 
 
 Figure \ref{fig:succreq} shows the logs from node 2 as it joins the ring, and figure \ref{fig:succreqcoord} shows the logs from the coordinator as it handles the request. Figure \ref{fig:singlenodejoin} shows the logs from node 6 when it initializes the ring network by connecting to itself.
 
@@ -262,10 +261,10 @@ Figure \ref{fig:succreq} shows the logs from node 2 as it joins the ring, and fi
 
 \subsection{Topology Recovery and Maintenance}
 
-When designing a distributed system, it should be assumed that failure will occur, and so as an extension this implementation included a mechanism for recovering from failure. Node failure is detected by either:
+When designing a distributed system, it should be assumed that failure will occur, and so as an extension this implementation included a mechanism for recovering from node failure. Node failure is detected by either:
 \begin{enumerate}
-	\item a node attempting to read the socket connected to its predecessor.
-	\item a node forwarding the token to its successor and not receiving an acknowledgement within a given timeframe.
+	\item A node attempting to read the socket connected to its predecessor.
+	\item A node forwarding the token to its successor and not receiving an acknowledgement within a given timeframe.
 \end{enumerate}
 
 When a failure is detected by the successor of a failing node, it will simply begin listening for a new predecessor. Once the predecessor of the failing node detects the loss of connection, it will request a new successor from the coordinator node. The coordinator will then reply with the ID of the node after the failed node for the original predeccessor to connect to, at which point normal network behaviour can resume. Figure \ref{fig:failure} shows the topology change when a node fails. Since the failure is detected by the ring handling thread, and the new successor message arrives on the UDPSocket handling thread, the ring handling thread simply blocks until notified by the UDPSocket thread that a new successor has now been connected to. 
@@ -277,7 +276,7 @@ When a failure is detected by the successor of a failing node, it will simply be
 	\label{fig:failure}
 \end{figure}
 
-The token acknowledgement message is the only occurence of communication in the reverse direction of the ring topology. The predecessor of the failing node will hold onto the token until it is assigned a new successor, and only releases the token once it has received the acknowlegement from it. This limits the number of situtations that can result in the loss of the token. If somehow the token is acknowledged but the acknowledgement message does not reach the predecessor in time, it could be possible for two tokens to then be in circulation. Figure \ref{fig:recovery} shows logs from a node that has experienced successor failure. 
+The token acknowledgement message is the only occurence of communication in the reverse direction of the ring topology. The predecessor of the failing node will hold onto the token until it is assigned a new successor, and will only release the token once it has received an acknowledgement from its successor. THis ensures that the token will not be lost in transport. However, if somehow the token is acknowledged but the acknowledgement message does not reach the predecessor in time, it could be possible for two tokens to then be in circulation. Figure \ref{fig:recovery} shows logs from a node that has experienced successor failure. 
 
 \begin{figure}[!ht]
 	\centering
@@ -303,7 +302,7 @@ Knowing this meant that it could be assumed if there were only two nodes in the 
 
 Initially, the coordinator node was always the node with the ID 6. This node would maintain an in-memory virtual representation of the network topology using a cyclic linked list of node IDs. This obviously would be useless if the coordinator was to change, and so it was necessary to persist the network topology somehow. 
 
-This was achieved by adding a database which would behave like resource P in the practical specification (the list of nodes). Only the coordinator would be able to write and update the database, and all other nodes would read from it. The database allowed operations to be carried out as transactions, meaning that node failure during an update could be rolled back. The database is initialized using a csv file containing the ID, address, and port of each node that \emph{may} join the network at some point. Figure \ref{fig:er} shows an ER diagram of the database schema. The successorId is nullable and refers to another row in the node table. If a value is present in that column then the node ID on that row would be assumed to be part of the ring.
+This was achieved by adding a database which would behave like resource P in the practical specification (the list of nodes). Only the coordinator would be able to write and update the database, and all other nodes could only read from it. The database allowed operations to be carried out as transactions, meaning that node failure during an update could be rolled back. The database is initialized using a csv file containing the ID, address, and port of each node that \emph{may} join the network at some point. Figure \ref{fig:er} shows an ER diagram of the database schema for persisting nodes. The successorId is nullable and refers to another row in the node table. If a value is present in that column then the node ID on that row would be assumed to be part of the ring.
 
 \begin{figure}[!ht]
 	\centering
@@ -312,9 +311,9 @@ This was achieved by adding a database which would behave like resource P in the
 	\label{fig:er}
 \end{figure}
 
-When a new node wants to join the network, it first queries the database to learn who the current coordinator is. If no coordinator exists and no nodes have successors set, then this node will assume coordinator status. A limitation of this functionality is that if another node (B) queries for the current coordinator before the first node (A) has had the chance to update the database, then B could potentially also designate itself as coordinator. Since B would overwrite A as coordinator, later joining nodes would always make requests to B, and A would remain connected to itself.
+When a new node wants to join the network, it first queries the database to learn who the current coordinator is. If no coordinator exists and no nodes have successors set, then this node will assume coordinator status. A limitation of this functionality is that if another node (B) queries for the current coordinator before the first node (A) has had the chance to update the database, then B could potentially also designate itself as coordinator. Since B would overwrite A as coordinator, later joining nodes would always make requests to B, and A would remain connected to itself, each 'ring' with its own token (the split brain problem).
 
-The database was also essential for recovering the network topology quickly when a coordinator failed. If a node detected the failure of its successor and knew that its successor was currently the coordinator, it would temporarily act as a coordinator until a new one was elected. This would allow it to update the database and recover the ring topology by connecting to the successor of the failed coordinator. Immediately after recovering this connection, an election would be triggered by the acting coordinator in order to designate a permanent coordinator.
+The database was essential for recovering the network topology quickly when a coordinator failed. If a node detected the failure of its successor and knew that its successor was currently the coordinator, it would temporarily act as a coordinator until a new one was elected. This would allow it to update the database and recover the ring topology by connecting to the successor of the failed coordinator. Immediately after recovering this connection, an election would be triggered by the acting coordinator in order to designate a permanent coordinator.
 
 In order to ensure that only one coordinator existed at any time, the coordinators table included a boolean column \emph{singleRowLock} that would always be true. By setting this boolean column as the primary key, insert statements could then be constructed to either 
 \begin{enumerate}
@@ -323,6 +322,8 @@ In order to ensure that only one coordinator existed at any time, the coordinato
 \end{enumerate}
 
 Whilst another row could be added with the value FALSE for \emph{singleRowLock}, permissions would be configured such that only the hosts and a system administrator would be able to perform updates so it could be assumed that as long as the application code always used TRUE for inserts, only one row would ever exist. 
+
+Figure \ref{fig:dbstate} shows the state of the database after 8 nodes join in a random order. Figure \ref{fig:dbstateafterfail} shows the state of the database after node 8 fails and a new coordinator is elected.
 
 \begin{figure}[!h]
 \centering
@@ -360,14 +361,13 @@ Whilst another row could be added with the value FALSE for \emph{singleRowLock},
 \label{fig:dbstateafterfail}
 \end{figure}
 
-Figure \ref{fig:dbstate} shows the state of the database after 8 nodes join in a random order. Figure \ref{fig:dbstateafterfail} shows the state of the database after node 8 fails and a new coordinator is elected.
 
 
 \section{Leader/Coordinator Election}
 
 \subsection{Election API}
 
-An interface was used for providing a generic 'election algorithm' API, allowing different algorithms to be switched out easily. Any node.nodemessaging that arrived from either the UDP socket or the ring sockets that had the COORDINATOR\_ELECTION type would be routed to the handler for the election algorithm specified in the election header. For example, an election message that required the bully algorithm would be routed to the bully election handler.
+An interface was used for providing a generic 'election algorithm' API, allowing different algorithms to be switched out easily. Any messagees that arrived from either the UDP socket or the ring sockets that had the COORDINATOR\_ELECTION type would be routed to the handler for the election algorithm specified in the election header. For example, an election message that required the bully algorithm would be routed to the bully election handler.
 
 In the configuration for each node, a default election algorithm is specified. Therefore the type of election that would be started could vary depending on which node initiated it. If a node received an election message for a different algorithm to the one they are currently using, then they would replace their election handler with one that could process the arriving message. 
 
@@ -381,7 +381,7 @@ The methods required by the election API are summarised in table \ref{tbl:elecap
 Method                                 & Usage                                                                                      \\ \hline
 \multicolumn{1}{l|}{getMethodName}     & Returns the name of the underlying algorithm used by the implementation of this interface. \\
 \multicolumn{1}{l|}{startElection}     & Starts an election.                                                                        \\
-\multicolumn{1}{l|}{handleMessage}     & Handles any election node.nodemessaging.                                                             \\
+\multicolumn{1}{l|}{handleMessage}     & Handles any election messagees.                                                             \\
 \multicolumn{1}{l|}{getResult}         & Returns the result of the election (if concluded).                                         \\
 \multicolumn{1}{l|}{electionConcluded} & Returns true if a result has been obtained.                                                \\ \hline
 \end{tabular}%
@@ -394,7 +394,7 @@ Method                                 & Usage                                  
 
 Initially, elections could only be triggered by the predecessor of a failed coordinator. This meant that if a new node joined with a higher ID, it would not be elected until the current coordinator failed. This was resolved by adding logic to the joining procedure that once part of the ring, the new node would trigger an election if it found that its ID was greater than the current coordinators. 
 
-This meant it would be possible for multiple elections to be ongoing simultaneously if many nodes joined the ring in quick succession with higher IDs than the current coordinator. 
+This meant it would be possible for multiple elections to be ongoing simultaneously if many nodes joined the ring in quick succession with higher IDs than the current coordinator, or if coordinator failure occurred whilst a node with a higher ID joined the ring. 
 
 \subsection{Ring-Based}
 
@@ -411,9 +411,9 @@ This node then chose the new coordinator from the list of candidates based on wh
 
 \subsection{Chang Roberts}
 
-The Chang Roberts algorithm reused most of the components from the ring-based algorithm, other than the forwarding logic for ELECTION node.nodemessaging.
+The Chang Roberts algorithm reused most of the components from the ring-based algorithm, other than the forwarding logic for ELECTION messagees.
 
-If the ELECTION message contained the receiving nodes ID, then it would conclude the election and forward the COORDINATOR message as in the ring-based algorithm. However, in order to avoid redundant forwarding of election node.nodemessaging if two elections are started at the same time, ELECTION node.nodemessaging would only be forwarded if the receiving node was a better candidate (i.e. had a greater ID), or if it had not already participated by forwarding a message previously.
+If the ELECTION message contained the receiving nodes ID, then it would conclude the election and forward the COORDINATOR message as in the ring-based algorithm. However, in order to avoid redundant forwarding of election messages if two or more elections are started at the same time, ELECTION messages would only be forwarded if the receiving node was a better candidate (i.e. had a greater ID), or if it had not already participated by forwarding a message previously.
 
 Figure \ref{fig:chang} shows logs from a new node that has joined the ring and triggered an election. Initially the election message is sent, and later it returns with the same ID and so node 8 elects itself. It then forwards the coordinator message until it arrives back to itself at which point it is dropped.
 
@@ -428,7 +428,7 @@ Figure \ref{fig:chang} shows logs from a new node that has joined the ring and t
 
 The bully algorithm was the most difficult to implement due to its dependence on timing. An election would be started by a node by sending an ELECTION message to all nodes with IDs greater than it's own. It would then create a thread which would sleep for a preset time before assuming it is to be the coordinator. If one of the other nodes that received the ELECTION message replied with an OK message, the sleeping thread would simply terminate after the preset time had expired. Another thread would be spawned to again sleep for a duration of time after receiving the OK message. If no coordinator message was received before this second duration elapsed, then the node would restart the election.
 
-Each node that received an ELECTION message would reply with an OK message if it had not already started an election, and then carry out the same procedure as the first node had to trigger the election. Eventually the node with the highest ID would not have any other nodes to send ELECTION node.nodemessaging to, and so it would consider itself the coordinator and inform all the other nodes in the ring using the COORDINATOR message.
+Each node that received an ELECTION message would reply with an OK message if it had not already started an election, and then carry out the same procedure as the first node had to trigger the election. Eventually the node with the highest ID would not have any other nodes to send ELECTION messagees to, and so it would consider itself the coordinator and inform all the other nodes in the ring using the COORDINATOR message.
 
 Figure \ref{fig:bully} shows how effective the bully algorithm is at dealing with failure and demonstrates a node being bullied into letting another node be coordinator. The order of events in the logs shown are:
 
@@ -467,7 +467,7 @@ In order to ensure that the token is at least delivered successfully, the token 
 
 \subsection{Server}
 
-In order for each node in the ring to serve clients, they each provide a TCP server socket. In order to isolate coordination traffic from client traffic, clients used a different port to connect to the node than other nodes. To allow for local testing, it was necessary to use port numbers to differentiate between host sockets on the same machine. In a realistic scenario, each node would have a different host address (and even a different FQDN) and a consistent port for client traffic and coordination traffic. 
+In order for each node in the ring to serve clients, they each provide a TCP server socket. Coordination traffic and client traffic was isolated by using differenent port numbers for both. To allow for local testing, it was necessary to use port numbers to differentiate between host sockets on the same machine. In a realistic scenario, each node would have a different host address (and even a different FQDN) and a consistent port for client traffic and coordination traffic. 
 
 I had hoped to use an existing protocol such as Websockets so that the client-to-server communication followed some standard. Due to time constraints however, I opted for simply sending messages over the TCP socket, using line breaks to seperate each message. This time I serialized the messages to JSON to allow any application to consume and communicate with the server as a client, in contrast to the direct serialization of POJOs which is used for communication between nodes.
 
@@ -501,13 +501,14 @@ Figure \ref{fig:msgdb} shows the ER diagram of the tables added to the database 
 	\label{fig:msgdb}
 \end{figure}
 
-Each server is responsible for adding and removing their users to groups when requested. Once the token is available, the oldest message for any of their clients is removed from the database and forwarded to that client. The oldest message is always chosen to ensure the FIFO ordering of messages. If a user disconnects before a message reaches it, the message will remain in the database until the user connects again to any server node.
+Each server is responsible for adding and removing their users to groups when requested. Once the token is available, the oldest message for any of their clients is removed from the database and forwarded to that client. The oldest message is always chosen to ensure the FIFO delivery of messages. If a user disconnects before a message reaches it, the message will remain in the database until the user connects again to any server node.
 
 % TODO screenshot of server adding user to group, sending message, receiving message
+% TODO screenshot of messages in database for group and for users.
 
 \subsection{Client (RingChat)}
 
-The client implementation is a simple command line interface, though an interface was used for the UI class to allow for other implementations. The client application takes the address and port number of the server it is to connect to in the ring as arguments. 
+The client UI is a simple command line interface, though an interface was enforced for the UI class to allow for other implementations. The client application takes the address and port number of the server it is to connect to in the ring as arguments. 
 
 \begin{figure}[!ht]
 	\centering
@@ -515,6 +516,8 @@ The client implementation is a simple command line interface, though an interfac
 	\caption{Example of a user logging in and sending a message to another user using the CLI.}
 	\label{fig:clientchat}
 \end{figure}
+
+The user is able to login, join and leave groups, send messages to other users and groups, and read messages for them. Asynchronous communication is used, and so when requesting to join or leave a group the server may immediately reply with confirmation. 
 
 % TODO how to run
 % Screenshot message being sent and received to other user, and other group.
@@ -528,6 +531,9 @@ However, the project was tested thoroughly by hand as it was developed which hel
 \section{Potential Issues}
 
 % TODO
+% Node messages are serialized POJOs, so all servers in the ring have to be running the exact same application.
+% Assumes silence from a node is failure, and not just that traffic is delayed. Though the node can rejoin after absolute failure.
+% Must know all possible nodes addresses when initializing the network, though it wouldnt be too difficult to introduce a mechanism for registering completetly nodes.
 % Doesnt handle node failure while coordinator is being elected
 % Doesnt retry election messages
 % Doesnt check for client delivery

@@ -8,6 +8,7 @@
 \newlabel{tbl:arguments}{{1}{1}}
 \@writefile{toc}{\contentsline {section}{\numberline {2}Ring Formation}{1}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Messages}{1}}
+\citation{join}
 \@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Possible values for the type field in the message header, with their usage and payload.\relax }}{2}}
 \newlabel{tbl:messagetypes}{{2}{2}}
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Main message header.\relax }}{2}}
@@ -15,7 +16,6 @@
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Election message header.\relax }}{2}}
 \newlabel{fig:elecmsg}{{2}{2}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Transport Protocol}{2}}
-\citation{join}
 \newlabel{fig:tcp}{{3a}{3}}
 \newlabel{sub@fig:tcp}{{a}{3}}
 \newlabel{fig:udp}{{3b}{3}}
@@ -49,43 +49,43 @@
 \newlabel{sub@fig:coordtable}{{b}{9}}
 \@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces The state of the database after nodes join in the order 6, 5, 8, 3, 4, 7, 1, 2.\relax }}{9}}
 \newlabel{fig:dbstate}{{13}{9}}
-\newlabel{fig:nodetableafterfail}{{14a}{9}}
-\newlabel{sub@fig:nodetableafterfail}{{a}{9}}
-\newlabel{fig:coordtableafterfail}{{14b}{9}}
-\newlabel{sub@fig:coordtableafterfail}{{b}{9}}
-\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces The state of the database after recovering from node 8 failing.\relax }}{9}}
-\newlabel{fig:dbstateafterfail}{{14}{9}}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Leader/Coordinator Election}{10}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Election API}{10}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Leader/Coordinator Election}{9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Election API}{9}}
+\newlabel{fig:nodetableafterfail}{{14a}{10}}
+\newlabel{sub@fig:nodetableafterfail}{{a}{10}}
+\newlabel{fig:coordtableafterfail}{{14b}{10}}
+\newlabel{sub@fig:coordtableafterfail}{{b}{10}}
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces The state of the database after recovering from node 8 failing.\relax }}{10}}
+\newlabel{fig:dbstateafterfail}{{14}{10}}
 \@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Methods of the election handler interface.\relax }}{10}}
 \newlabel{tbl:elecapi}{{3}{10}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Triggering Elections}{10}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Triggering Elections}{11}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Ring-Based}{11}}
 \@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Logs from node 2 after detecting coordinator failure. Note how token passing resumes as soon as a new successor is found despite the loss of the coordinator in order to make node failure transparent.\relax }}{11}}
 \newlabel{fig:ringbased}{{15}{11}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Chang Roberts}{11}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Chang Roberts}{12}}
 \@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Logs from node 8 when it joins the ring and notices its ID is greater than the current coordinator.\relax }}{12}}
 \newlabel{fig:chang}{{16}{12}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.5}Bully}{12}}
 \@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Logs from node 6 during an election where coordinator 8 has failed, and 7 should be the next coordinator.\relax }}{13}}
 \newlabel{fig:bully}{{17}{13}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Receive/Send Posts}{13}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Mutual Exclusion}{13}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Server}{14}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Receive/Send Posts}{14}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Mutual Exclusion}{14}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Server}{15}}
 \@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Messages sent between client and server.\relax }}{15}}
 \newlabel{tbl:clientmessagetypes}{{4}{15}}
 \@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces ER diagram for user and group messaging database.\relax }}{16}}
 \newlabel{fig:msgdb}{{18}{16}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Client (RingChat)}{16}}
-\@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces Example of a user logging in and sending a message to another user using the CLI.\relax }}{16}}
-\newlabel{fig:clientchat}{{19}{16}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Testing}{16}}
 \bibstyle{unsrt}
 \bibdata{mybib}
 \bibcite{maven}{{1}{}{{}}{{}}}
-\bibcite{apachecli}{{2}{}{{}}{{}}}
-\bibcite{join}{{3}{}{{}}{{}}}
-\providecommand\NAT@force@numbers{}\NAT@force@numbers
+\@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces Example of a user logging in and sending a message to another user using the CLI.\relax }}{17}}
+\newlabel{fig:clientchat}{{19}{17}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Testing}{17}}
 \@writefile{toc}{\contentsline {section}{\numberline {6}Potential Issues}{17}}
 \@writefile{toc}{\contentsline {section}{\numberline {7}Summary}{17}}
 \@writefile{toc}{\contentsline {section}{\numberline {8}How to Run}{17}}
+\bibcite{apachecli}{{2}{}{{}}{{}}}
+\bibcite{join}{{3}{}{{}}{{}}}
+\providecommand\NAT@force@numbers{}\NAT@force@numbers

@@ -2,6 +2,7 @@ package node.clientmessaging.repositories;
 
 import node.clientmessaging.messages.ChatMessage;
 
+import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 
@@ -13,9 +14,9 @@ public interface MessageRepository {
     /**
      * Sends a message to either a group or a user
      *
-     * @param userMessage message to be sent
+     * @param chatMessage message to be sent
      */
-    void sendMessage(ChatMessage userMessage);
+    void sendMessage(ChatMessage chatMessage) throws IOException;
 
     /**
      * Gets the oldest waiting message out of any messages waiting for the given users.

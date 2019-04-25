@@ -1,5 +1,6 @@
 package node.clientmessaging;
 
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import logging.LoggerFactory;
 import node.clientmessaging.messages.ChatMessage;
 import node.clientmessaging.repositories.MessageRepository;
@@ -124,10 +125,13 @@ public class SocketChatServer implements ChatServer {
     @Override
     public boolean sendMessage() {
         final ChatMessage message = outgoingMessages.poll();
-        if (message != null) {
+
+        if (message == null) return false;
+
+        try {
             messageRepository.sendMessage(message);
             return true;
-        } else {
+        } catch (IOException e) {
             return false;
         }
     }
